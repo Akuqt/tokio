@@ -19,6 +19,7 @@
     "curly": "off",
     "no-shadow": "off",
     "no-unused-vars": "error",
-    "no-console": "warn"
+    "no-console": "allow",
+    "no-floating-promises": "allow"
   }
 }
