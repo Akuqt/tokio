@@ -1,0 +1,67 @@
+{
+  "name": "tokio",
+  "version": "0.0.1",
+  "description": "Tiktok live integrator app.",
+  "main": "./out/main/index.js",
+  "author": "Akuqt",
+  "license": "MIT",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Akuqt/tokio.git"
+  },
+  "keywords": [
+    "tiktok",
+    "live",
+    "tts",
+    "integration",
+    "overlays",
+    "animations"
+  ],
+  "bugs": {
+    "url": "https://github.com/Akuqt/tokio/issues"
+  },
+  "homepage": "https://tokio.ialfaro.com",
+  "scripts": {
+    "format": "prettier --write .",
+    "lint": "oxlint --type-aware",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
+    "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
+    "typecheck": "yarn typecheck:node && yarn typecheck:web",
+    "start": "electron-vite preview",
+    "dev": "electron-vite dev",
+    "build": "yarn typecheck && electron-vite build",
+    "postinstall": "electron-builder install-app-deps",
+    "build:unpack": "yarn build && electron-builder --dir",
+    "build:win": "yarn build && electron-builder --win",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@electron-toolkit/preload": "^3.0.2",
+    "@electron-toolkit/utils": "^4.0.0",
+    "axios": "^1.18.1",
+    "electron-updater": "^6.3.9"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.1",
+    "@commitlint/config-conventional": "^21.2.0",
+    "@electron-toolkit/tsconfig": "^2.0.0",
+    "@types/node": "^22.19.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "electron": "^39.2.6",
+    "electron-builder": "^26.0.12",
+    "electron-vite": "^5.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.1.0",
+    "oxlint": "^1.74.0",
+    "oxlint-tsgolint": "^0.25.0",
+    "pinst": "^3.0.0",
+    "prettier": "^3.7.4",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.6"
+  }
+}
