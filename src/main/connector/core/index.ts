@@ -87,12 +87,6 @@ export class TikTokLiveConnector extends EventEmitter {
         });
       }
     } catch (err) {
-      this.emit(
-        "error",
-        new Error(`Failed to connect to ${this._username}`, {
-          cause: err,
-        }),
-      );
       Logger.error(
         `<Connector> Failed to connect to ${this._username} -- ${formatError(err)}`,
         this._logSettings,
