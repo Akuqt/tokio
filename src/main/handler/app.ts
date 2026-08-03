@@ -3,28 +3,42 @@ import { TikTokLiveConnector } from "@/connector";
 import { checkInternetConnection } from "@/helper/network";
 import { TTSService } from "@/tts";
 import { AppHandlerVariables } from "@/types";
-import { App, BrowserWindow, IpcMain, Shell } from "electron";
+import type {
+  App,
+  BrowserWindow,
+  IpcMain,
+  session as Session,
+  Shell,
+} from "electron";
 import { existsSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { join, resolve } from "path";
 
 export class AppHandler implements AppHandlerVariables {
   public internet: boolean;
-  public connector: TikTokLiveConnector | null;
-  public tts: TTSService | null;
+  public readonly tts: TTSService;
+  public readonly connector: TikTokLiveConnector;
   public readonly folders: Folders;
   public readonly app: App;
   public readonly win: BrowserWindow;
   public readonly ipcMain: IpcMain;
   private readonly shell: Shell;
+  private readonly session: typeof Session;
 
-  constructor(app: App, win: BrowserWindow, ipcMain: IpcMain, shell: Shell) {
+  constructor(
+    app: App,
+    win: BrowserWindow,
+    ipcMain: IpcMain,
+    shell: Shell,
+    session: typeof Session,
+  ) {
     this.app = app;
     this.win = win;
     this.ipcMain = ipcMain;
     this.shell = shell;
-    this.connector = null;
-    this.tts = null;
+    this.session = session;
+    this.connector = new TikTokLiveConnector();
+    this.tts = new TTSService();
     this.internet = true;
     const home = this.app.getPath("home");
     const appFolder = resolve(join(home, ".tokio"));
@@ -37,8 +51,9 @@ export class AppHandler implements AppHandlerVariables {
     };
   }
 
-  public async initApp() {
+  protected async initApp() {
     this.initWindow();
+    this.initSession();
     await this.checkInternet();
     await this.initFolders();
   }
@@ -71,5 +86,22 @@ export class AppHandler implements AppHandlerVariables {
     this.win?.on("ready-to-show", async () => {
       this.win?.show();
     });
+  }
+
+  private initSession() {
+    const csp = this.app.isPackaged
+      ? "default-src 'self'; media-src 'self' blob:; script-src 'self'; style-src 'self' 'unsafe-inline';"
+      : "default-src 'self'; media-src 'self' blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws://localhost:5173 http://localhost:5173;";
+
+    this.session.defaultSession.webRequest.onHeadersReceived(
+      (details, callback) => {
+        callback({
+          responseHeaders: {
+            ...details.responseHeaders,
+            "Content-Security-Policy": [csp],
+          },
+        });
+      },
+    );
   }
 }
