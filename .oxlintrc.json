@@ -20,6 +20,7 @@
     "no-shadow": "off",
     "no-unused-vars": "error",
     "no-console": "allow",
+    "no-underscore-dangle": "allow",
     "no-floating-promises": "allow"
   }
 }
