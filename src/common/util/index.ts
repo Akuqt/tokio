@@ -20,3 +20,11 @@ export class EventStack<T, U> {
     this.evs.push(...events.getEvents());
   }
 }
+
+export function formatError(error: unknown) {
+  if (!(error instanceof Error)) return "unknown";
+  const message = error.message || "<message?>";
+  const cause =
+    error.cause instanceof Error ? error.cause : new Error("<cause?>");
+  return `message: ${message} -- cause: ${cause.message}`;
+}
