@@ -17,4 +17,12 @@ export interface Folders {
   readonly appFolder: string;
   readonly binFolder: string;
   readonly settingsFolder: string;
+  readonly logsFolder: string;
+}
+
+export interface Files {
+  readonly logs: {
+    readonly connector: string;
+  };
+  readonly ffmpeg: string;
 }
