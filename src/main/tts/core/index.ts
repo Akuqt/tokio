@@ -1,3 +1,4 @@
+import { AudioFilterService } from "@/audio";
 import axios, { isAxiosError } from "axios";
 import { Buffer } from "node:buffer";
 import { writeFile } from "node:fs/promises";
@@ -12,18 +13,14 @@ import {
 } from "../types";
 
 export class TTSService {
-  private static sessionId: string | undefined;
+  private sessionId: string | undefined;
 
-  private static getURL(
-    text: string,
-    speaker: string,
-    lang: SupportedLanguage,
-  ) {
+  private getURL(text: string, speaker: string, lang: SupportedLanguage) {
     const preparedText = prepareText(text, lang);
     return `${config.API_URL}/?text_speaker=${speaker}&req_text=${preparedText}&speaker_map_type=0&aid=1233`;
   }
 
-  private static async generateB64TTSALT(
+  private async generateB64TTSALT(
     text: string,
     voice: string,
   ): Promise<string> {
@@ -53,7 +50,7 @@ export class TTSService {
     }
   }
 
-  private static async generateB64TTS(
+  private async generateB64TTS(
     text: string,
     lang: SupportedLanguage,
     voice: string,
@@ -82,7 +79,26 @@ export class TTSService {
     }
   }
 
-  private static getB64TTS<T extends SupportedLanguage>(
+  /**
+   * Sets the TikTok session ID.
+   * This is required to access the primary, high-quality TTS endpoints.
+   *
+   * @param session - The `sessionid` cookie string extracted from a valid TikTok web session.
+   */
+  public setSessionId(session: string) {
+    this.sessionId = session;
+  }
+
+  /**
+   * Generates TTS audio and returns it as a base64-encoded string.
+   * This is ideal for quickly obtaining the audio data without writing to disk or streaming.
+   *
+   * @param text - The text to be converted into speech.
+   * @param lang - The target language code (e.g., "en", "es").
+   * @param voice - The specific voice model to use, strictly typed to the selected language.
+   * @returns A promise that resolves to a base64-encoded string containing the audio data.
+   */
+  public getB64TTS<T extends SupportedLanguage>(
     text: string,
     lang: T,
     voice: VoiceName[T],
@@ -96,16 +112,6 @@ export class TTSService {
   }
 
   /**
-   * Sets the TikTok session ID.
-   * This is required to access the primary, high-quality TTS endpoints.
-   *
-   * @param session - The `sessionid` cookie string extracted from a valid TikTok web session.
-   */
-  public static setSessionId(session: string) {
-    this.sessionId = session;
-  }
-
-  /**
    * Generates TTS audio and writes the binary buffer directly to the specified file path.
    *
    * @param path - The destination file path including the extension (e.g., "./output.mp3").
@@ -114,7 +120,7 @@ export class TTSService {
    * @param voice - The specific voice model to use, strictly typed to the selected language.
    * @returns A promise that resolves when the file has been successfully written to disk.
    */
-  public static async saveToFile<T extends SupportedLanguage>(
+  public async saveToFile<T extends SupportedLanguage>(
     path: string,
     text: string,
     lang: T,
@@ -140,7 +146,7 @@ export class TTSService {
    * @param voice - The specific voice model to use, strictly typed to the selected language.
    * @returns A promise that resolves to a standard Node.js Readable stream containing the decoded binary data.
    */
-  public static async generateStream<T extends SupportedLanguage>(
+  public async generateStream<T extends SupportedLanguage>(
     text: string,
     lang: T,
     voice: VoiceName[T],
@@ -148,5 +154,32 @@ export class TTSService {
     const base64Audio = await this.getB64TTS(text, lang, voice);
     const audioBuffer = Buffer.from(base64Audio, "base64");
     return Readable.from(audioBuffer);
+  }
+
+  /**
+   * Generates TTS audio and returns it as a base64-encoded string after applying optional audio filters using FFmpeg.
+   * This is ideal for quickly obtaining the audio data without writing to disk or streaming.
+   *
+   * @param ffmpegPath - The path to the FFmpeg executable.
+   * @param text - The text to be converted into speech.
+   * @param lang - The target language code (e.g., "en", "es").
+   * @param voice - The specific voice model to use, strictly typed to the selected language.
+   * @returns A promise that resolves to a base64-encoded string containing the filtered audio data.
+   */
+  public async getB64Filtered<T extends SupportedLanguage>(
+    ffmpegPath: string,
+    text: string,
+    lang: T,
+    voice: VoiceName[T],
+    filters: {
+      speed?: number;
+      pitch?: number;
+      volume?: number;
+    },
+  ): Promise<string> {
+    const audioFilterService = new AudioFilterService(ffmpegPath);
+    const base64Audio = await this.getB64TTS(text, lang, voice);
+    const audio = await audioFilterService.filterAudioB64(base64Audio, filters);
+    return audio;
   }
 }
