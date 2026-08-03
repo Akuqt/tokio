@@ -1,4 +1,5 @@
 import { Files, Folders } from "@/common/types";
+import config from "@/config";
 import { TikTokLiveConnector } from "@/connector";
 import { checkInternetConnection } from "@/helper/network";
 import { TTSService } from "@/tts";
@@ -46,11 +47,13 @@ export class AppHandler implements AppHandlerVariables {
     const binFolder = resolve(join(appFolder, "bin"));
     const settingsFolder = resolve(join(appFolder, "settings"));
     const logsFolder = resolve(join(appFolder, "logs"));
+    const overlaysFolder = resolve(join(appFolder, "overlays"));
     this.folders = {
       appFolder,
       binFolder,
       settingsFolder,
       logsFolder,
+      overlaysFolder,
     };
     this.files = {
       logs: {
@@ -65,11 +68,11 @@ export class AppHandler implements AppHandlerVariables {
   }
 
   protected async initApp() {
-    this.initWindow();
-    this.initSession();
-    await this.checkInternet();
     await this.initFolders();
     await this.initFiles();
+    await this.checkInternet();
+    this.initSession();
+    this.initWindow();
   }
 
   private async checkInternet() {
@@ -91,6 +94,8 @@ export class AppHandler implements AppHandlerVariables {
       await mkdir(this.folders.settingsFolder, { recursive: true });
     if (!existsSync(this.folders.logsFolder))
       await mkdir(this.folders.logsFolder, { recursive: true });
+    if (!existsSync(this.folders.overlaysFolder))
+      await mkdir(this.folders.overlaysFolder, { recursive: true });
   }
 
   private async initFiles() {
@@ -110,9 +115,7 @@ export class AppHandler implements AppHandlerVariables {
   }
 
   private initSession() {
-    const csp = this.app.isPackaged
-      ? "default-src 'self'; media-src 'self' blob:; script-src 'self'; style-src 'self' 'unsafe-inline';"
-      : "default-src 'self'; media-src 'self' blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws://localhost:5173 http://localhost:5173;";
+    const csp = this.app.isPackaged ? config.CSP.prod : config.CSP.dev;
 
     this.session.defaultSession.webRequest.onHeadersReceived(
       (details, callback) => {

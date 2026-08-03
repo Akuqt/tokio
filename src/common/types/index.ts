@@ -18,6 +18,7 @@ export interface Folders {
   readonly binFolder: string;
   readonly settingsFolder: string;
   readonly logsFolder: string;
+  readonly overlaysFolder: string;
 }
 
 export interface Files {
