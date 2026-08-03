@@ -1,21 +1,13 @@
 import { TIKTOK_EVENTS } from "@/common/types";
-import { EventStack } from "@/common/util";
-import { TikTokLiveConnector } from "@/connector";
-import { cleanText } from "@/helper";
-import { TTSService } from "@/tts";
-import { AppHandlerVariables } from "@/types";
-import { IpcMainEvent } from "electron";
+import { cleanText, createStack } from "@/helper";
 import path from "path";
 
-const events = new EventStack<AppHandlerVariables, IpcMainEvent>();
+const events = createStack();
 
 events.push<string>(
   "app:listener:start",
   async ({ connector, win, tts }, e, username) => {
-    connector = new TikTokLiveConnector();
-    tts = new TTSService();
     connector.on(TIKTOK_EVENTS.CONNECTED, () => {
-      console.log("app:listener:done");
       e.reply("app:listener:done");
     });
     connector.on(TIKTOK_EVENTS.CHAT, async (chatData) => {
