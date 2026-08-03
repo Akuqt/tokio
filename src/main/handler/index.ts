@@ -15,10 +15,10 @@ export default class Handler extends AppHandler {
   public async init(events: EventStack<AppHandlerVariables, IpcMainEvent>) {
     try {
       await this.initApp();
+      for (const { event, callback } of events.getEvents())
+        this.addEvent(event, callback);
     } catch (error) {
       console.error("Error initializing App:", error);
     }
-    for (const { event, callback } of events.getEvents())
-      this.addEvent(event, callback);
   }
 }
