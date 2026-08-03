@@ -16,5 +16,5 @@ export type LoggerOptions = { file: boolean; path: string };
 export interface Folders {
   readonly appFolder: string;
   readonly binFolder: string;
-  readonly settingsPath: string;
+  readonly settingsFolder: string;
 }

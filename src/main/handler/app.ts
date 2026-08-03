@@ -43,11 +43,11 @@ export class AppHandler implements AppHandlerVariables {
     const home = this.app.getPath("home");
     const appFolder = resolve(join(home, ".tokio"));
     const binFolder = resolve(join(appFolder, "bin"));
-    const settingsPath = resolve(join(appFolder, "settings"));
+    const settingsFolder = resolve(join(appFolder, "settings"));
     this.folders = {
       appFolder,
       binFolder,
-      settingsPath,
+      settingsFolder,
     };
   }
 
@@ -73,8 +73,8 @@ export class AppHandler implements AppHandlerVariables {
       await mkdir(this.folders.appFolder, { recursive: true });
     if (!existsSync(this.folders.binFolder))
       await mkdir(this.folders.binFolder, { recursive: true });
-    if (!existsSync(this.folders.settingsPath))
-      await mkdir(this.folders.settingsPath, { recursive: true });
+    if (!existsSync(this.folders.settingsFolder))
+      await mkdir(this.folders.settingsFolder, { recursive: true });
   }
 
   private initWindow() {
