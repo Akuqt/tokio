@@ -3,11 +3,13 @@ import {
   FollowEvent,
   GiftEvent,
   LikeEvent,
+  LoggerOptions,
   ShareEvent,
   TIKTOK_EVENTS,
   TikTokEventMap,
   UserData,
 } from "@/common/types";
+import { formatError } from "@/common/util";
 import Logger from "@/logger";
 import { EventEmitter } from "events";
 import {
@@ -22,15 +24,28 @@ export class TikTokLiveConnector extends EventEmitter {
   private _connector: TikTokLiveConnection | null;
   private _sessionID: string;
   private _username: string;
+  private _logSettings: LoggerOptions;
 
   constructor() {
     super();
     this._connector = null;
     this._username = "";
     this._sessionID = "";
+    this._logSettings = {
+      file: false,
+      path: "",
+    };
   }
 
   // --- PUBLIC API ---
+
+  public setSessionID(sessionID: string) {
+    this._sessionID = sessionID;
+  }
+
+  public setLogOptions(options: LoggerOptions) {
+    this._logSettings = options;
+  }
 
   public async connect(username: string, sessionID?: string): Promise<void> {
     if (this.isConnected()) {
@@ -41,7 +56,10 @@ export class TikTokLiveConnector extends EventEmitter {
     if (!this._username) {
       return;
     }
-    Logger.info(`<Connector> Connecting to: ${this._username}`);
+    Logger.info(
+      `<Connector> Connecting to: ${this._username}`,
+      this._logSettings,
+    );
     this._connector = new TikTokLiveConnection(this._username, {
       session: {
         cookie: {
@@ -58,13 +76,14 @@ export class TikTokLiveConnector extends EventEmitter {
       if (state.isConnected) {
         Logger.success(
           `Connected to ${this._username} with roomID: ${state.roomId}`,
+          this._logSettings,
         );
         this.emit(TIKTOK_EVENTS.CONNECTED);
         this.registerEvents();
         this._connector.on(WebcastEvent.STREAM_END, async () => {
           this.emit(TIKTOK_EVENTS.DISCONNECTED);
           await this.disconnect();
-          Logger.info(`Disconnected from ${this._username}`);
+          Logger.info(`Disconnected from ${this._username}`, this._logSettings);
         });
       }
     } catch (err) {
@@ -74,8 +93,10 @@ export class TikTokLiveConnector extends EventEmitter {
           cause: err,
         }),
       );
-      Logger.error(`<Connector> Failed to connect to ${this._username}`);
-      console.error(err);
+      Logger.error(
+        `<Connector> Failed to connect to ${this._username} -- ${formatError(err)}`,
+        this._logSettings,
+      );
     }
   }
 
@@ -205,10 +226,11 @@ export class TikTokLiveConnector extends EventEmitter {
     // END
     Logger.success(
       `<Connector> Event listeners registered for ${this._username}`,
+      this._logSettings,
     );
   }
 
-  public static async fetchRegionGiftList(): Promise<any[]> {
+  public async fetchRegionGiftList(): Promise<any[]> {
     try {
       const region = await this.getUserRegionAndLanguage();
       const url = config.getGiftURL(region.region, region.language);
@@ -236,7 +258,10 @@ export class TikTokLiveConnector extends EventEmitter {
 
       return availableGifts;
     } catch (err) {
-      console.error(`[API] ⚠️ Failed to fetch global gift list:`, err);
+      Logger.error(
+        `<Connector> Failed to fetch global gift list -- ${formatError(err)}`,
+        this._logSettings,
+      );
       return [];
     }
   }
@@ -262,7 +287,7 @@ export class TikTokLiveConnector extends EventEmitter {
     };
   }
 
-  public static async getUserRegionAndLanguage(): Promise<{
+  public async getUserRegionAndLanguage(): Promise<{
     region: string;
     language: string;
   }> {
@@ -283,11 +308,11 @@ export class TikTokLiveConnector extends EventEmitter {
         ? data.languages.split(",")[0]
         : "en-US";
       return { region, language: firstLanguage };
-    } catch (error) {
+    } catch (err) {
       Logger.error(
-        `Failed to fetch IP location, falling back to US/en-US: ${(error as Error).message}`,
+        `<Connector> Failed to fetch IP location, falling back to US/en-US -- ${formatError(err)}`,
+        this._logSettings,
       );
-      console.error(error);
       return { region: "US", language: "en-US" };
     }
   }

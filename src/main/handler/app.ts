@@ -1,4 +1,4 @@
-import { Folders } from "@/common/types";
+import { Files, Folders } from "@/common/types";
 import { TikTokLiveConnector } from "@/connector";
 import { checkInternetConnection } from "@/helper/network";
 import { TTSService } from "@/tts";
@@ -11,7 +11,7 @@ import type {
   Shell,
 } from "electron";
 import { existsSync } from "node:fs";
-import { mkdir } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "path";
 
 export class AppHandler implements AppHandlerVariables {
@@ -19,6 +19,7 @@ export class AppHandler implements AppHandlerVariables {
   public readonly tts: TTSService;
   public readonly connector: TikTokLiveConnector;
   public readonly folders: Folders;
+  public readonly files: Files;
   public readonly app: App;
   public readonly win: BrowserWindow;
   public readonly ipcMain: IpcMain;
@@ -44,11 +45,23 @@ export class AppHandler implements AppHandlerVariables {
     const appFolder = resolve(join(home, ".tokio"));
     const binFolder = resolve(join(appFolder, "bin"));
     const settingsFolder = resolve(join(appFolder, "settings"));
+    const logsFolder = resolve(join(appFolder, "logs"));
     this.folders = {
       appFolder,
       binFolder,
       settingsFolder,
+      logsFolder,
     };
+    this.files = {
+      logs: {
+        connector: resolve(join(this.folders.logsFolder, "connector.log")),
+      },
+      ffmpeg: resolve(join(this.folders.binFolder, "ffmpeg.exe")),
+    };
+    this.connector.setLogOptions({
+      file: true, // TODO: Update this later
+      path: this.files.logs.connector,
+    });
   }
 
   protected async initApp() {
@@ -56,6 +69,7 @@ export class AppHandler implements AppHandlerVariables {
     this.initSession();
     await this.checkInternet();
     await this.initFolders();
+    await this.initFiles();
   }
 
   private async checkInternet() {
@@ -75,6 +89,13 @@ export class AppHandler implements AppHandlerVariables {
       await mkdir(this.folders.binFolder, { recursive: true });
     if (!existsSync(this.folders.settingsFolder))
       await mkdir(this.folders.settingsFolder, { recursive: true });
+    if (!existsSync(this.folders.logsFolder))
+      await mkdir(this.folders.logsFolder, { recursive: true });
+  }
+
+  private async initFiles() {
+    if (!existsSync(this.files.logs.connector))
+      await writeFile(this.files.logs.connector, "", { encoding: "utf-8" });
   }
 
   private initWindow() {
