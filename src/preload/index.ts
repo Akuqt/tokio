@@ -1,22 +1,27 @@
-import { contextBridge } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
+import { electronAPI } from "@electron-toolkit/preload";
+import { contextBridge, ipcRenderer } from "electron";
 
-// Custom APIs for renderer
-const api = {}
+const api = {
+  startListener: (username: string) =>
+    ipcRenderer.send("app:listener:start", username),
+  onListener: (callback: () => void) =>
+    ipcRenderer.on("app:listener:done", () => callback()),
+  onAudioData: (callback: (base64String: string) => void) =>
+    ipcRenderer.on("app:audio:data", (_event, base64String: string) => {
+      callback(base64String);
+    }),
+};
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
-    contextBridge.exposeInMainWorld('api', api)
+    contextBridge.exposeInMainWorld("electron", electronAPI);
+    contextBridge.exposeInMainWorld("api", api);
   } catch (error) {
-    console.error(error)
+    console.error(error);
   }
 } else {
-  // @ts-ignore (define in dts)
-  window.electron = electronAPI
-  // @ts-ignore (define in dts)
-  window.api = api
+  // @ts-ignore
+  window.electron = electronAPI;
+  // @ts-ignore
+  window.api = api;
 }
