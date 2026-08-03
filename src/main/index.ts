@@ -11,10 +11,10 @@ app.commandLine.appendSwitch(
 app.commandLine.appendSwitch("log-level", "3");
 app.commandLine.appendSwitch("disable-blink-features", "AutomationControlled");
 
-let mainWindow: BrowserWindow | null = null;
+let win: BrowserWindow | null = null;
 
 function createWindow(): void {
-  mainWindow = new BrowserWindow({
+  win = new BrowserWindow({
     width: 900,
     height: 670,
     show: false,
@@ -25,32 +25,19 @@ function createWindow(): void {
     },
   });
 
-  const handler = new Handler(app, mainWindow, ipcMain, shell);
+  const handler = new Handler(app, win, ipcMain, shell, session);
 
   handler.init(events);
 
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
+    win.loadURL(process.env["ELECTRON_RENDERER_URL"]);
   } else {
-    mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
+    win.loadFile(join(__dirname, "../renderer/index.html"));
   }
 }
 
 app.whenReady().then(() => {
-  const csp = app.isPackaged
-    ? "default-src 'self'; media-src 'self' blob:; script-src 'self'; style-src 'self' 'unsafe-inline';"
-    : "default-src 'self'; media-src 'self' blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws://localhost:5173 http://localhost:5173;";
-
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        "Content-Security-Policy": [csp],
-      },
-    });
-  });
-
-  electronApp.setAppUserModelId("com.electron");
+  electronApp.setAppUserModelId("com.ialfaro.tokio");
 
   app.on("browser-window-created", (_, window) => {
     optimizer.watchWindowShortcuts(window);
