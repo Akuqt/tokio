@@ -1,7 +1,11 @@
 import { EventStack } from "@/common/util";
+import { AppHandlerVariables } from "@/types";
 import { type IpcMainEvent } from "electron";
 
-export function createStack<T, U = IpcMainEvent>(): EventStack<T, U> {
+export function createStack<
+  T = AppHandlerVariables,
+  U = IpcMainEvent,
+>(): EventStack<T, U> {
   return new EventStack();
 }
 
