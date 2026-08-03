@@ -11,7 +11,7 @@ export default class Logger {
   ) {
     const cmsg = `${Logger.gen_date()} -- ${chalk.rgb(color.r, color.g, color.b)(tag)} ${msg}`;
     if (options && options.file) {
-      const fmsg = `${Logger.gen_date()} -- ${tag} ${msg}`;
+      const fmsg = `${Logger.gen_date()} -- ${tag} ${msg}\n`;
       appendFile(options.path, fmsg, "utf-8", (err) => {
         if (err) throw err;
       });
@@ -20,9 +20,7 @@ export default class Logger {
   }
 
   private static gen_date() {
-    return new Date().toLocaleString("en", {
-      timeZone: "UTC",
-    });
+    return new Date().toISOString();
   }
 
   public static info(msg: string, options?: LoggerOptions) {
