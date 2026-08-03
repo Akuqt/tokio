@@ -5,8 +5,8 @@ import { App, BrowserWindow, IpcMain } from "electron";
 
 export interface AppHandlerVariables {
   internet: boolean;
-  connector: TikTokLiveConnector | null;
-  tts: TTSService | null;
+  readonly connector: TikTokLiveConnector;
+  readonly tts: TTSService;
   readonly folders: Folders;
   readonly app: App;
   readonly win: BrowserWindow;
