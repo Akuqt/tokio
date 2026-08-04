@@ -25,6 +25,7 @@ export interface Folders {
 export interface Files {
   readonly logs: {
     readonly connector: string;
+    readonly system: string;
     readonly overlayServer: string;
   };
   readonly ffmpeg: string;
