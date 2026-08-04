@@ -1,7 +1,8 @@
-import { Files, Folders } from "@/common/types";
+import { Files, Folders, TIKTOK_EVENTS } from "@/common/types";
 import config from "@/config";
 import { TikTokLiveConnector } from "@/connector";
 import { checkInternetConnection } from "@/helper/network";
+import { OverlayServer } from "@/server";
 import { TTSService } from "@/tts";
 import { AppHandlerVariables } from "@/types";
 import type {
@@ -19,6 +20,7 @@ export class AppHandler implements AppHandlerVariables {
   public internet: boolean;
   public readonly tts: TTSService;
   public readonly connector: TikTokLiveConnector;
+  public readonly server: OverlayServer;
   public readonly folders: Folders;
   public readonly files: Files;
   public readonly app: App;
@@ -41,6 +43,7 @@ export class AppHandler implements AppHandlerVariables {
     this.session = session;
     this.connector = new TikTokLiveConnector();
     this.tts = new TTSService();
+    this.server = new OverlayServer();
     this.internet = true;
     const home = this.app.getPath("home");
     const appFolder = resolve(join(home, ".tokio"));
@@ -58,6 +61,9 @@ export class AppHandler implements AppHandlerVariables {
     this.files = {
       logs: {
         connector: resolve(join(this.folders.logsFolder, "connector.log")),
+        overlayServer: resolve(
+          join(this.folders.logsFolder, "overlay_server.log"),
+        ),
       },
       ffmpeg: resolve(join(this.folders.binFolder, "ffmpeg.exe")),
     };
@@ -65,12 +71,18 @@ export class AppHandler implements AppHandlerVariables {
       file: true, // TODO: Update this later
       path: this.files.logs.connector,
     });
+    this.server.setLogOptions({
+      file: true, // TODO: Update this later
+      path: this.files.logs.overlayServer,
+    });
   }
 
   protected async initApp() {
     await this.initFolders();
     await this.initFiles();
     await this.checkInternet();
+    await this.initOverlayServer();
+    this.initOverlayEvents();
     this.initSession();
     this.initWindow();
   }
@@ -101,6 +113,46 @@ export class AppHandler implements AppHandlerVariables {
   private async initFiles() {
     if (!existsSync(this.files.logs.connector))
       await writeFile(this.files.logs.connector, "", { encoding: "utf-8" });
+    if (!existsSync(this.files.logs.overlayServer))
+      await writeFile(this.files.logs.overlayServer, "", { encoding: "utf-8" });
+  }
+
+  private async initOverlayServer() {
+    const res = await this.server.start();
+    if (!res.success) throw new Error(res.message);
+  }
+
+  private initOverlayEvents() {
+    this.connector.on(TIKTOK_EVENTS.CHAT, (data) => {
+      this.server.broadcast(TIKTOK_EVENTS.CHAT, data);
+    });
+    this.connector.on(TIKTOK_EVENTS.LIKE, (data) => {
+      this.server.broadcast(TIKTOK_EVENTS.LIKE, data);
+    });
+    this.connector.on(TIKTOK_EVENTS.GIFT, (data) => {
+      this.server.broadcast(TIKTOK_EVENTS.GIFT, data);
+    });
+    this.connector.on(TIKTOK_EVENTS.FOLLOW, (data) => {
+      this.server.broadcast(TIKTOK_EVENTS.FOLLOW, data);
+    });
+    this.connector.on(TIKTOK_EVENTS.SHARE, (data) => {
+      this.server.broadcast(TIKTOK_EVENTS.SHARE, data);
+    });
+    this.connector.on(TIKTOK_EVENTS.ENVELOPE, (data) => {
+      this.server.broadcast(TIKTOK_EVENTS.ENVELOPE, data);
+    });
+    this.connector.on(TIKTOK_EVENTS.SUPER_FAN_BOX, (data) => {
+      this.server.broadcast(TIKTOK_EVENTS.SUPER_FAN_BOX, data);
+    });
+    this.connector.on(TIKTOK_EVENTS.SUPER_FAN, (data) => {
+      this.server.broadcast(TIKTOK_EVENTS.SUPER_FAN, data);
+    });
+    this.connector.on(TIKTOK_EVENTS.MEMBER_JOIN, (data) => {
+      this.server.broadcast(TIKTOK_EVENTS.MEMBER_JOIN, data);
+    });
+    this.connector.on(TIKTOK_EVENTS.SUPER_FAN_JOIN, (data) => {
+      this.server.broadcast(TIKTOK_EVENTS.SUPER_FAN_JOIN, data);
+    });
   }
 
   private initWindow() {
