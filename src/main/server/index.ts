@@ -19,12 +19,14 @@ export class OverlayServer {
   private wss: RoomWebSocketServer | null = null;
   private dynamicRouter: Router;
   private _logSettings: LoggerOptions;
+  private _port: number;
   public activeApps: OverlayApp[] = [];
 
   constructor() {
     this.app = express();
     this.dynamicRouter = express.Router();
     this._logSettings = { file: false, path: "" };
+    this._port = 6767;
 
     this.app.use((req, res, next) => {
       this.dynamicRouter(req, res, next);
@@ -52,9 +54,7 @@ export class OverlayServer {
     this._logSettings = options;
   }
 
-  public start(
-    port: number = 3000,
-  ): Promise<{ success: boolean; message: string }> {
+  public start(): Promise<{ success: boolean; message: string }> {
     if (this.server)
       return Promise.resolve({
         success: false,
@@ -62,7 +62,7 @@ export class OverlayServer {
       });
 
     return new Promise((resolve) => {
-      this.server = this.app.listen(port, "0.0.0.0", () => {
+      this.server = this.app.listen(this._port, "0.0.0.0", () => {
         this.wss = new RoomWebSocketServer({ server: this.server! });
         this.wss.on("connection", (ws, req) => {
           const urlPath = (req.url?.split("/")[1] ?? "") as WSRoom;
@@ -80,19 +80,19 @@ export class OverlayServer {
           );
         });
         Logger.success(
-          `<Server> Server running on port ${port}`,
+          `<Server> Server running on port ${this._port}`,
           this._logSettings,
         );
         resolve({
           success: true,
-          message: `Server running on port ${port}`,
+          message: `Server running on port ${this._port}`,
         });
       });
 
       this.server.on("error", (err) => {
         this.server = null;
         Logger.error(
-          `<Server> Unable to start server on port ${port} -- ${formatError(err)}`,
+          `<Server> Unable to start server on port ${this._port} -- ${formatError(err)}`,
           this._logSettings,
         );
         resolve({ success: false, message: err.message });
@@ -111,6 +111,15 @@ export class OverlayServer {
     }
   }
 
+  public updatePort(port: number) {
+    if (port === this._port) return;
+    this._port = port;
+    this.stop();
+    setTimeout(() => {
+      this.start();
+    }, 500);
+  }
+
   public addOverlayApp(overlayApp: Omit<OverlayApp, "id">): OverlayApp[] {
     const safeRoute = overlayApp.route.startsWith("/")
       ? overlayApp.route
@@ -121,8 +130,6 @@ export class OverlayServer {
     this.activeApps.push({ ...overlayApp, route: safeRoute, id });
 
     this.rebuildRoutes();
-
-    console.log(JSON.stringify(this.activeApps, null, 4));
 
     return this.activeApps;
   }
