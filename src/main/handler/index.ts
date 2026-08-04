@@ -1,5 +1,6 @@
 import { EventCallback } from "@/common/types";
-import { EventStack } from "@/common/util";
+import { EventStack, formatError } from "@/common/util";
+import Logger from "@/logger";
 import { AppHandlerVariables } from "@/types";
 import { IpcMainEvent } from "electron";
 import { AppHandler } from "./app";
@@ -18,7 +19,13 @@ export default class Handler extends AppHandler {
       for (const { event, callback } of events.getEvents())
         this.addEvent(event, callback);
     } catch (error) {
-      console.error("Error initializing App:", error);
+      Logger.error(
+        `<System> Unable to initialize app -- ${formatError(error)}`,
+        {
+          file: this._log2file,
+          path: this.files.logs.system,
+        },
+      );
     }
   }
 }
