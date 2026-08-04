@@ -19,6 +19,7 @@ export interface ChatEvent {
 
 export interface Emotes {
   emoteID: string;
+  index: number;
   images: string[];
 }
 
