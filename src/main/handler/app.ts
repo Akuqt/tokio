@@ -5,6 +5,7 @@ import { checkInternetConnection } from "@/helper/network";
 import { OverlayServer } from "@/server";
 import { TTSService } from "@/tts";
 import { AppHandlerVariables } from "@/types";
+import { URLManager } from "@/url";
 import type {
   App,
   BrowserWindow,
@@ -18,6 +19,7 @@ import { join, resolve } from "path";
 
 export class AppHandler implements AppHandlerVariables {
   public internet: boolean;
+  public readonly urlManager: URLManager;
   public readonly tts: TTSService;
   public readonly connector: TikTokLiveConnector;
   public readonly server: OverlayServer;
@@ -28,6 +30,7 @@ export class AppHandler implements AppHandlerVariables {
   public readonly ipcMain: IpcMain;
   private readonly shell: Shell;
   private readonly session: typeof Session;
+  protected _log2file: boolean;
 
   constructor(
     app: App,
@@ -36,6 +39,7 @@ export class AppHandler implements AppHandlerVariables {
     shell: Shell,
     session: typeof Session,
   ) {
+    this._log2file = true; // TODO: Extenal handler
     this.app = app;
     this.win = win;
     this.ipcMain = ipcMain;
@@ -44,6 +48,7 @@ export class AppHandler implements AppHandlerVariables {
     this.connector = new TikTokLiveConnector();
     this.tts = new TTSService();
     this.server = new OverlayServer();
+    this.urlManager = new URLManager();
     this.internet = true;
     const home = this.app.getPath("home");
     const appFolder = resolve(join(home, ".tokio"));
@@ -61,6 +66,7 @@ export class AppHandler implements AppHandlerVariables {
     this.files = {
       logs: {
         connector: resolve(join(this.folders.logsFolder, "connector.log")),
+        system: resolve(join(this.folders.logsFolder, "system.log")),
         overlayServer: resolve(
           join(this.folders.logsFolder, "overlay_server.log"),
         ),
@@ -68,12 +74,16 @@ export class AppHandler implements AppHandlerVariables {
       ffmpeg: resolve(join(this.folders.binFolder, "ffmpeg.exe")),
     };
     this.connector.setLogOptions({
-      file: true, // TODO: Update this later
+      file: this._log2file,
       path: this.files.logs.connector,
     });
     this.server.setLogOptions({
-      file: true, // TODO: Update this later
+      file: this._log2file,
       path: this.files.logs.overlayServer,
+    });
+    this.urlManager.setLogOptions({
+      file: this._log2file,
+      path: this.files.logs.system,
     });
   }
 
@@ -113,6 +123,8 @@ export class AppHandler implements AppHandlerVariables {
   private async initFiles() {
     if (!existsSync(this.files.logs.connector))
       await writeFile(this.files.logs.connector, "", { encoding: "utf-8" });
+    if (!existsSync(this.files.logs.system))
+      await writeFile(this.files.logs.system, "", { encoding: "utf-8" });
     if (!existsSync(this.files.logs.overlayServer))
       await writeFile(this.files.logs.overlayServer, "", { encoding: "utf-8" });
   }
