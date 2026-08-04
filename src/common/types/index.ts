@@ -1,4 +1,5 @@
 export * from "./connector";
+export * from "./server";
 
 export type EventCallback<T, U, K> = (
   handler: T,
@@ -24,6 +25,7 @@ export interface Folders {
 export interface Files {
   readonly logs: {
     readonly connector: string;
+    readonly overlayServer: string;
   };
   readonly ffmpeg: string;
 }
