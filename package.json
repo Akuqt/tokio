@@ -42,11 +42,14 @@
     "@electron-toolkit/utils": "^4.0.0",
     "@vscode/sudo-prompt": "^9.3.2",
     "axios": "^1.18.1",
+    "better-sqlite3": "^13.0.2",
     "electron-updater": "^6.3.9",
     "express": "^5.2.1",
     "protobufjs": "^8.7.1",
+    "reflect-metadata": "^0.2.2",
     "tiktok-live-connector": "^2.4.3",
     "tiktok-live-proto": "^0.2.4",
+    "typeorm": "^1.1.0",
     "ws": "^8.21.1"
   },
   "devDependencies": {
