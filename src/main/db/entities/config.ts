@@ -26,4 +26,7 @@ export class AppConfigEntity {
 
   @Column("text")
   theme_name: string;
+
+  @Column("text")
+  profile: string;
 }

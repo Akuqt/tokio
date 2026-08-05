@@ -19,6 +19,7 @@ export default {
       session_id: "",
       theme_mode: "system",
       theme_name: "default",
+      profile: "default",
     },
   },
 };
