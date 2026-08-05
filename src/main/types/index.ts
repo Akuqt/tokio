@@ -1,5 +1,6 @@
 import { Files, Folders } from "@/common/types";
 import { TikTokLiveConnector } from "@/connector";
+import { AppDataBase } from "@/db";
 import { OverlayServer } from "@/server";
 import { TTSService } from "@/tts";
 import { URLManager } from "@/url";
@@ -16,4 +17,6 @@ export interface AppHandlerVariables {
   readonly app: App;
   readonly win: BrowserWindow;
   readonly ipcMain: IpcMain;
+  readonly db: AppDataBase;
+  setLog2File: (file: boolean) => void;
 }

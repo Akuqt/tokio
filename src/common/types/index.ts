@@ -20,6 +20,7 @@ export interface Folders {
   readonly settingsFolder: string;
   readonly logsFolder: string;
   readonly overlaysFolder: string;
+  readonly dbFolder: string;
 }
 
 export interface Files {
@@ -29,4 +30,21 @@ export interface Files {
     readonly overlayServer: string;
   };
   readonly ffmpeg: string;
+}
+
+export enum THEME_MODE {
+  DARK = "dark",
+  LIGHT = "light",
+  SYSTEM = "system",
+}
+
+export interface AppConfig {
+  id: number;
+  log2file: boolean;
+  enable_server: boolean;
+  server_port: number;
+  use_session_id: boolean;
+  session_id: string;
+  theme_mode: THEME_MODE;
+  theme_name: string;
 }
