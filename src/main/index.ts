@@ -1,3 +1,5 @@
+import "reflect-metadata";
+
 import { electronApp, is, optimizer } from "@electron-toolkit/utils";
 import { app, BrowserWindow, ipcMain, session, shell } from "electron";
 import { join } from "path";

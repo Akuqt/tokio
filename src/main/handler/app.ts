@@ -1,6 +1,7 @@
-import { Files, Folders, TIKTOK_EVENTS } from "@/common/types";
+import { AppConfig, Files, Folders, TIKTOK_EVENTS } from "@/common/types";
 import config from "@/config";
 import { TikTokLiveConnector } from "@/connector";
+import { AppDataBase } from "@/db";
 import { checkInternetConnection } from "@/helper/network";
 import { OverlayServer } from "@/server";
 import { TTSService } from "@/tts";
@@ -28,6 +29,7 @@ export class AppHandler implements AppHandlerVariables {
   public readonly app: App;
   public readonly win: BrowserWindow;
   public readonly ipcMain: IpcMain;
+  public readonly db: AppDataBase;
   private readonly shell: Shell;
   private readonly session: typeof Session;
   protected _log2file: boolean;
@@ -39,7 +41,6 @@ export class AppHandler implements AppHandlerVariables {
     shell: Shell,
     session: typeof Session,
   ) {
-    this._log2file = true; // TODO: Extenal handler
     this.app = app;
     this.win = win;
     this.ipcMain = ipcMain;
@@ -56,12 +57,18 @@ export class AppHandler implements AppHandlerVariables {
     const settingsFolder = resolve(join(appFolder, "settings"));
     const logsFolder = resolve(join(appFolder, "logs"));
     const overlaysFolder = resolve(join(appFolder, "overlays"));
+    const dbFolder = resolve(join(appFolder, "db"));
+    const dbPath = resolve(join(dbFolder, config.DB.name));
+    this.db = new AppDataBase(dbPath, {
+      appConfig: config.DB.DEFAULT_APP_CONFIG as AppConfig,
+    });
     this.folders = {
       appFolder,
       binFolder,
       settingsFolder,
       logsFolder,
       overlaysFolder,
+      dbFolder,
     };
     this.files = {
       logs: {
@@ -73,6 +80,22 @@ export class AppHandler implements AppHandlerVariables {
       },
       ffmpeg: resolve(join(this.folders.binFolder, "ffmpeg.exe")),
     };
+    this.setLog2File(true);
+  }
+
+  protected async initApp() {
+    await this.initFolders();
+    await this.initFiles();
+    await this.checkInternet();
+    await this.initDB();
+    await this.initOverlayServer();
+    this.initOverlayEvents();
+    this.initSession();
+    this.initWindow();
+  }
+
+  public setLog2File(file: boolean) {
+    this._log2file = file;
     this.connector.setLogOptions({
       file: this._log2file,
       path: this.files.logs.connector,
@@ -85,16 +108,10 @@ export class AppHandler implements AppHandlerVariables {
       file: this._log2file,
       path: this.files.logs.system,
     });
-  }
-
-  protected async initApp() {
-    await this.initFolders();
-    await this.initFiles();
-    await this.checkInternet();
-    await this.initOverlayServer();
-    this.initOverlayEvents();
-    this.initSession();
-    this.initWindow();
+    this.db.setLogOptions({
+      file: this._log2file,
+      path: this.files.logs.system,
+    });
   }
 
   private async checkInternet() {
@@ -105,6 +122,12 @@ export class AppHandler implements AppHandlerVariables {
     this.win.on("closed", () => {
       clearInterval(interval);
     });
+  }
+
+  private async initDB() {
+    await this.db.initialize();
+    const appConfig = await this.db.getAppConfig();
+    this.setLog2File(appConfig.log2file);
   }
 
   private async initFolders() {
@@ -118,6 +141,8 @@ export class AppHandler implements AppHandlerVariables {
       await mkdir(this.folders.logsFolder, { recursive: true });
     if (!existsSync(this.folders.overlaysFolder))
       await mkdir(this.folders.overlaysFolder, { recursive: true });
+    if (!existsSync(this.folders.dbFolder))
+      await mkdir(this.folders.dbFolder, { recursive: true });
   }
 
   private async initFiles() {
