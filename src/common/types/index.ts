@@ -47,4 +47,5 @@ export interface AppConfig {
   session_id: string;
   theme_mode: THEME_MODE;
   theme_name: string;
+  profile: string;
 }
