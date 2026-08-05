@@ -1,12 +1,11 @@
 import { TIKTOK_EVENTS } from "@/common/types";
 import { cleanText, createStack } from "@/helper";
-import path from "path";
 
 const events = createStack();
 
 events.push<string>(
   "app:listener:start",
-  async ({ connector, win, tts }, e, username) => {
+  async ({ connector, win, tts, files }, e, username) => {
     connector.on(TIKTOK_EVENTS.CONNECTED, () => {
       e.reply("app:listener:done");
     });
@@ -15,7 +14,7 @@ events.push<string>(
         const template = `${cleanText(chatData.user.username)} dice ${cleanText(chatData.comment.content)}`;
         console.log(template);
         const b64Audio = await tts?.getB64Filtered(
-          path.resolve(__dirname, "../../bin/ffmpeg.exe"), // TODO: Replace this with the actual bin.
+          files.ffmpeg,
           template,
           "es",
           "Spanish MX - Male",

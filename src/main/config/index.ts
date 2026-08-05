@@ -22,4 +22,8 @@ export default {
       profile: "default",
     },
   },
+  BIN: {
+    ffmpeg:
+      "https://huggingface.co/datasets/akuqt/tokio-utils/resolve/main/bin/ffmpeg.exe?download=true",
+  },
 };
