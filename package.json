@@ -50,7 +50,8 @@
     "tiktok-live-connector": "^2.4.3",
     "tiktok-live-proto": "^0.2.4",
     "typeorm": "^1.1.0",
-    "ws": "^8.21.1"
+    "ws": "^8.21.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.1",
