@@ -28,3 +28,11 @@ export function formatError(error: unknown) {
     error.cause instanceof Error ? error.cause : new Error("<cause?>");
   return `message: ${message} -- cause: ${cause.message}`;
 }
+
+export function delay(ms: number): Promise<void> {
+  return new Promise((res) => {
+    setTimeout(() => {
+      res();
+    }, ms);
+  });
+}
