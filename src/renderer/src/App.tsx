@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import BlobAudioPlayer from "./components/BlobAudioPlayer";
+import TTSPlayer from "./components/TTSPlayer";
 
 function App() {
   const [username, setUsername] = useState("dessgameplays");
   const [listening, setlistening] = useState(false);
-  const [b64audio, setB64audio] = useState<string | null>(null);
+  const [b64audio, setB64audio] = useState<Uint8Array<ArrayBufferLike> | null>(
+    null,
+  );
 
   const handleStart = async () => {
     if (!username.trim()) return;
@@ -15,10 +17,12 @@ function App() {
     window.api.onListener(() => {
       setlistening(true);
     });
-    window.api.onAudioData((base64String: string) => {
-      console.log("Received audio data:", base64String);
-      setB64audio(base64String);
-    });
+    window.api.onAudioData(
+      (base64String: Uint8Array<ArrayBufferLike> | null) => {
+        console.log("Received audio data:", base64String);
+        setB64audio(base64String);
+      },
+    );
   }, []);
 
   return (
@@ -51,7 +55,7 @@ function App() {
           Start Stream
         </button>
       </div>
-      <BlobAudioPlayer base64String={b64audio} />
+      <TTSPlayer incomingTTS={b64audio} />
     </div>
   );
 }

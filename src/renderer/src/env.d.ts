@@ -7,7 +7,9 @@ declare global {
     api: {
       startListener: (username: string) => void;
       onListener: (callback: () => void) => void;
-      onAudioData: (callback: (base64String: string) => void) => void;
+      onAudioData: (
+        callback: (data: Uint8Array<ArrayBufferLike> | null) => void,
+      ) => void;
     };
   }
 }

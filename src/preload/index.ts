@@ -6,10 +6,13 @@ const api = {
     ipcRenderer.send("app:listener:start", username),
   onListener: (callback: () => void) =>
     ipcRenderer.on("app:listener:done", () => callback()),
-  onAudioData: (callback: (base64String: string) => void) =>
-    ipcRenderer.on("app:audio:data", (_event, base64String: string) => {
-      callback(base64String);
-    }),
+  onAudioData: (callback: (data: Uint8Array<ArrayBufferLike> | null) => void) =>
+    ipcRenderer.on(
+      "app:audio:data",
+      (_event, data: Uint8Array<ArrayBufferLike> | null) => {
+        callback(data);
+      },
+    ),
 };
 
 if (process.contextIsolated) {
