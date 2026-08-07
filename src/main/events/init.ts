@@ -5,23 +5,18 @@ const events = createStack();
 
 events.push<string>(
   "app:listener:start",
-  async ({ connector, win, tts, files }, e, username) => {
+  async ({ connector, win, tts }, e, username) => {
     connector.on(TIKTOK_EVENTS.CONNECTED, () => {
       e.reply("app:listener:done");
     });
+    // NOTE: Testing TTS
     connector.on(TIKTOK_EVENTS.CHAT, async (chatData) => {
-      if (chatData.user.username.includes("Ratku")) {
-        const template = `${cleanText(chatData.user.username)} dice ${cleanText(chatData.comment.content)}`;
-        console.log(template);
-        const b64Audio = await tts?.getB64Filtered(
-          files.ffmpeg,
-          template,
-          "es",
-          "Spanish MX - Male",
-          { speed: 1, pitch: 1.0, volume: 1 },
-        );
-        win?.webContents.send("app:audio:data", b64Audio);
-      }
+      const template = `${cleanText(chatData.user.username)} dice ${cleanText(chatData.comment.content)}`;
+      console.log(template);
+      const res = await tts.generate(template, "es", "Spanish MX - Male");
+      if (!res.success || !res.buffer) return;
+      const audio = new Uint8Array(res.buffer);
+      win?.webContents.send("app:audio:data", audio);
     });
     await connector.connect(username);
   },

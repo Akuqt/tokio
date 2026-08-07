@@ -5,7 +5,7 @@ import { AppDataBase } from "@/db";
 import { JsonFileManager } from "@/files";
 import { checkInternetConnection } from "@/helper/network";
 import { OverlayServer } from "@/server";
-import { TTSService } from "@/tts";
+import { TTSServices } from "@/tts";
 import { AppHandlerVariables } from "@/types";
 import { URLManager } from "@/url";
 import type {
@@ -22,7 +22,7 @@ import { join, resolve } from "path";
 export class AppHandler implements AppHandlerVariables {
   public internet: boolean;
   public readonly urlManager: URLManager;
-  public readonly tts: TTSService;
+  public readonly tts: TTSServices;
   public readonly connector: TikTokLiveConnector;
   public readonly jsonfileManager: JsonFileManager;
   public readonly server: OverlayServer;
@@ -49,7 +49,7 @@ export class AppHandler implements AppHandlerVariables {
     this.shell = shell;
     this.session = session;
     this.connector = new TikTokLiveConnector();
-    this.tts = new TTSService();
+    this.tts = new TTSServices();
     this.server = new OverlayServer();
     this.urlManager = new URLManager();
     this.jsonfileManager = new JsonFileManager();

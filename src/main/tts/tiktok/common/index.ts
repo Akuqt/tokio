@@ -48,11 +48,8 @@ const textReplacements: Record<
   es: { plus: "mas", and: "y" },
 };
 
-export function prepareText(
-  text: string,
-  lang: SupportedLanguage = "en",
-): string {
-  const dictionary = textReplacements[lang];
+export function prepareText(text: string, lang: string): string {
+  const dictionary = textReplacements[lang] || { plus: "plus", and: "and" };
   return text
     .replace(/\+/g, dictionary.plus)
     .replace(/&/g, dictionary.and)
