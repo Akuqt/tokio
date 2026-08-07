@@ -1,13 +1,18 @@
 import { THEME_MODE } from "@/common/types";
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from "typeorm";
+import { AppProfileEntity } from "./profile";
+import { AppThemeEntity } from "./theme";
 
 @Entity()
 export class AppConfigEntity {
   @PrimaryGeneratedColumn()
   id: number;
-
-  @Column("boolean")
-  log2file: boolean;
 
   @Column("boolean")
   enable_server: boolean;
@@ -24,9 +29,11 @@ export class AppConfigEntity {
   @Column("text")
   theme_mode: THEME_MODE;
 
-  @Column("text")
-  theme_name: string;
+  @OneToOne(() => AppThemeEntity)
+  @JoinColumn({ name: "themeId" })
+  theme: AppThemeEntity;
 
-  @Column("text")
-  profile: string;
+  @OneToOne(() => AppProfileEntity)
+  @JoinColumn({ name: "profileId" })
+  profile: AppProfileEntity;
 }
