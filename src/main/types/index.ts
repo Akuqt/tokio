@@ -3,7 +3,7 @@ import { TikTokLiveConnector } from "@/connector";
 import { AppDataBase } from "@/db";
 import { JsonFileManager } from "@/files";
 import { OverlayServer } from "@/server";
-import { TTSService } from "@/tts";
+import { TTSServices } from "@/tts";
 import { URLManager } from "@/url";
 import { App, BrowserWindow, IpcMain } from "electron";
 
@@ -12,7 +12,7 @@ export interface AppHandlerVariables {
   readonly connector: TikTokLiveConnector;
   readonly jsonfileManager: JsonFileManager;
   readonly server: OverlayServer;
-  readonly tts: TTSService;
+  readonly tts: TTSServices;
   readonly urlManager: URLManager;
   readonly folders: Folders;
   readonly files: Files;
