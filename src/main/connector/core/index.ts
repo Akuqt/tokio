@@ -9,7 +9,7 @@ import {
   TikTokEventMap,
   UserData,
 } from "@/common/types";
-import { formatError } from "@/common/util";
+import { delay, formatError } from "@/common/util";
 import Logger from "@/logger";
 import { EventEmitter } from "events";
 import {
@@ -61,6 +61,7 @@ export class TikTokLiveConnector extends EventEmitter {
       this._logSettings,
     );
     this._connector = new TikTokLiveConnection(this._username, {
+      processInitialData: false,
       session: {
         cookie: {
           type: "cookie",
@@ -79,6 +80,7 @@ export class TikTokLiveConnector extends EventEmitter {
           this._logSettings,
         );
         this.emit(TIKTOK_EVENTS.CONNECTED);
+        await delay(1000);
         this.registerEvents();
         this._connector.on(WebcastEvent.STREAM_END, async () => {
           this.emit(TIKTOK_EVENTS.DISCONNECTED);
