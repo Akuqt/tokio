@@ -10,17 +10,7 @@ export default {
     NAME: "Tokio",
   },
   DB: {
-    name: "tokio-app.sqlite",
-    DEFAULT_APP_CONFIG: {
-      log2file: true,
-      enable_server: false,
-      server_port: 6767,
-      use_session_id: false,
-      session_id: "",
-      theme_mode: "system",
-      theme_name: "default",
-      profile: "default",
-    },
+    name: "tokio",
   },
   BIN: {
     ffmpeg:
