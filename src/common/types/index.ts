@@ -21,6 +21,8 @@ export interface Folders {
   readonly logsFolder: string;
   readonly overlaysFolder: string;
   readonly dbFolder: string;
+  readonly profilesFolder: string;
+  readonly themesFolder: string;
 }
 
 export interface Files {
@@ -38,14 +40,25 @@ export enum THEME_MODE {
   SYSTEM = "system",
 }
 
+export interface AppTheme {
+  id?: number;
+  name: string;
+  path: string;
+}
+
+export interface AppProfile {
+  id?: number;
+  name: string;
+  path: string;
+}
+
 export interface AppConfig {
-  id: number;
-  log2file: boolean;
+  id?: number;
   enable_server: boolean;
   server_port: number;
   use_session_id: boolean;
   session_id: string;
   theme_mode: THEME_MODE;
-  theme_name: string;
-  profile: string;
+  theme: AppTheme;
+  profile: AppProfile;
 }
