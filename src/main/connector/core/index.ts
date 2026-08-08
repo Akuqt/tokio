@@ -1,6 +1,7 @@
 import {
   ChatEvent,
   FollowEvent,
+  Gift,
   GiftEvent,
   LikeEvent,
   LoggerOptions,
@@ -11,6 +12,7 @@ import {
 } from "@/common/types";
 import { delay, formatError } from "@/common/util";
 import Logger from "@/logger";
+import { TikTokConnectorService } from "@/shared";
 import { EventEmitter } from "events";
 import {
   TikTokLiveConnection,
@@ -20,15 +22,17 @@ import {
 } from "tiktok-live-connector";
 import config from "../config";
 
-export class TikTokLiveConnector extends EventEmitter {
+export class TikTokLiveConnector extends TikTokConnectorService {
   private _connector: TikTokLiveConnection | null;
   private _sessionID: string;
   private _username: string;
   private _logSettings: LoggerOptions;
+  private _events: EventEmitter;
 
   constructor() {
     super();
     this._connector = null;
+    this._events = new EventEmitter();
     this._username = "";
     this._sessionID = "";
     this._logSettings = {
@@ -39,12 +43,19 @@ export class TikTokLiveConnector extends EventEmitter {
 
   // --- PUBLIC API ---
 
-  public setSessionID(sessionID: string) {
+  public setKey(sessionID: string) {
     this._sessionID = sessionID;
   }
 
   public setLogOptions(options: LoggerOptions) {
     this._logSettings = options;
+  }
+
+  public on<K extends TIKTOK_EVENTS>(
+    event: K,
+    listener: (data: TikTokEventMap[K]) => void,
+  ): void {
+    this._events.on(event, listener);
   }
 
   public async connect(username: string, sessionID?: string): Promise<void> {
@@ -106,7 +117,50 @@ export class TikTokLiveConnector extends EventEmitter {
     return this._connector?.isConnected ?? false;
   }
 
+  public async fetchGifts(): Promise<Gift[]> {
+    try {
+      const region = await this.getUserRegionAndLanguage();
+      const url = this.getGiftURL(region.region, region.language);
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: config.HEADERS,
+      });
+
+      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+
+      const data = await response.json();
+      const rawGifts =
+        data?.data?.gifts ||
+        data?.data?.giftList ||
+        data?.data?.pages?.[0]?.gifts ||
+        [];
+
+      const availableGifts: Gift[] = rawGifts.map((g: any) => ({
+        id: g.id,
+        name: g.name,
+        diamondCount: g.diamond_count,
+        image: g.image?.url_list?.[0],
+      }));
+
+      return availableGifts;
+    } catch (err) {
+      Logger.error(
+        `<Connector> Failed to fetch global gift list -- ${formatError(err)}`,
+        this._logSettings,
+      );
+      return [];
+    }
+  }
+
   // -- Private API --
+
+  private emit<K extends TIKTOK_EVENTS>(
+    event: K,
+    data?: TikTokEventMap[K],
+  ): void {
+    this._events.emit(event, data);
+  }
 
   private registerEvents(): void {
     if (!this._connector) return;
@@ -130,7 +184,7 @@ export class TikTokLiveConnector extends EventEmitter {
       const data: FollowEvent = {
         user,
       };
-      this.emit(TIKTOK_EVENTS.SHARE, data);
+      this.emit(TIKTOK_EVENTS.FOLLOW, data);
     });
 
     this._connector.on(WebcastEvent.CHAT, (tdata) => {
@@ -226,42 +280,6 @@ export class TikTokLiveConnector extends EventEmitter {
     );
   }
 
-  public async fetchRegionGiftList(): Promise<any[]> {
-    try {
-      const region = await this.getUserRegionAndLanguage();
-      const url = config.getGiftURL(region.region, region.language);
-
-      const response = await fetch(url, {
-        method: "GET",
-        headers: config.HEADERS,
-      });
-
-      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-
-      const data = await response.json();
-      const rawGifts =
-        data?.data?.gifts ||
-        data?.data?.giftList ||
-        data?.data?.pages?.[0]?.gifts ||
-        [];
-
-      const availableGifts = rawGifts.map((g: any) => ({
-        id: g.id,
-        name: g.name,
-        diamondCount: g.diamond_count,
-        image: g.image?.url_list?.[0],
-      }));
-
-      return availableGifts;
-    } catch (err) {
-      Logger.error(
-        `<Connector> Failed to fetch global gift list -- ${formatError(err)}`,
-        this._logSettings,
-      );
-      return [];
-    }
-  }
-
   // --- HELPER METHODS ---
 
   private getUserData(tdata: {
@@ -283,12 +301,16 @@ export class TikTokLiveConnector extends EventEmitter {
     };
   }
 
-  public async getUserRegionAndLanguage(): Promise<{
+  private getGiftURL(lang: string, region: string) {
+    return `${config.GIFTS_URL}/?aid=1988&app_language=${lang}&region=${region}&sys_region=${region}`;
+  }
+
+  private async getUserRegionAndLanguage(): Promise<{
     region: string;
     language: string;
   }> {
     try {
-      const response = await fetch("https://ipapi.co/json/", {
+      const response = await fetch(config.GEO_API_URL, {
         headers: config.HEADERS,
       });
 
@@ -311,35 +333,5 @@ export class TikTokLiveConnector extends EventEmitter {
       );
       return { region: "US", language: "en-US" };
     }
-  }
-
-  // --- OVERRIDE LOGIC ---
-
-  override on<K extends TIKTOK_EVENTS>(
-    event: K,
-    listener: (data: TikTokEventMap[K]) => void,
-  ): this;
-
-  override on(event: string | symbol, listener: (...args: any[]) => void): this;
-
-  override on(
-    event: TIKTOK_EVENTS | string | symbol,
-    listener: (...args: any[]) => void,
-  ): this {
-    return super.on(event, listener);
-  }
-
-  override emit<K extends TIKTOK_EVENTS>(
-    event: K,
-    data: TikTokEventMap[K],
-  ): boolean;
-
-  override emit(event: string | symbol, ...args: any[]): boolean;
-
-  override emit(
-    event: TIKTOK_EVENTS | string | symbol,
-    ...args: any[]
-  ): boolean {
-    return super.emit(event, ...args);
   }
 }

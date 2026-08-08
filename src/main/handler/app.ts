@@ -1,6 +1,6 @@
 import { Files, Folders, THEME_MODE, TIKTOK_EVENTS } from "@/common/types";
 import config from "@/config";
-import { TikTokLiveConnector } from "@/connector";
+import { TikTokConnectorServices } from "@/connector";
 import { AppDataBase } from "@/db";
 import { JsonFileManager } from "@/files";
 import { checkInternetConnection } from "@/helper/network";
@@ -23,7 +23,7 @@ export class AppHandler implements AppHandlerVariables {
   public internet: boolean;
   public readonly urlManager: URLManager;
   public readonly tts: TTSServices;
-  public readonly connector: TikTokLiveConnector;
+  public readonly connector: TikTokConnectorServices;
   public readonly jsonfileManager: JsonFileManager;
   public readonly server: OverlayServer;
   public readonly folders: Folders;
@@ -48,7 +48,7 @@ export class AppHandler implements AppHandlerVariables {
     this.ipcMain = ipcMain;
     this.shell = shell;
     this.session = session;
-    this.connector = new TikTokLiveConnector();
+    this.connector = new TikTokConnectorServices();
     this.tts = new TTSServices();
     this.server = new OverlayServer();
     this.urlManager = new URLManager();
