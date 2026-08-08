@@ -297,7 +297,7 @@ export class DBManagerService extends Service {
         },
       });
 
-    if (this._checkConfigTable(config)) return;
+    if (!this._checkConfigTable(config)) return;
 
     const profile = await this._jsonManagerService.saveFile(
       this._defaultAppConfig.profile.path,
@@ -336,9 +336,12 @@ export class DBManagerService extends Service {
 
     if (!theme) throw new Error("Unable to save default theme file.");
 
+    console.log("HERE 1!!!");
+
     await this._dataSource.getRepository(ConnectorProviderEntity).insert({
       ...this._defaultProviders.connector,
     });
+    console.log("HERE 2!!!");
 
     await this._dataSource.getRepository(TTSProviderEntity).insert({
       ...this._defaultProviders.tts,
