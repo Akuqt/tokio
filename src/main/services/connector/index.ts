@@ -1,49 +1,47 @@
-import { Providers, TIKTOK_EVENTS, TikTokEventMap } from "@/common/types";
+import { Provider, TIKTOK_EVENTS, TikTokEventMap } from "@/common/types";
 import { formatError } from "@/common/util";
 import Logger from "@/logger";
-import { Service } from "../shared";
+import { ProviderService } from "../shared";
 import { ConnectorProvider, ConnectorResponse, GiftResponse } from "./common";
 import { TikTokLiveConnector } from "./providers";
 
-export class TikTokConnectorService extends Service {
-  private _current: { name: string; provider: ConnectorProvider | null };
-  private _providerPool: Map<string, ConnectorProvider>;
-
+export class TikTokConnectorService extends ProviderService<ConnectorProvider> {
   constructor() {
     super();
     this._current = {
       name: "",
       provider: null,
     };
-    this._providerPool = new Map<string, ConnectorProvider>();
-    this.addProvider("TikTok", new TikTokLiveConnector(), true); // Note: Default Provider
+    this._providerPool = new Map();
+    this.addProvider("TikTok", new TikTokLiveConnector(), true); // NOTE: DO NOT CHANGE, Add your providers below.
   }
 
-  private addProvider(
+  public addProvider(
     name: string,
     provider: ConnectorProvider,
     start?: boolean,
   ) {
     if (!(provider instanceof ConnectorProvider)) return;
-    this._providerPool.set(name, provider);
+    this._providerPool?.set(name, provider);
     if (start) {
       this.setProvider(name);
     }
   }
 
-  public setProvider(name: string) {
-    const provider = this._providerPool.get(name);
+  public setProvider(name: string, key?: string) {
+    const provider = this._providerPool?.get(name);
     if (!provider) return;
     this._current = { name, provider };
+    this.setKey(key || "");
   }
 
-  public getProvides(): Providers {
-    const provides = this._providerPool.keys().toArray();
-    return provides.map((s) => ({ name: s, active: s == this._current.name }));
+  public getProviders(): Provider[] {
+    const provides = this._providerPool?.keys().toArray() || [];
+    return provides.map((s) => ({ name: s, active: s == this._current?.name }));
   }
 
   public setKey(key: string): void {
-    if (this._current.provider) this._current.provider.setKey(key);
+    if (this._current?.provider) this._current.provider.setKey(key);
   }
 
   public setLogFile(logFile: string): void {
@@ -54,7 +52,7 @@ export class TikTokConnectorService extends Service {
     event: T,
     listener: (data: TikTokEventMap[T]) => void,
   ): void {
-    if (this._current.provider) this._current.provider.on(event, listener);
+    if (this._current?.provider) this._current.provider.on(event, listener);
   }
 
   public async connect(
@@ -62,7 +60,7 @@ export class TikTokConnectorService extends Service {
     key?: string,
   ): Promise<ConnectorResponse> {
     Logger.info(`<Connector> Connecting to: ${username}`, this._logFile);
-    if (!this._current.provider) {
+    if (!this._current?.provider) {
       Logger.error(`<Connector> No provider was defined.`, this._logFile);
       return {
         success: false,
@@ -82,16 +80,16 @@ export class TikTokConnectorService extends Service {
   }
 
   public async disconnect(): Promise<void> {
-    if (this._current.provider) this._current.provider.disconnect();
+    if (this._current?.provider) this._current.provider.disconnect();
   }
 
   public isConnected(): boolean {
-    if (!this._current.provider) return false;
+    if (!this._current?.provider) return false;
     return this._current.provider.isConnected();
   }
 
   public async fetchGifts(): Promise<GiftResponse> {
-    if (!this._current.provider)
+    if (!this._current?.provider)
       return { data: [], warn: "No conector provider was defined." };
     const res = await this._current.provider.fetchGifts();
     return res;
