@@ -3,11 +3,12 @@ import { TikTokTTS } from "./tiktok/core";
 
 type Services = { name: string; active: boolean }[];
 
-export class TTSServices {
+export class TTSServices extends TTSService {
   private _current: { name: string; service: TTSService | null };
   private _servicePool: Map<string, TTSService>;
 
   constructor() {
+    super();
     this._current = {
       name: "",
       service: null,
@@ -44,11 +45,11 @@ export class TTSServices {
     if (this._current.service) this._current.service.setKey(key);
   }
 
-  public async generate(
+  public async generateBuffer(
     text: string,
     lang?: string,
     voice?: string,
-  ): Promise<Promise<GenerationResponse>> {
+  ): Promise<GenerationResponse> {
     if (!this._current.service) return { success: false };
     const res = await this._current.service.generateBuffer(text, lang, voice);
     return res;

@@ -9,9 +9,9 @@ export type VoiceData = {
 }[];
 
 export abstract class TTSService {
-  abstract setKey(session: string): void;
-  abstract getVoices(): VoiceData;
-  abstract generateBuffer(
+  public abstract setKey(key: string): void;
+  public abstract getVoices(): VoiceData;
+  public abstract generateBuffer(
     text: string,
     lang?: string,
     voice?: string,

@@ -13,7 +13,7 @@ events.push<string>(
     connector.on(TIKTOK_EVENTS.CHAT, async (chatData) => {
       const template = `${cleanText(chatData.user.username)} dice ${cleanText(chatData.comment.content)}`;
       console.log(template);
-      const res = await tts.generate(template, "es", "Spanish MX - Male");
+      const res = await tts.generateBuffer(template, "es", "Spanish MX - Male");
       if (!res.success || !res.buffer) return;
       const audio = new Uint8Array(res.buffer);
       win?.webContents.send("app:audio:data", audio);
