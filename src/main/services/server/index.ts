@@ -1,5 +1,4 @@
 import {
-  LoggerOptions,
   OverlayApp,
   TIKTOK_EVENTS,
   TikTokEventMap,
@@ -10,12 +9,12 @@ import Logger from "@/logger";
 import express, { Express, Router } from "express";
 import { Server as HttpServer } from "http";
 import { randomUUID } from "node:crypto";
-import { TikTokConnectorServices } from "../connector";
-import { LoggerService } from "../shared";
+import { TikTokConnectorService } from "../connector";
+import { Service } from "../shared";
 import { WSROOMS } from "./util";
 import { RoomWebSocketServer } from "./websocket";
 
-export class ServerService extends LoggerService {
+export class ServerService extends Service {
   private app: Express;
   private server: HttpServer | null = null;
   private wss: RoomWebSocketServer | null = null;
@@ -27,7 +26,6 @@ export class ServerService extends LoggerService {
     super();
     this.app = express();
     this.dynamicRouter = express.Router();
-    this._logSettings = { file: false, path: "" };
     this._port = 6767;
 
     this.app.use((req, res, next) => {
@@ -52,8 +50,8 @@ export class ServerService extends LoggerService {
     }
   }
 
-  public setLogOptions(options: LoggerOptions) {
-    this._logSettings = options;
+  public setLogFile(logFile: string) {
+    this._logFile = logFile;
   }
 
   public start(): Promise<{ success: boolean; message: string }> {
@@ -72,7 +70,7 @@ export class ServerService extends LoggerService {
           this.wss?.joinRoom(urlPath, ws);
           Logger.info(
             `<WebSocket> New client connected to ${urlPath} events.`,
-            this._logSettings,
+            this._logFile,
           );
           ws.send(
             JSON.stringify({
@@ -83,7 +81,7 @@ export class ServerService extends LoggerService {
         });
         Logger.success(
           `<Server> Server running on port ${this._port}`,
-          this._logSettings,
+          this._logFile,
         );
         resolve({
           success: true,
@@ -95,7 +93,7 @@ export class ServerService extends LoggerService {
         this.server = null;
         Logger.error(
           `<Server> Unable to start server on port ${this._port} -- ${formatError(err)}`,
-          this._logSettings,
+          this._logFile,
         );
         resolve({ success: false, message: err.message });
       });
@@ -144,7 +142,7 @@ export class ServerService extends LoggerService {
     return this.activeApps;
   }
 
-  public initEvents(connectorService: TikTokConnectorServices) {
+  public initEvents(connectorService: TikTokConnectorService) {
     if (!connectorService) {
       throw new Error("Connector service not defined.");
     }
@@ -213,10 +211,7 @@ export class ServerService extends LoggerService {
         this.multiBroadcast(["SUPER_FAN_JOIN", "GLOBAL"], data);
         break;
       default:
-        Logger.warn(
-          `<Server> Unknown Broadcast Event ${type}`,
-          this._logSettings,
-        );
+        Logger.warn(`<Server> Unknown Broadcast Event ${type}`, this._logFile);
         break;
     }
   }

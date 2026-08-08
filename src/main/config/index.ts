@@ -12,8 +12,7 @@ export default {
   DB: {
     name: "tokio",
   },
-  BIN: {
-    ffmpeg:
-      "https://huggingface.co/datasets/akuqt/tokio-utils/resolve/main/bin/ffmpeg.exe?download=true",
+  APP: {
+    folderName: ".tokio",
   },
 };

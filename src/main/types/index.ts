@@ -1,10 +1,10 @@
 import {
   DBManagerService,
-  JsonManagerService,
+  JSONManagerService,
   PathManagerService,
   ServerService,
-  TikTokConnectorServices,
-  TTSServices,
+  TikTokConnectorService,
+  TTSService,
   URLManagerService,
 } from "@/services";
 import {
@@ -22,11 +22,11 @@ export interface AppHandlerVariables {
   readonly ipcMain: IpcMain;
   readonly shell: Shell;
   readonly session: typeof Session;
-  readonly connectorService: TikTokConnectorServices;
-  readonly ttsService: TTSServices;
+  readonly connectorService: TikTokConnectorService;
+  readonly ttsService: TTSService;
   readonly serverService: ServerService;
   readonly urlManagerService: URLManagerService;
-  readonly jsonManagerService: JsonManagerService;
+  readonly jsonManagerService: JSONManagerService;
   readonly dbManagerService: DBManagerService;
   readonly pathManagerService: PathManagerService;
 }

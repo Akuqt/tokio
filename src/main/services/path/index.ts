@@ -7,8 +7,12 @@ export class PathManagerService {
   public folders: Folders;
   public files: Files;
 
-  public async initialize(homePath: string): Promise<void> {
-    const appFolder = resolve(join(homePath, ".tokio"));
+  public async initialize(
+    homePath: string,
+    appFolderName: string,
+    callback?: (data: { files: Files; folders: Folders }) => void,
+  ): Promise<void> {
+    const appFolder = resolve(join(homePath, appFolderName));
 
     this.folders = {
       appFolder,
@@ -42,5 +46,7 @@ export class PathManagerService {
         await writeFile(file, "", { encoding: "utf-8" });
       }
     }
+
+    callback?.({ files: this.files, folders: this.folders });
   }
 }

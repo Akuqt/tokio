@@ -1,82 +1,99 @@
-import {
-  Gift,
-  LoggerOptions,
-  TIKTOK_EVENTS,
-  TikTokEventMap,
-} from "@/common/types";
-import { TikTokConnectorService } from "../shared";
-import { TikTokLiveConnector } from "./core";
+import { Providers, TIKTOK_EVENTS, TikTokEventMap } from "@/common/types";
+import { formatError } from "@/common/util";
+import Logger from "@/logger";
+import { Service } from "../shared";
+import { ConnectorProvider, ConnectorResponse, GiftResponse } from "./common";
+import { TikTokLiveConnector } from "./providers";
 
-type Services = { name: string; active: boolean }[];
-
-export class TikTokConnectorServices extends TikTokConnectorService {
-  private _current: { name: string; service: TikTokConnectorService | null };
-  private _servicePool: Map<string, TikTokConnectorService>;
+export class TikTokConnectorService extends Service {
+  private _current: { name: string; provider: ConnectorProvider | null };
+  private _providerPool: Map<string, ConnectorProvider>;
 
   constructor() {
     super();
     this._current = {
       name: "",
-      service: null,
+      provider: null,
     };
-    this._servicePool = new Map<string, TikTokConnectorService>();
-    this.addService("TikTok", new TikTokLiveConnector(), true);
+    this._providerPool = new Map<string, ConnectorProvider>();
+    this.addProvider("TikTok", new TikTokLiveConnector(), true); // Note: Default Provider
   }
 
-  public addService(
+  private addProvider(
     name: string,
-    service: TikTokConnectorService,
+    provider: ConnectorProvider,
     start?: boolean,
   ) {
-    if (!(service instanceof TikTokConnectorService)) return;
-    this._servicePool.set(name, service);
+    if (!(provider instanceof ConnectorProvider)) return;
+    this._providerPool.set(name, provider);
     if (start) {
-      this.setService(name);
+      this.setProvider(name);
     }
   }
 
-  public setService(name: string) {
-    const service = this._servicePool.get(name);
-    if (!service) return;
-    this._current = { name, service };
+  public setProvider(name: string) {
+    const provider = this._providerPool.get(name);
+    if (!provider) return;
+    this._current = { name, provider };
   }
 
-  public getServices(): Services {
-    const services = this._servicePool.keys().toArray();
-    return services.map((s) => ({ name: s, active: s == this._current.name }));
+  public getProvides(): Providers {
+    const provides = this._providerPool.keys().toArray();
+    return provides.map((s) => ({ name: s, active: s == this._current.name }));
   }
 
   public setKey(key: string): void {
-    if (this._current.service) this._current.service.setKey(key);
+    if (this._current.provider) this._current.provider.setKey(key);
   }
 
-  public setLogOptions(options: LoggerOptions): void {
-    if (this._current.service) this._current.service.setLogOptions(options);
+  public setLogFile(logFile: string): void {
+    this._logFile = logFile;
   }
 
   public on<T extends TIKTOK_EVENTS>(
     event: T,
     listener: (data: TikTokEventMap[T]) => void,
   ): void {
-    if (this._current.service) this._current.service.on(event, listener);
+    if (this._current.provider) this._current.provider.on(event, listener);
   }
 
-  public async connect(username: string, key?: string): Promise<void> {
-    if (this._current.service) this._current.service.connect(username, key);
+  public async connect(
+    username: string,
+    key?: string,
+  ): Promise<ConnectorResponse> {
+    Logger.info(`<Connector> Connecting to: ${username}`, this._logFile);
+    if (!this._current.provider) {
+      Logger.error(`<Connector> No provider was defined.`, this._logFile);
+      return {
+        success: false,
+        error: new Error("No conector provider was defined."),
+      };
+    }
+    const res = await this._current.provider.connect(username, key);
+    if (!res.success) {
+      Logger.error(
+        `<Connector> Unable to connecto to ${username} -- ${formatError(res.error)}`,
+        this._logFile,
+      );
+    } else {
+      Logger.error(`<Connector> Connected to ${username}.`, this._logFile);
+    }
+    return res;
   }
 
   public async disconnect(): Promise<void> {
-    if (this._current.service) this._current.service.disconnect();
+    if (this._current.provider) this._current.provider.disconnect();
   }
 
   public isConnected(): boolean {
-    if (!this._current.service) return false;
-    return this._current.service.isConnected();
+    if (!this._current.provider) return false;
+    return this._current.provider.isConnected();
   }
 
-  public async fetchGifts(): Promise<Gift[]> {
-    if (!this._current.service) return [];
-    const res = await this._current.service.fetchGifts();
+  public async fetchGifts(): Promise<GiftResponse> {
+    if (!this._current.provider)
+      return { data: [], warn: "No conector provider was defined." };
+    const res = await this._current.provider.fetchGifts();
     return res;
   }
 }

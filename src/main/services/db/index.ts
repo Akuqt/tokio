@@ -1,22 +1,16 @@
-import {
-  AppConfig,
-  AppProfile,
-  AppTheme,
-  LoggerOptions,
-  THEME_MODE,
-} from "@/common/types";
+import { AppConfig, AppProfile, AppTheme, THEME_MODE } from "@/common/types";
 import { formatError } from "@/common/util";
 import Logger from "@/logger";
 import { ProfileSchema, ThemeSchema } from "@/schemas";
-import { JsonManagerService, PathManagerService } from "@/services";
+import { JSONManagerService, PathManagerService } from "@/services";
 import { join } from "path";
 import { DataSource } from "typeorm";
-import { LoggerService } from "../shared";
+import { Service } from "../shared";
 import { AppConfigEntity, AppProfileEntity, AppThemeEntity } from "./entities";
 
-export class DBManagerService extends LoggerService {
+export class DBManagerService extends Service {
   private _dbPath: string;
-  private _jsonManagerService: JsonManagerService | null;
+  private _jsonManagerService: JSONManagerService | null;
   private _pathManagerService: PathManagerService | null;
   private _defaultAppConfig: AppConfig;
   private _dataSource: DataSource | null;
@@ -26,19 +20,15 @@ export class DBManagerService extends LoggerService {
     this._dataSource = null;
     this._jsonManagerService = null;
     this._pathManagerService = null;
-    this._logSettings = {
-      file: false,
-      path: "",
-    };
   }
 
-  public setLogOptions(options: LoggerOptions) {
-    this._logSettings = options;
+  public setLogFile(logFile: string) {
+    this._logFile = logFile;
   }
 
   public async initialize(
     dbName: string,
-    jsonManagerService: JsonManagerService,
+    jsonManagerService: JSONManagerService,
     pathManagerService: PathManagerService,
   ): Promise<void> {
     this._pathManagerService = pathManagerService;
@@ -57,11 +47,11 @@ export class DBManagerService extends LoggerService {
       });
       this._dataSource = await AppDataSource.initialize();
       await this.initializeTables();
-      Logger.success(`<System> Sqlite database initialized`, this._logSettings);
+      Logger.success(`<System> Sqlite database initialized`, this._logFile);
     } catch (error) {
       Logger.error(
         `<System> Unable to initialize sqlite database -- ${formatError(error)}`,
-        this._logSettings,
+        this._logFile,
       );
       throw new Error("Unable to initialize sqlite database.", {
         cause: error,
@@ -126,7 +116,7 @@ export class DBManagerService extends LoggerService {
     } catch (error) {
       Logger.error(
         `<System> Unable to update sqlite app_profile_entity table -- ${formatError(error)}`,
-        this._logSettings,
+        this._logFile,
       );
     }
     return 1;
@@ -160,7 +150,7 @@ export class DBManagerService extends LoggerService {
     } catch (error) {
       Logger.error(
         `<System> Unable to update sqlite app_theme_entity table -- ${formatError(error)}`,
-        this._logSettings,
+        this._logFile,
       );
     }
     return 1;
@@ -178,7 +168,7 @@ export class DBManagerService extends LoggerService {
     } catch (error) {
       Logger.error(
         `<System> Unable to update sqlite app_config_entity table -- ${formatError(error)}`,
-        this._logSettings,
+        this._logFile,
       );
     }
     return false;
@@ -199,7 +189,7 @@ export class DBManagerService extends LoggerService {
     } catch (error) {
       Logger.error(
         `<System> Unable to update sqlite app_config_entity table with profile -- ${formatError(error)}`,
-        this._logSettings,
+        this._logFile,
       );
     }
     return false;
@@ -220,7 +210,7 @@ export class DBManagerService extends LoggerService {
     } catch (error) {
       Logger.error(
         `<System> Unable to update sqlite app_config_entity table with theme -- ${formatError(error)}`,
-        this._logSettings,
+        this._logFile,
       );
     }
     return false;

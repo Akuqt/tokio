@@ -4,14 +4,12 @@ import {
   Gift,
   GiftEvent,
   LikeEvent,
-  LoggerOptions,
   ShareEvent,
   TIKTOK_EVENTS,
   TikTokEventMap,
   UserData,
 } from "@/common/types";
-import { delay, formatError } from "@/common/util";
-import Logger from "@/logger";
+import { delay } from "@/common/util";
 import { EventEmitter } from "events";
 import {
   TikTokLiveConnection,
@@ -19,10 +17,14 @@ import {
   UserIdentity,
   WebcastEvent,
 } from "tiktok-live-connector";
-import { TikTokConnectorService } from "../../shared";
-import config from "../config";
+import {
+  ConnectorProvider,
+  ConnectorResponse,
+  GiftResponse,
+} from "../../common";
+import config from "./config";
 
-export class TikTokLiveConnector extends TikTokConnectorService {
+export class TikTokLiveConnector extends ConnectorProvider {
   private _connector: TikTokLiveConnection | null;
   private _sessionID: string;
   private _username: string;
@@ -34,20 +36,12 @@ export class TikTokLiveConnector extends TikTokConnectorService {
     this._events = new EventEmitter();
     this._username = "";
     this._sessionID = "";
-    this._logSettings = {
-      file: false,
-      path: "",
-    };
   }
 
   // --- PUBLIC API ---
 
   public setKey(sessionID: string) {
     this._sessionID = sessionID;
-  }
-
-  public setLogOptions(options: LoggerOptions) {
-    this._logSettings = options;
   }
 
   public on<K extends TIKTOK_EVENTS>(
@@ -57,19 +51,28 @@ export class TikTokLiveConnector extends TikTokConnectorService {
     this._events.on(event, listener);
   }
 
-  public async connect(username: string, sessionID?: string): Promise<void> {
+  public async connect(
+    username: string,
+    sessionID?: string,
+  ): Promise<ConnectorResponse> {
     if (this.isConnected()) {
-      return;
+      return {
+        success: false,
+        error: new Error("Instance already connected"),
+      };
     }
     this._username = username.replace("@", "") || "";
     this._sessionID = sessionID || "";
     if (!this._username) {
-      return;
+      this.emit(TIKTOK_EVENTS.CONNECTED, {
+        success: false,
+        error: new Error("No username was defined."),
+      });
+      return {
+        success: false,
+        error: new Error("No username was defined."),
+      };
     }
-    Logger.info(
-      `<Connector> Connecting to: ${this._username}`,
-      this._logSettings,
-    );
     this._connector = new TikTokLiveConnection(this._username, {
       processInitialData: false,
       session: {
@@ -85,41 +88,56 @@ export class TikTokLiveConnector extends TikTokConnectorService {
     try {
       const state = await this._connector.connect();
       if (state.isConnected) {
-        Logger.success(
-          `Connected to ${this._username} with roomID: ${state.roomId}`,
-          this._logSettings,
-        );
         this.emit(TIKTOK_EVENTS.CONNECTED);
         await delay(1000);
         this.registerEvents();
         this._connector.on(WebcastEvent.STREAM_END, async () => {
-          this.emit(TIKTOK_EVENTS.DISCONNECTED);
           await this.disconnect();
-          Logger.info(`Disconnected from ${this._username}`, this._logSettings);
+          this.emit(TIKTOK_EVENTS.DISCONNECTED);
         });
+        return {
+          success: true,
+        };
       }
+      this.emit(TIKTOK_EVENTS.CONNECTED, {
+        success: false,
+        error: new Error("Unable to connect with unknown reason."),
+      });
+      return {
+        success: false,
+        error: new Error("Unable to connect with unknown reason."),
+      };
     } catch (err) {
-      Logger.error(
-        `<Connector> Failed to connect to ${this._username} -- ${formatError(err)}`,
-        this._logSettings,
-      );
+      this.emit(TIKTOK_EVENTS.CONNECTED, {
+        success: false,
+        error: err as Error,
+      });
+      return {
+        success: false,
+        error: err as Error,
+      };
     }
   }
 
   public async disconnect(): Promise<void> {
     if (this.isConnected()) {
-      await this._connector?.disconnect();
+      try {
+        await this._connector?.disconnect();
+      } catch {
+        // Next
+      }
+      this.emit(TIKTOK_EVENTS.DISCONNECTED);
     }
   }
 
   public isConnected(): boolean {
-    return this._connector?.isConnected ?? false;
+    return this._connector?.isConnected || false;
   }
 
-  public async fetchGifts(): Promise<Gift[]> {
+  public async fetchGifts(): Promise<GiftResponse> {
     try {
       const region = await this.getUserRegionAndLanguage();
-      const url = this.getGiftURL(region.region, region.language);
+      const url = this.getGiftURL(region.data.region, region.data.language);
 
       const response = await fetch(url, {
         method: "GET",
@@ -142,13 +160,12 @@ export class TikTokLiveConnector extends TikTokConnectorService {
         image: g.image?.url_list?.[0],
       }));
 
-      return availableGifts;
+      return { data: availableGifts, warn: region.error?.message };
     } catch (err) {
-      Logger.error(
-        `<Connector> Failed to fetch global gift list -- ${formatError(err)}`,
-        this._logSettings,
-      );
-      return [];
+      return {
+        data: [],
+        error: err as Error,
+      };
     }
   }
 
@@ -271,12 +288,6 @@ export class TikTokLiveConnector extends TikTokConnectorService {
       const user = this.getUserData({ user: tdata.user });
       this.emit(TIKTOK_EVENTS.SUPER_FAN_JOIN, { user });
     });
-
-    // END
-    Logger.success(
-      `<Connector> Event listeners registered for ${this._username}`,
-      this._logSettings,
-    );
   }
 
   // --- HELPER METHODS ---
@@ -305,8 +316,8 @@ export class TikTokLiveConnector extends TikTokConnectorService {
   }
 
   private async getUserRegionAndLanguage(): Promise<{
-    region: string;
-    language: string;
+    data: { region: string; language: string };
+    error?: Error;
   }> {
     try {
       const response = await fetch(config.GEO_API_URL, {
@@ -324,13 +335,12 @@ export class TikTokLiveConnector extends TikTokConnectorService {
       const firstLanguage = data.languages
         ? data.languages.split(",")[0]
         : "en-US";
-      return { region, language: firstLanguage };
+      return { data: { region, language: firstLanguage } };
     } catch (err) {
-      Logger.error(
-        `<Connector> Failed to fetch IP location, falling back to US/en-US -- ${formatError(err)}`,
-        this._logSettings,
-      );
-      return { region: "US", language: "en-US" };
+      return {
+        data: { region: "US", language: "en-US" },
+        error: err as Error,
+      };
     }
   }
 }

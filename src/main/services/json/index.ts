@@ -1,22 +1,13 @@
-import { LoggerOptions } from "@/common/types";
 import { formatError } from "@/common/util";
 import { cleanText } from "@/helper";
 import Logger from "@/logger";
 import { promises as fs } from "fs";
 import { z } from "zod";
-import { LoggerService } from "../shared";
+import { Service } from "../shared";
 
-export class JsonManagerService extends LoggerService {
-  constructor() {
-    super();
-    this._logSettings = {
-      file: false,
-      path: "",
-    };
-  }
-
-  public setLogOptions(options: LoggerOptions) {
-    this._logSettings = options;
+export class JSONManagerService extends Service {
+  public setLogFile(logFile: string) {
+    this._logFile = logFile;
   }
 
   async saveFile<T>(
@@ -31,7 +22,7 @@ export class JsonManagerService extends LoggerService {
       if (!validation.success) {
         Logger.error(
           `<System> Schema validation failed while saving json file ${filePath} -- ${cleanText(z.prettifyError(validation.error))}}`,
-          this._logSettings,
+          this._logFile,
         );
         return false;
       }
@@ -47,12 +38,12 @@ export class JsonManagerService extends LoggerService {
       if (error instanceof SyntaxError) {
         Logger.error(
           `<System> Schema validation failed while saving json file ${filePath} -- ${formatError(error)}`,
-          this._logSettings,
+          this._logFile,
         );
       } else {
         Logger.error(
           `<System> Unable to save json file ${filePath} -- ${formatError(error)}`,
-          this._logSettings,
+          this._logFile,
         );
         await fs.unlink(tempPath).catch(() => {});
       }
@@ -71,7 +62,7 @@ export class JsonManagerService extends LoggerService {
       if (!validation.success) {
         Logger.error(
           `<System> Schema validation failed while loading json file ${filePath} -- ${cleanText(z.prettifyError(validation.error))}}`,
-          this._logSettings,
+          this._logFile,
         );
         return null;
       }
@@ -81,12 +72,12 @@ export class JsonManagerService extends LoggerService {
       if (error instanceof SyntaxError) {
         Logger.error(
           `<System> Schema validation failed while loading json file ${filePath} -- ${formatError(error)}`,
-          this._logSettings,
+          this._logFile,
         );
       } else {
         Logger.error(
           `<System> Unable to load json file ${filePath} -- ${formatError(error)}`,
-          this._logSettings,
+          this._logFile,
         );
       }
       return null;
@@ -102,7 +93,7 @@ export class JsonManagerService extends LoggerService {
     if (!existingData) {
       Logger.error(
         `<System> Unable to update json file ${filePath} -- ${formatError(new Error("File does not exist or is invalid."))}`,
-        this._logSettings,
+        this._logFile,
       );
       return false;
     }

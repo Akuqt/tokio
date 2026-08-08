@@ -12,8 +12,6 @@ export interface EventItem<T, U, K> {
   callback: EventCallback<T, U, K>;
 }
 
-export type LoggerOptions = { file: boolean; path: string };
-
 export interface Folders {
   appFolder: string;
   settingsFolder: string;
@@ -60,3 +58,5 @@ export interface AppConfig {
   theme: AppTheme;
   profile: AppProfile;
 }
+
+export type Providers = { name: string; active: boolean }[];

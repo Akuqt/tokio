@@ -7,11 +7,11 @@ import events from "./events";
 import Handler from "./handler";
 import {
   DBManagerService,
-  JsonManagerService,
+  JSONManagerService,
   PathManagerService,
   ServerService,
-  TikTokConnectorServices,
-  TTSServices,
+  TikTokConnectorService,
+  TTSService,
   URLManagerService,
 } from "./services";
 
@@ -43,11 +43,11 @@ function createWindow(): void {
     ipcMain,
     session,
     pathManagerService: new PathManagerService(),
-    connectorService: new TikTokConnectorServices(),
-    ttsService: new TTSServices(),
+    connectorService: new TikTokConnectorService(),
+    ttsService: new TTSService(),
     serverService: new ServerService(),
     urlManagerService: new URLManagerService(),
-    jsonManagerService: new JsonManagerService(),
+    jsonManagerService: new JSONManagerService(),
     dbManagerService: new DBManagerService(),
   }).init(events);
 

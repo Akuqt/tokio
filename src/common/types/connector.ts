@@ -80,7 +80,7 @@ export enum TIKTOK_EVENTS {
 }
 
 export interface TikTokEventMap {
-  [TIKTOK_EVENTS.CONNECTED]: void;
+  [TIKTOK_EVENTS.CONNECTED]: { success: boolean; error?: Error };
   [TIKTOK_EVENTS.DISCONNECTED]: void;
   [TIKTOK_EVENTS.CHAT]: ChatEvent;
   [TIKTOK_EVENTS.SHARE]: ShareEvent;

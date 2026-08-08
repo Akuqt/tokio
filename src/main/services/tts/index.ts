@@ -1,53 +1,52 @@
-import { LoggerOptions } from "@/common/types";
-import { GenerationResponse, TTSService, VoiceData } from "../shared";
-import { TikTokTTS } from "./tiktok/core";
+import { Providers } from "@/common/types";
+import { Service } from "../shared";
+import { GenerationResponse, TTSProvider, VoiceData } from "./common";
+import { TikTokTTS } from "./providers";
 
-type Services = { name: string; active: boolean }[];
-
-export class TTSServices extends TTSService {
-  private _current: { name: string; service: TTSService | null };
-  private _servicePool: Map<string, TTSService>;
+export class TTSService extends Service {
+  private _current: { name: string; provider: TTSProvider | null };
+  private _providerPool: Map<string, TTSProvider>;
 
   constructor() {
     super();
     this._current = {
       name: "",
-      service: null,
+      provider: null,
     };
-    this._servicePool = new Map<string, TTSService>();
-    this.addService("TikTok", new TikTokTTS(), true);
+    this._providerPool = new Map<string, TTSProvider>();
+    this.addProvider("TikTok", new TikTokTTS(), true);
   }
 
-  public addService(name: string, service: TTSService, start?: boolean) {
-    if (!(service instanceof TTSService)) return;
-    this._servicePool.set(name, service);
+  private addProvider(name: string, provider: TTSProvider, start?: boolean) {
+    if (!(provider instanceof TTSProvider)) return;
+    this._providerPool.set(name, provider);
     if (start) {
-      this.setService(name);
+      this.setProvider(name);
     }
   }
 
-  public setService(name: string) {
-    const service = this._servicePool.get(name);
-    if (!service) return;
-    this._current = { name, service };
+  public setLogFile(logFile: string): void {
+    this._logFile = logFile;
   }
 
-  public getServices(): Services {
-    const services = this._servicePool.keys().toArray();
-    return services.map((s) => ({ name: s, active: s == this._current.name }));
+  public setProvider(name: string) {
+    const provider = this._providerPool.get(name);
+    if (!provider) return;
+    this._current = { name, provider };
+  }
+
+  public getProviders(): Providers {
+    const providers = this._providerPool.keys().toArray();
+    return providers.map((s) => ({ name: s, active: s == this._current.name }));
   }
 
   public getVoices(): VoiceData {
-    if (this._current.service) return this._current.service.getVoices();
-    return [];
+    if (!this._current.provider) return [];
+    return this._current.provider.getVoices();
   }
 
   public setKey(key: string): void {
-    if (this._current.service) this._current.service.setKey(key);
-  }
-
-  public setLogOptions(options: LoggerOptions): void {
-    if (this._current.service) this._current.service.setLogOptions(options);
+    if (this._current.provider) this._current.provider.setKey(key);
   }
 
   public async generateBuffer(
@@ -55,8 +54,8 @@ export class TTSServices extends TTSService {
     lang?: string,
     voice?: string,
   ): Promise<GenerationResponse> {
-    if (!this._current.service) return { success: false };
-    const res = await this._current.service.generateBuffer(text, lang, voice);
+    if (!this._current.provider) return { success: false };
+    const res = await this._current.provider.generateBuffer(text, lang, voice);
     return res;
   }
 }

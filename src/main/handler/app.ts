@@ -1,12 +1,12 @@
 import config from "@/config";
-import { checkInternetConnection } from "@/helper/network";
+import { checkInternetConnection } from "@/helper";
 import type {
   DBManagerService,
-  JsonManagerService,
+  JSONManagerService,
   PathManagerService,
   ServerService,
-  TikTokConnectorServices,
-  TTSServices,
+  TikTokConnectorService,
+  TTSService,
   URLManagerService,
 } from "@/services";
 import { AppHandlerVariables } from "@/types";
@@ -25,14 +25,13 @@ export class AppHandler implements AppHandlerVariables {
   public readonly ipcMain: IpcMain;
   public readonly shell: Shell;
   public readonly session: typeof Session;
-  public readonly connectorService: TikTokConnectorServices;
-  public readonly ttsService: TTSServices;
+  public readonly connectorService: TikTokConnectorService;
+  public readonly ttsService: TTSService;
   public readonly serverService: ServerService;
   public readonly urlManagerService: URLManagerService;
-  public readonly jsonManagerService: JsonManagerService;
+  public readonly jsonManagerService: JSONManagerService;
   public readonly dbManagerService: DBManagerService;
   public readonly pathManagerService: PathManagerService;
-  private _log2file: boolean = true;
 
   constructor(deps: Omit<AppHandlerVariables, "internet">) {
     this.app = deps.app;
@@ -51,8 +50,18 @@ export class AppHandler implements AppHandlerVariables {
   }
 
   public async initApp() {
-    await this.pathManagerService.initialize(this.app.getPath("home"));
-    this.setLog2File(true);
+    await this.pathManagerService.initialize(
+      this.app.getPath("home"),
+      config.APP.folderName,
+      ({ files }) => {
+        this.connectorService.setLogFile(files.logs.connector);
+        this.ttsService.setLogFile(files.logs.tts);
+        this.serverService.setLogFile(files.logs.server);
+        this.urlManagerService.setLogFile(files.logs.system);
+        this.dbManagerService.setLogFile(files.logs.system);
+        this.jsonManagerService.setLogFile(files.logs.system);
+      },
+    );
     await this.checkInternet();
     await this.dbManagerService.initialize(
       config.DB.name,
@@ -63,34 +72,6 @@ export class AppHandler implements AppHandlerVariables {
     this.serverService.initEvents(this.connectorService);
     this.initSession();
     this.initWindow();
-  }
-
-  private setLog2File(file: boolean) {
-    this._log2file = file;
-    this.connectorService.setLogOptions({
-      file: this._log2file,
-      path: this.pathManagerService.files.logs.connector,
-    });
-    this.ttsService.setLogOptions({
-      file: this._log2file,
-      path: this.pathManagerService.files.logs.tts,
-    });
-    this.serverService.setLogOptions({
-      file: this._log2file,
-      path: this.pathManagerService.files.logs.server,
-    });
-    this.urlManagerService.setLogOptions({
-      file: this._log2file,
-      path: this.pathManagerService.files.logs.system,
-    });
-    this.dbManagerService.setLogOptions({
-      file: this._log2file,
-      path: this.pathManagerService.files.logs.system,
-    });
-    this.jsonManagerService.setLogOptions({
-      file: this._log2file,
-      path: this.pathManagerService.files.logs.system,
-    });
   }
 
   private async checkInternet() {

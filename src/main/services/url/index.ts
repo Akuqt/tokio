@@ -1,26 +1,21 @@
-import { LoggerOptions } from "@/common/types";
 import { formatError } from "@/common/util";
 import config from "@/config";
 import Logger from "@/logger";
 import { exec } from "@vscode/sudo-prompt";
 import fs from "fs";
 import { join, resolve } from "path";
-import { LoggerService } from "../shared";
+import { Service } from "../shared";
 
-export class URLManagerService extends LoggerService {
+export class URLManagerService extends Service {
   private _port: number;
 
   constructor() {
     super();
     this._port = 6767;
-    this._logSettings = {
-      file: false,
-      path: "",
-    };
   }
 
-  public setLogOptions(options: LoggerOptions) {
-    this._logSettings = options;
+  public setLogFile(logFile: string) {
+    this._logFile = logFile;
   }
 
   public setPort(port: number) {
@@ -54,26 +49,26 @@ export class URLManagerService extends LoggerService {
         };
         Logger.info(
           `<System> Prompting for admin rights to add ${config.CMD.FQDN} to the hosts file.`,
-          this._logSettings,
+          this._logFile,
         );
         exec(command, options, (error) => {
           if (error) {
             Logger.error(
               `<System> Failed to modify hosts file -- ${formatError(error)}`,
-              this._logSettings,
+              this._logFile,
             );
             return;
           }
           Logger.success(
             "<System> Successfully updated hosts file.",
-            this._logSettings,
+            this._logFile,
           );
         });
       }
     } catch (error) {
       Logger.error(
         `<System> Unable to read hosts file -- ${formatError(error)}`,
-        this._logSettings,
+        this._logFile,
       );
     }
   }

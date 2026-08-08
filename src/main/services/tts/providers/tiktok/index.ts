@@ -1,29 +1,16 @@
-import { LoggerOptions } from "@/common/types";
 import axios, { isAxiosError } from "axios";
 import { Buffer } from "node:buffer";
-import { GenerationResponse, TTSService, VoiceData } from "../../../shared";
-import { handleStatusError, prepareText, Voices, VoicesData } from "../common";
-import config from "../config";
-import { TTSResponse, TTSResponseALT } from "../types";
+import { GenerationResponse, TTSProvider, VoiceData } from "../../common";
+import { handleStatusError, prepareText, Voices, VoicesData } from "./common";
+import config from "./config";
+import { TTSResponse, TTSResponseALT } from "./types";
 
-export class TikTokTTS extends TTSService {
+export class TikTokTTS extends TTSProvider {
   private sessionId: string | undefined;
-
-  constructor() {
-    super();
-    this._logSettings = {
-      file: false,
-      path: "",
-    };
-  }
 
   private getURL(text: string, speaker: string, lang: string) {
     const preparedText = prepareText(text, lang);
     return `${config.API_URL}/?text_speaker=${speaker}&req_text=${preparedText}&speaker_map_type=0&aid=1233`;
-  }
-
-  public setLogOptions(options: LoggerOptions): void {
-    this._logSettings = options;
   }
 
   private async generateB64TTSALT(
