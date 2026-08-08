@@ -1,29 +1,31 @@
-import { AppConfig, AppProfile, AppTheme, LoggerOptions } from "@/common/types";
+import {
+  AppConfig,
+  AppProfile,
+  AppTheme,
+  LoggerOptions,
+  THEME_MODE,
+} from "@/common/types";
 import { formatError } from "@/common/util";
-import { JsonFileManager } from "@/files";
 import Logger from "@/logger";
 import { ProfileSchema, ThemeSchema } from "@/schemas";
+import { JsonManagerService, PathManagerService } from "@/services";
+import { join } from "path";
 import { DataSource } from "typeorm";
+import { LoggerService } from "../shared";
 import { AppConfigEntity, AppProfileEntity, AppThemeEntity } from "./entities";
 
-export class AppDataBase {
+export class DBManagerService extends LoggerService {
   private _dbPath: string;
-  private _fileManager: JsonFileManager;
+  private _jsonManagerService: JsonManagerService | null;
+  private _pathManagerService: PathManagerService | null;
   private _defaultAppConfig: AppConfig;
   private _dataSource: DataSource | null;
-  private _logSettings: LoggerOptions;
 
-  constructor(
-    dbPath: string,
-    defaults: {
-      appConfig: AppConfig;
-      fileManager: JsonFileManager;
-    },
-  ) {
-    this._dbPath = dbPath;
-    this._fileManager = defaults.fileManager;
-    this._defaultAppConfig = defaults.appConfig;
+  constructor() {
+    super();
     this._dataSource = null;
+    this._jsonManagerService = null;
+    this._pathManagerService = null;
     this._logSettings = {
       file: false,
       path: "",
@@ -34,8 +36,19 @@ export class AppDataBase {
     this._logSettings = options;
   }
 
-  public async initialize(): Promise<void> {
+  public async initialize(
+    dbName: string,
+    jsonManagerService: JsonManagerService,
+    pathManagerService: PathManagerService,
+  ): Promise<void> {
+    this._pathManagerService = pathManagerService;
+    this._jsonManagerService = jsonManagerService;
+    this._dbPath = join(
+      this._pathManagerService.folders.settingsFolder,
+      dbName,
+    );
     try {
+      this._defaultAppConfig = this._generateDefaults();
       const AppDataSource = new DataSource({
         type: "better-sqlite3",
         database: this._dbPath,
@@ -56,6 +69,33 @@ export class AppDataBase {
     }
   }
 
+  private _generateDefaults() {
+    if (!this._pathManagerService) {
+      throw new Error("There is no path configuration defined.");
+    }
+    return {
+      enable_server: false,
+      server_port: 6767,
+      session_id: "",
+      use_session_id: false,
+      theme_mode: THEME_MODE.SYSTEM,
+      profile: {
+        name: "default",
+        path: join(
+          this._pathManagerService.folders.profilesFolder,
+          "default.json",
+        ),
+      },
+      theme: {
+        name: "default",
+        path: join(
+          this._pathManagerService.folders.themesFolder,
+          "default.json",
+        ),
+      },
+    };
+  }
+
   public async getAppConfig(): Promise<AppConfig> {
     if (!this._dataSource) return this._defaultAppConfig;
     const config = await this._dataSource
@@ -73,7 +113,7 @@ export class AppDataBase {
   }
 
   public async addAppProfile(name: string, path?: string): Promise<number> {
-    if (!this._dataSource || !name) return 1;
+    if (!this._dataSource || !this._defaultAppConfig || !name) return 1;
     try {
       const res = await this._dataSource
         .getRepository(AppProfileEntity)
@@ -93,23 +133,23 @@ export class AppDataBase {
   }
 
   public async getAppProfiles(): Promise<AppProfile[]> {
-    if (!this._dataSource) return [this._defaultAppConfig.profile];
+    if (!this._dataSource) return [];
     const profiles = await this._dataSource
       .getRepository(AppProfileEntity)
       .find();
-    if (!(profiles.length > 0)) return [this._defaultAppConfig.profile];
+    if (!(profiles.length > 0)) return [];
     return profiles;
   }
 
   public async getAppThemes(): Promise<AppTheme[]> {
-    if (!this._dataSource) return [this._defaultAppConfig.theme];
+    if (!this._dataSource) return [];
     const themes = await this._dataSource.getRepository(AppThemeEntity).find();
-    if (!(themes.length > 0)) return [this._defaultAppConfig.theme];
+    if (!(themes.length > 0)) return [];
     return themes;
   }
 
   public async addAppTheme(name: string, path?: string): Promise<number> {
-    if (!this._dataSource || !name) return 1;
+    if (!this._dataSource || !name || !this._defaultAppConfig) return 1;
     try {
       const res = await this._dataSource.getRepository(AppThemeEntity).insert({
         name,
@@ -199,8 +239,8 @@ export class AppDataBase {
 
   // TODO: Update file creation logic
   private async initializeTables() {
-    if (!this._dataSource || !this._fileManager)
-      throw new Error("No data source or file manager were defined.");
+    if (!this._dataSource || !this._jsonManagerService)
+      throw new Error("No data source or json file manager were defined.");
     const config = await this._dataSource
       .getRepository(AppConfigEntity)
       .findOne({
@@ -213,7 +253,7 @@ export class AppDataBase {
 
     if (this._checkConfigTable(config)) return;
 
-    const profile = await this._fileManager.saveFile(
+    const profile = await this._jsonManagerService.saveFile(
       this._defaultAppConfig.profile.path,
       ProfileSchema,
       {
@@ -232,7 +272,7 @@ export class AppDataBase {
 
     if (!profile) throw new Error("Unable to save default profile file.");
 
-    const theme = await this._fileManager.saveFile(
+    const theme = await this._jsonManagerService.saveFile(
       this._defaultAppConfig.theme.path,
       ThemeSchema,
       {

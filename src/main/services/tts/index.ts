@@ -1,4 +1,5 @@
-import { GenerationResponse, TTSService, VoiceData } from "@/shared";
+import { LoggerOptions } from "@/common/types";
+import { GenerationResponse, TTSService, VoiceData } from "../shared";
 import { TikTokTTS } from "./tiktok/core";
 
 type Services = { name: string; active: boolean }[];
@@ -43,6 +44,10 @@ export class TTSServices extends TTSService {
 
   public setKey(key: string): void {
     if (this._current.service) this._current.service.setKey(key);
+  }
+
+  public setLogOptions(options: LoggerOptions): void {
+    if (this._current.service) this._current.service.setLogOptions(options);
   }
 
   public async generateBuffer(

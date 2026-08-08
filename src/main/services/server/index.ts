@@ -10,19 +10,21 @@ import Logger from "@/logger";
 import express, { Express, Router } from "express";
 import { Server as HttpServer } from "http";
 import { randomUUID } from "node:crypto";
+import { TikTokConnectorServices } from "../connector";
+import { LoggerService } from "../shared";
 import { WSROOMS } from "./util";
 import { RoomWebSocketServer } from "./websocket";
 
-export class OverlayServer {
+export class ServerService extends LoggerService {
   private app: Express;
   private server: HttpServer | null = null;
   private wss: RoomWebSocketServer | null = null;
   private dynamicRouter: Router;
-  private _logSettings: LoggerOptions;
   private _port: number;
   public activeApps: OverlayApp[] = [];
 
   constructor() {
+    super();
     this.app = express();
     this.dynamicRouter = express.Router();
     this._logSettings = { file: false, path: "" };
@@ -142,7 +144,43 @@ export class OverlayServer {
     return this.activeApps;
   }
 
-  public broadcast<T extends TIKTOK_EVENTS>(type: T, data: TikTokEventMap[T]) {
+  public initEvents(connectorService: TikTokConnectorServices) {
+    if (!connectorService) {
+      throw new Error("Connector service not defined.");
+    }
+    connectorService.on(TIKTOK_EVENTS.CHAT, (data) => {
+      this.broadcast(TIKTOK_EVENTS.CHAT, data);
+    });
+    connectorService.on(TIKTOK_EVENTS.LIKE, (data) => {
+      this.broadcast(TIKTOK_EVENTS.LIKE, data);
+    });
+    connectorService.on(TIKTOK_EVENTS.GIFT, (data) => {
+      this.broadcast(TIKTOK_EVENTS.GIFT, data);
+    });
+    connectorService.on(TIKTOK_EVENTS.FOLLOW, (data) => {
+      this.broadcast(TIKTOK_EVENTS.FOLLOW, data);
+    });
+    connectorService.on(TIKTOK_EVENTS.SHARE, (data) => {
+      this.broadcast(TIKTOK_EVENTS.SHARE, data);
+    });
+    connectorService.on(TIKTOK_EVENTS.ENVELOPE, (data) => {
+      this.broadcast(TIKTOK_EVENTS.ENVELOPE, data);
+    });
+    connectorService.on(TIKTOK_EVENTS.SUPER_FAN_BOX, (data) => {
+      this.broadcast(TIKTOK_EVENTS.SUPER_FAN_BOX, data);
+    });
+    connectorService.on(TIKTOK_EVENTS.SUPER_FAN, (data) => {
+      this.broadcast(TIKTOK_EVENTS.SUPER_FAN, data);
+    });
+    connectorService.on(TIKTOK_EVENTS.MEMBER_JOIN, (data) => {
+      this.broadcast(TIKTOK_EVENTS.MEMBER_JOIN, data);
+    });
+    connectorService.on(TIKTOK_EVENTS.SUPER_FAN_JOIN, (data) => {
+      this.broadcast(TIKTOK_EVENTS.SUPER_FAN_JOIN, data);
+    });
+  }
+
+  private broadcast<T extends TIKTOK_EVENTS>(type: T, data: TikTokEventMap[T]) {
     switch (type) {
       case TIKTOK_EVENTS.CHAT:
         this.multiBroadcast(["CHAT", "GLOBAL"], data);

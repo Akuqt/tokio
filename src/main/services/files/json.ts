@@ -4,11 +4,11 @@ import { cleanText } from "@/helper";
 import Logger from "@/logger";
 import { promises as fs } from "fs";
 import { z } from "zod";
+import { LoggerService } from "../shared";
 
-export class JsonFileManager {
-  private _logSettings: LoggerOptions;
-
+export class JsonManagerService extends LoggerService {
   constructor() {
+    super();
     this._logSettings = {
       file: false,
       path: "",

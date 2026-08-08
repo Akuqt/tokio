@@ -5,12 +5,13 @@ import Logger from "@/logger";
 import { exec } from "@vscode/sudo-prompt";
 import fs from "fs";
 import { join, resolve } from "path";
+import { LoggerService } from "../shared";
 
-export class URLManager {
-  private _logSettings: LoggerOptions;
+export class URLManagerService extends LoggerService {
   private _port: number;
 
   constructor() {
+    super();
     this._port = 6767;
     this._logSettings = {
       file: false,

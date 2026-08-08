@@ -4,7 +4,7 @@ import {
   TIKTOK_EVENTS,
   TikTokEventMap,
 } from "@/common/types";
-import { TikTokConnectorService } from "@/shared";
+import { TikTokConnectorService } from "../shared";
 import { TikTokLiveConnector } from "./core";
 
 type Services = { name: string; active: boolean }[];

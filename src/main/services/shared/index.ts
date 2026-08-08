@@ -15,7 +15,12 @@ export type VoiceData = {
   lang: string;
 }[];
 
-export abstract class TTSService {
+export abstract class LoggerService {
+  protected _logSettings: LoggerOptions;
+  public abstract setLogOptions(options: LoggerOptions): void;
+}
+
+export abstract class TTSService extends LoggerService {
   public abstract setKey(key: string): void;
   public abstract getVoices(): VoiceData;
   public abstract generateBuffer(
@@ -25,9 +30,9 @@ export abstract class TTSService {
   ): Promise<GenerationResponse>;
 }
 
-export abstract class TikTokConnectorService {
+export abstract class TikTokConnectorService extends LoggerService {
   public abstract setKey(key: string): void;
-  public abstract setLogOptions(options: LoggerOptions): void;
+
   public abstract on<T extends TIKTOK_EVENTS>(
     event: T,
     listener: (data: TikTokEventMap[T]) => void,

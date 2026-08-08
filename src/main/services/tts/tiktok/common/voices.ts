@@ -1,4 +1,4 @@
-import { VoiceData } from "@/shared";
+import { VoiceData } from "../../../shared";
 import { EnglishVoiceName, SpanishVoiceName } from "../types";
 
 export const EnglishVoicesData: Record<EnglishVoiceName, string> = {

@@ -12,7 +12,6 @@ import {
 } from "@/common/types";
 import { delay, formatError } from "@/common/util";
 import Logger from "@/logger";
-import { TikTokConnectorService } from "@/shared";
 import { EventEmitter } from "events";
 import {
   TikTokLiveConnection,
@@ -20,13 +19,13 @@ import {
   UserIdentity,
   WebcastEvent,
 } from "tiktok-live-connector";
+import { TikTokConnectorService } from "../../shared";
 import config from "../config";
 
 export class TikTokLiveConnector extends TikTokConnectorService {
   private _connector: TikTokLiveConnection | null;
   private _sessionID: string;
   private _username: string;
-  private _logSettings: LoggerOptions;
   private _events: EventEmitter;
 
   constructor() {

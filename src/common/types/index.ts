@@ -15,23 +15,21 @@ export interface EventItem<T, U, K> {
 export type LoggerOptions = { file: boolean; path: string };
 
 export interface Folders {
-  readonly appFolder: string;
-  readonly binFolder: string;
-  readonly settingsFolder: string;
-  readonly logsFolder: string;
-  readonly overlaysFolder: string;
-  readonly dbFolder: string;
-  readonly profilesFolder: string;
-  readonly themesFolder: string;
+  appFolder: string;
+  settingsFolder: string;
+  logsFolder: string;
+  overlaysFolder: string;
+  profilesFolder: string;
+  themesFolder: string;
 }
 
 export interface Files {
-  readonly logs: {
-    readonly connector: string;
-    readonly system: string;
-    readonly overlayServer: string;
+  logs: {
+    connector: string;
+    tts: string;
+    system: string;
+    server: string;
   };
-  readonly ffmpeg: string;
 }
 
 export enum THEME_MODE {

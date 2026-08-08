@@ -5,6 +5,15 @@ import { app, BrowserWindow, ipcMain, session, shell } from "electron";
 import { join } from "path";
 import events from "./events";
 import Handler from "./handler";
+import {
+  DBManagerService,
+  JsonManagerService,
+  PathManagerService,
+  ServerService,
+  TikTokConnectorServices,
+  TTSServices,
+  URLManagerService,
+} from "./services";
 
 app.commandLine.appendSwitch(
   "webrtc-ip-handling-policy",
@@ -27,9 +36,20 @@ function createWindow(): void {
     },
   });
 
-  const handler = new Handler(app, win, ipcMain, shell, session);
-
-  handler.init(events);
+  new Handler({
+    app,
+    win,
+    shell,
+    ipcMain,
+    session,
+    pathManagerService: new PathManagerService(),
+    connectorService: new TikTokConnectorServices(),
+    ttsService: new TTSServices(),
+    serverService: new ServerService(),
+    urlManagerService: new URLManagerService(),
+    jsonManagerService: new JsonManagerService(),
+    dbManagerService: new DBManagerService(),
+  }).init(events);
 
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
     win.loadURL(process.env["ELECTRON_RENDERER_URL"]);
