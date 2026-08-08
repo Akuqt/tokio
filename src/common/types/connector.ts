@@ -57,6 +57,13 @@ export interface LikeEvent {
   totalLikes: number;
 }
 
+export interface Gift {
+  id: string;
+  name: string;
+  coins: number;
+  image: string;
+}
+
 export enum TIKTOK_EVENTS {
   CONNECTED = "tiktok:connected",
   DISCONNECTED = "tiktok:disconnected",
