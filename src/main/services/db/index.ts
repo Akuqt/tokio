@@ -1,4 +1,10 @@
-import { AppConfig, AppProfile, AppTheme, THEME_MODE } from "@/common/types";
+import {
+  AppConfig,
+  AppProfile,
+  AppProvider,
+  AppTheme,
+  THEME_MODE,
+} from "@/common/types";
 import { formatError } from "@/common/util";
 import Logger from "@/logger";
 import { ProfileSchema, ThemeSchema } from "@/schemas";
@@ -6,13 +12,25 @@ import { JSONManagerService, PathManagerService } from "@/services";
 import { join } from "path";
 import { DataSource } from "typeorm";
 import { Service } from "../shared";
-import { AppConfigEntity, AppProfileEntity, AppThemeEntity } from "./entities";
+import {
+  AppConfigEntity,
+  AppProfileEntity,
+  AppThemeEntity,
+  ConnectorProviderEntity,
+  TTSProviderEntity,
+} from "./entities";
+
+type DefaultProviders = {
+  tts: AppProvider;
+  connector: AppProvider;
+};
 
 export class DBManagerService extends Service {
   private _dbPath: string;
   private _jsonManagerService: JSONManagerService | null;
   private _pathManagerService: PathManagerService | null;
   private _defaultAppConfig: AppConfig;
+  private _defaultProviders: DefaultProviders;
   private _dataSource: DataSource | null;
 
   constructor() {
@@ -28,6 +46,7 @@ export class DBManagerService extends Service {
 
   public async initialize(
     dbName: string,
+    defaultProviders: DefaultProviders,
     jsonManagerService: JSONManagerService,
     pathManagerService: PathManagerService,
   ): Promise<void> {
@@ -37,12 +56,19 @@ export class DBManagerService extends Service {
       this._pathManagerService.folders.settingsFolder,
       dbName,
     );
+    this._defaultProviders = defaultProviders;
     try {
       this._defaultAppConfig = this._generateDefaults();
       const AppDataSource = new DataSource({
         type: "better-sqlite3",
         database: this._dbPath,
-        entities: [AppConfigEntity, AppProfileEntity, AppThemeEntity],
+        entities: [
+          AppThemeEntity,
+          AppConfigEntity,
+          AppProfileEntity,
+          TTSProviderEntity,
+          ConnectorProviderEntity,
+        ],
         synchronize: true,
       });
       this._dataSource = await AppDataSource.initialize();
@@ -59,16 +85,17 @@ export class DBManagerService extends Service {
     }
   }
 
-  private _generateDefaults() {
+  private _generateDefaults(): AppConfig {
     if (!this._pathManagerService) {
       throw new Error("There is no path configuration defined.");
     }
+
     return {
       enable_server: false,
       server_port: 6767,
-      session_id: "",
-      use_session_id: false,
       theme_mode: THEME_MODE.SYSTEM,
+      connector_provider: this._defaultProviders.connector,
+      tts_provider: this._defaultProviders.tts,
       profile: {
         name: "default",
         path: join(
@@ -95,6 +122,8 @@ export class DBManagerService extends Service {
         relations: {
           theme: true,
           profile: true,
+          connector_provider: true,
+          tts_provider: true,
         },
       });
     if (!config || !this._checkConfigTable(config))
@@ -154,6 +183,33 @@ export class DBManagerService extends Service {
       );
     }
     return 1;
+  }
+
+  public async updateAppProvider(
+    type: "connector" | "tts",
+    name: string,
+    key?: string,
+  ): Promise<boolean> {
+    if (!this._dataSource || !name || !type) return false;
+    try {
+      const res = await this._dataSource
+        .getRepository(
+          type === "connector" ? ConnectorProviderEntity : TTSProviderEntity,
+        )
+        .update(
+          {
+            id: 1,
+          },
+          { name, key: key || "" },
+        );
+      return (res.affected || 0) > 0;
+    } catch (error) {
+      Logger.error(
+        `<System> Unable to update sqlite ${type === "connector" ? type : "tts"}_provider table -- ${formatError(error)}`,
+        this._logFile,
+      );
+    }
+    return false;
   }
 
   public async updateAppConfig(
@@ -280,6 +336,14 @@ export class DBManagerService extends Service {
 
     if (!theme) throw new Error("Unable to save default theme file.");
 
+    await this._dataSource.getRepository(ConnectorProviderEntity).insert({
+      ...this._defaultProviders.connector,
+    });
+
+    await this._dataSource.getRepository(TTSProviderEntity).insert({
+      ...this._defaultProviders.tts,
+    });
+
     await this._dataSource.getRepository(AppThemeEntity).insert({
       name: this._defaultAppConfig.theme.name,
       path: this._defaultAppConfig.theme.path,
@@ -294,6 +358,8 @@ export class DBManagerService extends Service {
       ...this._defaultAppConfig,
       theme: { id: 1 },
       profile: { id: 1 },
+      connector_provider: { id: 1 },
+      tts_provider: { id: 1 },
     });
   }
 }

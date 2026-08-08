@@ -6,8 +6,10 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from "typeorm";
+import { ConnectorProviderEntity } from "./connector";
 import { AppProfileEntity } from "./profile";
 import { AppThemeEntity } from "./theme";
+import { TTSProviderEntity } from "./tts";
 
 @Entity()
 export class AppConfigEntity {
@@ -20,12 +22,6 @@ export class AppConfigEntity {
   @Column("int")
   server_port: number;
 
-  @Column("boolean")
-  use_session_id: boolean;
-
-  @Column("text")
-  session_id: string;
-
   @Column("text")
   theme_mode: THEME_MODE;
 
@@ -36,4 +32,12 @@ export class AppConfigEntity {
   @OneToOne(() => AppProfileEntity)
   @JoinColumn({ name: "profileId" })
   profile: AppProfileEntity;
+
+  @OneToOne(() => ConnectorProviderEntity)
+  @JoinColumn({ name: "connector_providerId" })
+  connector_provider: ConnectorProviderEntity;
+
+  @OneToOne(() => TTSProviderEntity)
+  @JoinColumn({ name: "tts_providerId" })
+  tts_provider: TTSProviderEntity;
 }

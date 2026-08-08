@@ -65,6 +65,7 @@ export class AppHandler implements AppHandlerVariables {
     await this.checkInternet();
     await this.dbManagerService.initialize(
       config.DB.name,
+      config.DB.providers,
       this.jsonManagerService,
       this.pathManagerService,
     );
