@@ -1,3 +1,4 @@
+import { ProfileSchema, ThemeSchema } from "@/common/schemas";
 import {
   AppConfig,
   AppProfile,
@@ -5,9 +6,8 @@ import {
   AppTheme,
   THEME_MODE,
 } from "@/common/types";
-import { formatError } from "@/common/util";
+import { defaultTheme, formatError } from "@/common/util";
 import Logger from "@/logger";
-import { ProfileSchema, ThemeSchema } from "@/schemas";
 import { JSONManagerService, PathManagerService } from "@/services";
 import { join } from "path";
 import { DataSource } from "typeorm";
@@ -126,8 +126,7 @@ export class DBManagerService extends Service {
           tts_provider: true,
         },
       });
-    if (!config || !this._checkConfigTable(config))
-      return this._defaultAppConfig;
+    if (!config || !config) return this._defaultAppConfig;
     return config;
   }
 
@@ -272,17 +271,6 @@ export class DBManagerService extends Service {
     return false;
   }
 
-  private _checkConfigTable(table: AppConfigEntity | null) {
-    if (!table || typeof table !== "object") return false;
-    const keys = Object.keys(table);
-    for (const key of keys) {
-      if (table[key] === undefined || table[key] === null) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   // TODO: Update file creation logic
   private async initializeTables() {
     if (!this._dataSource || !this._jsonManagerService)
@@ -297,7 +285,7 @@ export class DBManagerService extends Service {
         },
       });
 
-    if (!this._checkConfigTable(config)) return;
+    if (config) return;
 
     const profile = await this._jsonManagerService.saveFile(
       this._defaultAppConfig.profile.path,
@@ -321,27 +309,14 @@ export class DBManagerService extends Service {
     const theme = await this._jsonManagerService.saveFile(
       this._defaultAppConfig.theme.path,
       ThemeSchema,
-      {
-        name: "default",
-        dark: {
-          backgroundColor: "#1b1b1f",
-          FontColor: "#f8f8f8",
-        },
-        light: {
-          backgroundColor: "#f8f8f8",
-          FontColor: "#1b1b1f",
-        },
-      },
+      defaultTheme,
     );
 
     if (!theme) throw new Error("Unable to save default theme file.");
 
-    console.log("HERE 1!!!");
-
     await this._dataSource.getRepository(ConnectorProviderEntity).insert({
       ...this._defaultProviders.connector,
     });
-    console.log("HERE 2!!!");
 
     await this._dataSource.getRepository(TTSProviderEntity).insert({
       ...this._defaultProviders.tts,

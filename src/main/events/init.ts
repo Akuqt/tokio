@@ -1,4 +1,5 @@
-import { TIKTOK_EVENTS } from "@/common/types";
+import { ThemeSchema } from "@/common/schemas";
+import { THEME_MODE, TIKTOK_EVENTS } from "@/common/types";
 import { cleanText, createStack } from "@/helper";
 
 const events = createStack();
@@ -23,6 +24,32 @@ events.push<string>(
       win?.webContents.send("app:audio:data", audio);
     });
     await connectorService.connect(username);
+  },
+);
+
+events.push(
+  "app:get:theme",
+  async ({ dbManagerService, jsonManagerService, nativeTheme }, e) => {
+    try {
+      const config = await dbManagerService.getAppConfig();
+      let mode = "dark";
+      if (config.theme_mode == THEME_MODE.SYSTEM) {
+        if (!nativeTheme.shouldUseDarkColors) {
+          mode = "light";
+        }
+      } else {
+        mode = config.theme_mode;
+      }
+      const path = config.theme.path;
+      const theme = await jsonManagerService.loadFile(path, ThemeSchema);
+      e.reply("app:res:theme", {
+        success: true,
+        theme,
+        mode,
+      });
+    } catch {
+      e.reply("app:res:theme", { success: false });
+    }
   },
 );
 

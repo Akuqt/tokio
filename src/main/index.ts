@@ -1,7 +1,14 @@
 import "reflect-metadata";
 
 import { electronApp, is, optimizer } from "@electron-toolkit/utils";
-import { app, BrowserWindow, ipcMain, session, shell } from "electron";
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  nativeTheme,
+  session,
+  shell,
+} from "electron";
 import { join } from "path";
 import events from "./events";
 import Handler from "./handler";
@@ -26,9 +33,13 @@ let win: BrowserWindow | null = null;
 
 function createWindow(): void {
   win = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 1200,
+    minWidth: 1200,
+    height: 800,
+    minHeight: 800,
     show: false,
+    titleBarStyle: "hidden",
+    title: "Tokio",
     autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, "../preload/index.mjs"),
@@ -42,6 +53,7 @@ function createWindow(): void {
     shell,
     ipcMain,
     session,
+    nativeTheme,
     pathManagerService: new PathManagerService(),
     connectorService: new TikTokConnectorService(),
     ttsService: new TTSService(),
