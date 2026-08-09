@@ -11,6 +11,7 @@ import {
   App,
   BrowserWindow,
   IpcMain,
+  NativeTheme,
   session as Session,
   Shell,
 } from "electron";
@@ -22,6 +23,7 @@ export interface AppHandlerVariables {
   readonly ipcMain: IpcMain;
   readonly shell: Shell;
   readonly session: typeof Session;
+  readonly nativeTheme: NativeTheme;
   readonly connectorService: TikTokConnectorService;
   readonly ttsService: TTSService;
   readonly serverService: ServerService;

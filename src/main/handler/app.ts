@@ -14,6 +14,7 @@ import type {
   App,
   BrowserWindow,
   IpcMain,
+  NativeTheme,
   session as Session,
   Shell,
 } from "electron";
@@ -24,6 +25,7 @@ export class AppHandler implements AppHandlerVariables {
   public readonly win: BrowserWindow;
   public readonly ipcMain: IpcMain;
   public readonly shell: Shell;
+  public readonly nativeTheme: NativeTheme;
   public readonly session: typeof Session;
   public readonly connectorService: TikTokConnectorService;
   public readonly ttsService: TTSService;
@@ -39,6 +41,7 @@ export class AppHandler implements AppHandlerVariables {
     this.ipcMain = deps.ipcMain;
     this.shell = deps.shell;
     this.session = deps.session;
+    this.nativeTheme = deps.nativeTheme;
     this.connectorService = deps.connectorService;
     this.ttsService = deps.ttsService;
     this.serverService = deps.serverService;
@@ -98,6 +101,31 @@ export class AppHandler implements AppHandlerVariables {
 
     this.win?.on("ready-to-show", async () => {
       this.win?.show();
+    });
+
+    this.ipcMain.on("window-minimize", () => {
+      this.win.minimize();
+    });
+
+    this.ipcMain.on("window-maximize", () => {
+      if (this.win.isMaximized()) {
+        this.win.unmaximize();
+      } else {
+        this.win.maximize();
+      }
+    });
+
+    this.win?.on("resize", () => {
+      if (this.win?.isNormal()) {
+        this.win.webContents.send("window-resize", "normal");
+      } else {
+        this.win?.webContents.send("window-resize", "mazimized");
+      }
+      this.win?.webContents.send("close:sidebar", true);
+    });
+
+    this.ipcMain.on("window-close", () => {
+      this.win.close();
     });
   }
 
