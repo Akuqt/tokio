@@ -1,5 +1,7 @@
 import type { EventCallback, EventItem } from "../types";
 
+export * from "./constants";
+
 export class EventStack<T, U> {
   private evs: EventItem<T, U, any>[];
 
