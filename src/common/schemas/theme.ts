@@ -5,11 +5,11 @@ const Color = z.string().min(7).max(9);
 const Theme = z.object({
   backgroundColor: z.object({
     primary: Color,
-    secundary: Color,
+    secondary: Color,
   }),
   fontColor: z.object({
     primary: Color,
-    secundary: Color,
+    secondary: Color,
   }),
   logo: z.object({
     primary: Color,
