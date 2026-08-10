@@ -38,6 +38,7 @@ export enum THEME_MODE {
 
 export interface AppTheme {
   id?: number;
+  file: string;
   name: string;
   path: string;
 }
@@ -45,6 +46,7 @@ export interface AppTheme {
 export interface AppProfile {
   id?: number;
   name: string;
+  file: string;
   path: string;
 }
 
@@ -66,3 +68,14 @@ export interface AppConfig {
 }
 
 export type Provider = { name: string; active: boolean };
+
+export type VoiceData = {
+  name: string;
+  lang: string;
+};
+
+export type ServiceAppProvider = {
+  name: string;
+  active: boolean;
+  type: "tts" | "connector";
+};
