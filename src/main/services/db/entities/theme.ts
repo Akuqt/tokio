@@ -6,6 +6,9 @@ export class AppThemeEntity {
   id: number;
 
   @Column("text")
+  file: string;
+
+  @Column("text")
   name: string;
 
   @Column("text")

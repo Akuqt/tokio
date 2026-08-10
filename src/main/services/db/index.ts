@@ -6,7 +6,7 @@ import {
   AppTheme,
   THEME_MODE,
 } from "@/common/types";
-import { defaultTheme, formatError } from "@/common/util";
+import { defaultProfile, defaultTheme, formatError } from "@/common/util";
 import Logger from "@/logger";
 import { JSONManagerService, PathManagerService } from "@/services";
 import { join } from "path";
@@ -97,14 +97,16 @@ export class DBManagerService extends Service {
       connector_provider: this._defaultProviders.connector,
       tts_provider: this._defaultProviders.tts,
       profile: {
-        name: "default",
+        name: "Default",
+        file: "default.json",
         path: join(
           this._pathManagerService.folders.profilesFolder,
           "default.json",
         ),
       },
       theme: {
-        name: "default",
+        name: "Default",
+        file: "default.json",
         path: join(
           this._pathManagerService.folders.themesFolder,
           "default.json",
@@ -290,18 +292,7 @@ export class DBManagerService extends Service {
     const profile = await this._jsonManagerService.saveFile(
       this._defaultAppConfig.profile.path,
       ProfileSchema,
-      {
-        name: "default",
-        tiktok: {
-          username: "",
-        },
-        tts: {
-          voice: {
-            category: "",
-            name: "",
-          },
-        },
-      },
+      defaultProfile,
     );
 
     if (!profile) throw new Error("Unable to save default profile file.");
@@ -324,11 +315,13 @@ export class DBManagerService extends Service {
 
     await this._dataSource.getRepository(AppThemeEntity).insert({
       name: this._defaultAppConfig.theme.name,
+      file: this._defaultAppConfig.theme.file,
       path: this._defaultAppConfig.theme.path,
     });
 
     await this._dataSource.getRepository(AppProfileEntity).insert({
       name: this._defaultAppConfig.profile.name,
+      file: this._defaultAppConfig.profile.file,
       path: this._defaultAppConfig.profile.path,
     });
 

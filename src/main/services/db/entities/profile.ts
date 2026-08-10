@@ -9,5 +9,8 @@ export class AppProfileEntity {
   name: string;
 
   @Column("text")
+  file: string;
+
+  @Column("text")
   path: string;
 }
