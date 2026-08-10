@@ -78,7 +78,7 @@ export type EnglishVoiceName =
   | "Confidence"
   | "Smooth";
 
-export type SpanishVoiceName = "Spanish (Spain) - Male" | "Spanish MX - Male";
+export type SpanishVoiceName = "Pedro" | "Juan";
 
 export type VoiceName = {
   [key in SupportedLanguage]: key extends "en"

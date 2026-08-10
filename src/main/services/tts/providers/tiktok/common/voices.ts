@@ -1,4 +1,4 @@
-import { VoiceData } from "../../../shared";
+import { VoiceData } from "../../../common";
 import { EnglishVoiceName, SpanishVoiceName } from "../types";
 
 export const EnglishVoicesData: Record<EnglishVoiceName, string> = {
@@ -55,8 +55,8 @@ export const EnglishVoicesData: Record<EnglishVoiceName, string> = {
 } as const;
 
 export const SpanishVoicesData: Record<SpanishVoiceName, string> = {
-  "Spanish (Spain) - Male": "es_002",
-  "Spanish MX - Male": "es_mx_002",
+  Pedro: "es_002",
+  Juan: "es_mx_002",
 } as const;
 
 export const VoicesData: Record<EnglishVoiceName | SpanishVoiceName, string> = {
