@@ -1,4 +1,5 @@
-import { Theme } from "@/common/schemas";
+import { Profile, Theme } from "@/common/schemas";
+import { ServiceAppProvider, VoiceData } from "@/common/types";
 import { electronAPI } from "@electron-toolkit/preload";
 import { contextBridge, ipcRenderer } from "electron";
 
@@ -39,6 +40,60 @@ const api = {
           mode: "dark" | "light";
         },
       ) => callback(res),
+    ),
+  getProfile: () => ipcRenderer.send("app:get:profile"),
+  setProfile: (file: string) => ipcRenderer.send("app:set:profile", { file }),
+  onGetProfile: (
+    callback: (res: {
+      success: boolean;
+      profile: Profile;
+      profiles: { name: string; active: boolean; file: string }[];
+    }) => void,
+  ) =>
+    ipcRenderer.on(
+      "app:res:profile",
+      (
+        _,
+        res: {
+          success: boolean;
+          profile: Profile;
+          profiles: { name: string; active: boolean; file: string }[];
+        },
+      ) => callback(res),
+    ),
+  getServices: () => ipcRenderer.send("app:get:services"),
+  getVoices: () => ipcRenderer.send("app:get:voices"),
+  setServices: (name: string, type: "tts" | "connector", key?: string) =>
+    ipcRenderer.send("app:set:services", { name, type, key }),
+  onGetServices: (
+    callback: (res: {
+      success: boolean;
+      services: ServiceAppProvider[];
+    }) => void,
+  ) =>
+    ipcRenderer.on(
+      "app:res:services",
+      (
+        _,
+        res: {
+          success: boolean;
+          services: ServiceAppProvider[];
+        },
+      ) => callback(res),
+    ),
+  onGetVoices: (
+    callback: (res: { success: boolean; voices: VoiceData[] }) => void,
+  ) =>
+    ipcRenderer.on(
+      "app:res:voices",
+      (_, res: { success: boolean; voices: VoiceData[] }) => callback(res),
+    ),
+  updateTTSProfile: (settings: Profile["tts"]) =>
+    ipcRenderer.send("app:update:tts:profile", { settings }),
+  onUpdateTTSProfile: (callback: (res: { success: boolean }) => void) =>
+    ipcRenderer.on(
+      "app:update:res:tts:profile",
+      (_, res: { success: boolean }) => callback(res),
     ),
 };
 
