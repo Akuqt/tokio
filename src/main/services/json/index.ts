@@ -84,7 +84,7 @@ export class JSONManagerService extends Service {
     }
   }
 
-  async updateProfile<T>(
+  async updateFile<T>(
     filePath: string,
     schema: z.ZodType<T>,
     updates: Partial<T>,
