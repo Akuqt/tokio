@@ -16,7 +16,7 @@ import {
   VscChromeRestore,
 } from "react-icons/vsc";
 
-import { useTheme } from "@/hooks";
+import { useProfile, useTheme } from "@/hooks";
 
 const navItemStyle: React.CSSProperties = {
   display: "flex",
@@ -45,14 +45,15 @@ const windowControlStyle: React.CSSProperties = {
   transition: "background-color 0.2s, color 0.2s",
 };
 
-const profilesList = ["Stream Profile 1", "Stream Profile 2", "Guest Profile"]; // TODO: Fetch from main
-
 export function Layout() {
   const { mode, toggleMode } = useTheme();
+  const { profiles, changeProfile } = useProfile();
 
   const [isMaximized, setIsMaximized] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [activeProfile, setActiveProfile] = useState(profilesList[0]);
+  const [activeProfile, setActiveProfile] = useState(
+    profiles.find((p) => p.active),
+  );
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleMinimize = () => window.api?.minimize();
@@ -137,7 +138,7 @@ export function Layout() {
               height: "32px",
               borderRadius: "6px",
               cursor: "pointer",
-              color: "var(--font-color-secundary)",
+              color: "var(--font-color-secondary)",
               transition: "background-color 0.2s, color 0.2s",
               marginRight: "8px",
             }}
@@ -148,7 +149,7 @@ export function Layout() {
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = "transparent";
-              e.currentTarget.style.color = "var(--font-color-secundary)";
+              e.currentTarget.style.color = "var(--font-color-secondary)";
             }}
             title="Toggle Theme"
           >
@@ -170,7 +171,7 @@ export function Layout() {
                 gap: "8px",
                 color: isProfileOpen
                   ? "var(--font-color-primary)"
-                  : "var(--font-color-secundary)",
+                  : "var(--font-color-secondary)",
                 fontSize: "13px",
                 cursor: "pointer",
                 padding: "6px 16px",
@@ -204,7 +205,7 @@ export function Layout() {
               >
                 🌹
               </div>
-              <span>{activeProfile}</span>
+              <span>{activeProfile?.name}</span>
               <FiChevronDown
                 size={14}
                 style={{
@@ -234,12 +235,13 @@ export function Layout() {
                   gap: "2px",
                 }}
               >
-                {profilesList.map((profile) => (
+                {profiles.map((profile, key) => (
                   <div
-                    key={profile}
+                    key={key}
                     onClick={() => {
                       setActiveProfile(profile);
                       setIsProfileOpen(false);
+                      changeProfile(profile.file);
                     }}
                     style={{
                       display: "flex",
@@ -248,11 +250,11 @@ export function Layout() {
                       padding: "8px 12px",
                       fontSize: "13px",
                       color:
-                        activeProfile === profile
+                        activeProfile?.file === profile.file
                           ? "var(--font-color-primary)"
-                          : "var(--font-color-secundary)",
+                          : "var(--font-color-secondary)",
                       backgroundColor:
-                        activeProfile === profile
+                        activeProfile?.file === profile.file
                           ? "var(--nav-bar-profile-selected-background)"
                           : "transparent",
                       borderRadius: "4px",
@@ -260,16 +262,16 @@ export function Layout() {
                       transition: "background-color 0.2s",
                     }}
                     onMouseEnter={(e) => {
-                      if (activeProfile !== profile)
+                      if (activeProfile?.file !== profile.file)
                         e.currentTarget.style.backgroundColor =
                           "var(--nav-bar-profile-hover)";
                     }}
                     onMouseLeave={(e) => {
-                      if (activeProfile !== profile)
+                      if (activeProfile?.file !== profile.file)
                         e.currentTarget.style.backgroundColor = "transparent";
                     }}
                   >
-                    {profile}
+                    {profile.name}
                     {activeProfile === profile && (
                       <FiCheck
                         size={14}
