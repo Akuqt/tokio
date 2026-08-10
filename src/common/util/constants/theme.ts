@@ -1,14 +1,14 @@
-import { Theme } from "../schemas";
+import { Theme } from "../../schemas";
 
 export const defaultTheme: Theme = {
   dark: {
     backgroundColor: {
-      primary: "#000000", // Main content area
-      secundary: "#09090b", // Sidebar and Navbar
+      primary: "#1a1a1a", // Main content area
+      secondary: "#242424", // Sidebar and Navbar
     },
     fontColor: {
       primary: "#f4f4f5", // Main text (white-ish)
-      secundary: "#a1a1aa", // Muted text / unselected icons
+      secondary: "#a1a1aa", // Muted text / unselected icons
     },
     logo: {
       primary: "#ff4757", // Red background
@@ -48,11 +48,11 @@ export const defaultTheme: Theme = {
   light: {
     backgroundColor: {
       primary: "#ffffff", // White main content area
-      secundary: "#f4f4f5", // Light grey Sidebar and Navbar
+      secondary: "#f4f4f5", // Light grey Sidebar and Navbar
     },
     fontColor: {
       primary: "#09090b", // Almost black text
-      secundary: "#52525b", // Muted grey text
+      secondary: "#52525b", // Muted grey text
     },
     logo: {
       primary: "#ff4757", // Keep the red accent
