@@ -6,11 +6,13 @@ import { z } from "zod";
 import { Service } from "../shared";
 
 export class JSONManagerService extends Service {
+  private _writeLocks: Map<string, Promise<any>> = new Map();
+
   public setLogFile(logFile: string) {
     this._logFile = logFile;
   }
 
-  async saveFile<T>(
+  public async saveFile<T>(
     filePath: string,
     schema: z.ZodType<T>,
     data: T,
@@ -21,23 +23,21 @@ export class JSONManagerService extends Service {
 
       if (!validation.success) {
         Logger.error(
-          `<System> Schema validation failed while saving json file ${filePath} -- ${cleanText(z.prettifyError(validation.error))}}`,
+          `<System> Schema validation failed while saving json file ${filePath} -- ${cleanText(z.prettifyError(validation.error))}`,
           this._logFile,
         );
         return false;
       }
 
       const jsonString = JSON.stringify(data, null, 2);
-
       await fs.writeFile(tempPath, jsonString, "utf-8");
-
       await fs.rename(tempPath, filePath);
 
       return true;
     } catch (error) {
-      if (error instanceof SyntaxError) {
+      if (error instanceof TypeError) {
         Logger.error(
-          `<System> Schema validation failed while saving json file ${filePath} -- ${formatError(error)}`,
+          `<System> Data serialization failed for ${filePath} -- ${formatError(error)}`,
           this._logFile,
         );
       } else {
@@ -45,23 +45,28 @@ export class JSONManagerService extends Service {
           `<System> Unable to save json file ${filePath} -- ${formatError(error)}`,
           this._logFile,
         );
-        await fs.unlink(tempPath).catch(() => {});
       }
+      await fs.unlink(tempPath).catch(() => {});
       return false;
     }
   }
 
-  async loadFile<T>(filePath: string, schema: z.ZodType<T>): Promise<T | null> {
+  public async loadFile<T>(
+    filePath: string,
+    schema: z.ZodType<T>,
+  ): Promise<T | null> {
     try {
       const fileContent = await fs.readFile(filePath, "utf-8");
-
       const rawJson = JSON.parse(fileContent);
 
       const validation = schema.safeParse(rawJson);
 
       if (!validation.success) {
+        console.log(rawJson);
+        console.log(validation.error);
+
         Logger.error(
-          `<System> Schema validation failed while loading json file ${filePath} -- ${cleanText(z.prettifyError(validation.error))}}`,
+          `<System> Schema validation failed while loading json file ${filePath} -- ${cleanText(z.prettifyError(validation.error))}`,
           this._logFile,
         );
         return null;
@@ -71,9 +76,11 @@ export class JSONManagerService extends Service {
     } catch (error) {
       if (error instanceof SyntaxError) {
         Logger.error(
-          `<System> Schema validation failed while loading json file ${filePath} -- ${formatError(error)}`,
+          `<System> Malformed JSON in file ${filePath} -- ${formatError(error)}`,
           this._logFile,
         );
+      } else if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        return null;
       } else {
         Logger.error(
           `<System> Unable to load json file ${filePath} -- ${formatError(error)}`,
@@ -84,21 +91,35 @@ export class JSONManagerService extends Service {
     }
   }
 
-  async updateFile<T>(
+  public async updateFile<T>(
     filePath: string,
     schema: z.ZodType<T>,
     updates: Partial<T>,
   ): Promise<boolean> {
-    const existingData = await this.loadFile(filePath, schema);
-    if (!existingData) {
-      Logger.error(
-        `<System> Unable to update json file ${filePath} -- ${formatError(new Error("File does not exist or is invalid."))}`,
-        this._logFile,
-      );
-      return false;
+    const currentLock = this._writeLocks.get(filePath) || Promise.resolve();
+
+    const updatePromise = currentLock.then(async () => {
+      const existingData = await this.loadFile(filePath, schema);
+      if (!existingData) {
+        Logger.error(
+          `<System> Unable to update json file ${filePath} -- File does not exist or is invalid.`,
+          this._logFile,
+        );
+        return false;
+      }
+      const mergedData = this._deepMerge(existingData, updates);
+      return this.saveFile(filePath, schema, mergedData);
+    });
+
+    this._writeLocks.set(filePath, updatePromise);
+
+    try {
+      return await updatePromise;
+    } finally {
+      if (this._writeLocks.get(filePath) === updatePromise) {
+        this._writeLocks.delete(filePath);
+      }
     }
-    const mergedData = this._deepMerge(existingData, updates);
-    return this.saveFile(filePath, schema, mergedData);
   }
 
   private _deepMerge(target: any, source: any): any {
