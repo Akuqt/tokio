@@ -2,10 +2,10 @@ import { APP_EVENTS } from "@/common/types";
 import config from "@/config";
 import { checkInternetConnection } from "@/helper";
 import type {
-  DBManagerService,
   JSONManagerService,
   PathManagerService,
   ServerService,
+  StoreManagerService,
   TikTokConnectorService,
   TTSService,
   URLManagerService,
@@ -33,7 +33,7 @@ export class AppHandler implements AppHandlerVariables {
   public readonly serverService: ServerService;
   public readonly urlManagerService: URLManagerService;
   public readonly jsonManagerService: JSONManagerService;
-  public readonly dbManagerService: DBManagerService;
+  public readonly storeManagerService: StoreManagerService;
   public readonly pathManagerService: PathManagerService;
 
   constructor(deps: Omit<AppHandlerVariables, "internet">) {
@@ -48,7 +48,7 @@ export class AppHandler implements AppHandlerVariables {
     this.serverService = deps.serverService;
     this.urlManagerService = deps.urlManagerService;
     this.jsonManagerService = deps.jsonManagerService;
-    this.dbManagerService = deps.dbManagerService;
+    this.storeManagerService = deps.storeManagerService;
     this.pathManagerService = deps.pathManagerService;
     this.internet = true;
   }
@@ -62,12 +62,12 @@ export class AppHandler implements AppHandlerVariables {
         this.ttsService.setLogFile(files.logs.tts);
         this.serverService.setLogFile(files.logs.server);
         this.urlManagerService.setLogFile(files.logs.system);
-        this.dbManagerService.setLogFile(files.logs.system);
+        this.storeManagerService.setLogFile(files.logs.system);
         this.jsonManagerService.setLogFile(files.logs.system);
       },
     );
     await this.checkInternet();
-    await this.dbManagerService.initialize(
+    await this.storeManagerService.initialize(
       config.DB.name,
       config.DB.providers,
       this.jsonManagerService,

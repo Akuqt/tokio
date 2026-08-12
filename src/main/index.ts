@@ -13,10 +13,10 @@ import { join } from "path";
 import events from "./events";
 import Handler from "./handler";
 import {
-  DBManagerService,
   JSONManagerService,
   PathManagerService,
   ServerService,
+  StoreManagerService,
   TikTokConnectorService,
   TTSService,
   URLManagerService,
@@ -60,7 +60,7 @@ function createWindow(): void {
     serverService: new ServerService(),
     urlManagerService: new URLManagerService(),
     jsonManagerService: new JSONManagerService(),
-    dbManagerService: new DBManagerService(),
+    storeManagerService: new StoreManagerService(),
   }).init(events);
 
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {

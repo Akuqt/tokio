@@ -1,9 +1,9 @@
 import { APP_EVENTS, AppEventsMap } from "@/common/types";
 import {
-  DBManagerService,
   JSONManagerService,
   PathManagerService,
   ServerService,
+  StoreManagerService,
   TikTokConnectorService,
   TTSService,
   URLManagerService,
@@ -31,7 +31,7 @@ export interface AppHandlerVariables {
   readonly serverService: ServerService;
   readonly urlManagerService: URLManagerService;
   readonly jsonManagerService: JSONManagerService;
-  readonly dbManagerService: DBManagerService;
+  readonly storeManagerService: StoreManagerService;
   readonly pathManagerService: PathManagerService;
 }
 

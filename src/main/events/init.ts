@@ -1,24 +1,36 @@
 import { ProfileSchema, ThemeSchema } from "@/common/schemas";
 import { APP_EVENTS, THEME_MODE } from "@/common/types";
 import { createStack } from "@/helper";
+import { join } from "path";
 
 const events = createStack();
 
 events.push(
   APP_EVENTS.GET_THEME,
-  async ({ dbManagerService, jsonManagerService, nativeTheme }, e) => {
+  async (
+    {
+      storeManagerService,
+      jsonManagerService,
+      nativeTheme,
+      pathManagerService,
+    },
+    e,
+  ) => {
     try {
-      const config = await dbManagerService.getAppConfig();
+      const config = storeManagerService.getSettings();
       let mode = "dark";
-      if (config.theme_mode == THEME_MODE.SYSTEM) {
+      if (config.appearance.mode == THEME_MODE.SYSTEM) {
         if (!nativeTheme.shouldUseDarkColors) {
           mode = "light";
         }
       } else {
-        mode = config.theme_mode;
+        mode = config.appearance.mode;
       }
-      const path = config.theme.path;
-      const theme = await jsonManagerService.loadFile(path, ThemeSchema);
+      const file = config.appearance.activeThemeFile;
+      const theme = await jsonManagerService.loadFile(
+        join(pathManagerService.folders.themesFolder, file),
+        ThemeSchema,
+      );
       e.reply(APP_EVENTS.RES_GET_THEME, {
         success: true,
         theme,
@@ -32,15 +44,21 @@ events.push(
 
 events.push(
   APP_EVENTS.GET_PROFILE,
-  async ({ dbManagerService, jsonManagerService }, e) => {
+  async (
+    { storeManagerService, jsonManagerService, pathManagerService },
+    e,
+  ) => {
     try {
-      const config = await dbManagerService.getAppConfig();
-      const path = config.profile.path;
-      const profile = await jsonManagerService.loadFile(path, ProfileSchema);
-      const profiles = (await dbManagerService.getAppProfiles()).map((p) => ({
+      const config = storeManagerService.getSettings();
+      const file = config.activeProfileFile;
+      const profile = await jsonManagerService.loadFile(
+        join(pathManagerService.folders.profilesFolder, file),
+        ProfileSchema,
+      );
+      const profiles = storeManagerService.getProfiles().map((p) => ({
         name: p.name,
         file: p.file,
-        active: p.file === config.profile.file,
+        active: p.file === config.activeProfileFile,
       }));
       e.reply(APP_EVENTS.RES_GET_PROFILE, {
         success: true,
@@ -55,17 +73,21 @@ events.push(
 
 events.push(
   APP_EVENTS.SET_PROFILE,
-  async ({ dbManagerService, jsonManagerService }, e, { file }) => {
+  async (
+    { storeManagerService, jsonManagerService, pathManagerService },
+    e,
+    { file },
+  ) => {
     try {
-      const config = await dbManagerService.getAppConfig();
-      if (config.profile.file === file) {
+      const config = storeManagerService.getSettings();
+      if (config.activeProfileFile === file) {
         return;
       }
-      const k = await dbManagerService.getAppProfiles();
+      const k = storeManagerService.getProfiles();
       const tmp = k.find((p) => p.file === file);
       if (!tmp) return;
       const profile = await jsonManagerService.loadFile(
-        tmp.path,
+        join(pathManagerService.folders.profilesFolder, tmp.file),
         ProfileSchema,
       );
       const profiles = k.map((p) => ({
@@ -73,7 +95,7 @@ events.push(
         file: p.file,
         active: p.file === file,
       }));
-      await dbManagerService.updateAppConfigProfile(tmp.id || 1);
+      storeManagerService.updateActiveProfile(tmp.file);
       e.reply(APP_EVENTS.RES_GET_PROFILE, {
         success: true,
         profile,
@@ -146,12 +168,23 @@ events.push(
 
 events.push(
   APP_EVENTS.UPDATE_TTS_SETTINGS,
-  async ({ dbManagerService, jsonManagerService }, e, { settings }) => {
+  async (
+    { storeManagerService, jsonManagerService, pathManagerService },
+    e,
+    { settings },
+  ) => {
     try {
-      const config = await dbManagerService.getAppConfig();
-      await jsonManagerService.updateFile(config.profile.path, ProfileSchema, {
-        tts: settings,
-      });
+      const config = storeManagerService.getSettings();
+      await jsonManagerService.updateFile(
+        join(
+          pathManagerService.folders.profilesFolder,
+          config.activeProfileFile,
+        ),
+        ProfileSchema,
+        {
+          tts: settings,
+        },
+      );
       e.reply(APP_EVENTS.RES_UPDATE_TTS_SETTINGS, {
         success: true,
       });
