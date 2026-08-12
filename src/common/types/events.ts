@@ -98,14 +98,3 @@ export interface AppEventsMap {
     data: Uint8Array<ArrayBufferLike>;
   };
 }
-
-export type EventCallback<T, U, K extends APP_EVENTS> = (
-  handler: T,
-  event: U,
-  data: AppEventsMap[K],
-) => void;
-
-export interface EventItem<T, U, K extends APP_EVENTS> {
-  event: K;
-  callback: EventCallback<T, U, K>;
-}
