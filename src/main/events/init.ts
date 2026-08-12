@@ -1,5 +1,5 @@
 import { ProfileSchema, ThemeSchema } from "@/common/schemas";
-import { APP_EVENTS, THEME_MODE } from "@/common/types";
+import { APP_EVENTS } from "@/common/types";
 import { createStack } from "@/helper";
 import { join } from "path";
 
@@ -19,7 +19,7 @@ events.push(
     try {
       const config = storeManagerService.getSettings();
       let mode = "dark";
-      if (config.appearance.mode == THEME_MODE.SYSTEM) {
+      if (config.appearance.mode == "system") {
         if (!nativeTheme.shouldUseDarkColors) {
           mode = "light";
         }
@@ -38,6 +38,17 @@ events.push(
       });
     } catch {
       e.reply(APP_EVENTS.RES_GET_THEME, { success: false });
+    }
+  },
+);
+
+events.push(
+  APP_EVENTS.SET_THEME_MODE,
+  async ({ storeManagerService }, _, { mode }) => {
+    try {
+      storeManagerService.updateAppearance(mode);
+    } catch {
+      // next
     }
   },
 );

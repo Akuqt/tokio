@@ -73,7 +73,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (!theme) return;
 
     const newMode = mode === "dark" ? "light" : "dark";
-
+    window.api.emit(APP_EVENTS.SET_THEME_MODE, { mode: newMode });
     applyThemeVariables(theme[newMode]);
     setMode(newMode);
   };
