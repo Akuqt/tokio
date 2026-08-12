@@ -49,6 +49,7 @@ const Theme = z.object({
 
 // TODO: Finish Theme schema
 export const ThemeSchema = z.object({
+  name: z.string().min(3),
   dark: Theme,
   light: Theme,
 });

@@ -1,6 +1,7 @@
 import { Theme } from "../../schemas";
 
 export const defaultTheme: Theme = {
+  name: "Default",
   dark: {
     backgroundColor: {
       primary: "#1a1a1a", // Main content area
