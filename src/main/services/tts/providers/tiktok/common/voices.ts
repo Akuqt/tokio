@@ -64,7 +64,7 @@ export const VoicesData: Record<EnglishVoiceName | SpanishVoiceName, string> = {
   ...SpanishVoicesData,
 };
 
-const Voices: VoiceData = [];
+const Voices: VoiceData[] = [];
 
 for (const voice of Object.keys(EnglishVoicesData)) {
   Voices.push({ name: voice, lang: "en" });

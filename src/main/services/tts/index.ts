@@ -41,7 +41,7 @@ export class TTSService extends ProviderService<TTSProvider> {
     }));
   }
 
-  public getVoices(): VoiceData {
+  public getVoices(): VoiceData[] {
     if (!this._current?.provider) return [];
     return this._current.provider.getVoices();
   }

@@ -104,7 +104,7 @@ export class TikTokTTS extends TTSProvider {
     return { success: false };
   }
 
-  public getVoices(): VoiceData {
+  public getVoices(): VoiceData[] {
     return Voices;
   }
 }
