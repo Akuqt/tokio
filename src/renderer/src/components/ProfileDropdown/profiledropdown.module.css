@@ -1,0 +1,61 @@
+.container {
+  -webkit-app-region: no-drag;
+  position: relative;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 6px 16px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.toggle:hover {
+  background-color: var(--nav-bar-profile-hover) !important;
+}
+
+.profile {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--nav-bar-profile-selected-background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.profiles_container {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 16px;
+  width: 200px;
+  background-color: var(--background-color-secundary);
+  border: 1px solid var(--nav-bar-profile-selected-background);
+  border-radius: 6px;
+  padding: 4px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profiles_item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.profiles_item:hover {
+  background-color: var(--nav-bar-profile-hover);
+}
