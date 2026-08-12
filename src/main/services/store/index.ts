@@ -7,7 +7,6 @@ import {
   StoreZodSchema,
   ThemeSchema,
 } from "@/common/schemas";
-import { THEME_MODE } from "@/common/types";
 import { defaultProfile, defaultTheme, formatError } from "@/common/util";
 import { defaultStoreData } from "@/common/util/constants/store";
 import Logger from "@/logger";
@@ -160,7 +159,10 @@ export class StoreManagerService extends Service {
     this.events.emit("settings-changed", this.getSettings());
   }
 
-  public updateAppearance(mode: THEME_MODE, activeThemeFile?: string): void {
+  public updateAppearance(
+    mode: "dark" | "light",
+    activeThemeFile?: string,
+  ): void {
     this._ensureInitialized();
     this._storeData!.settings.appearance.mode = mode;
     if (activeThemeFile) {

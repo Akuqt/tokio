@@ -1,5 +1,4 @@
 import { StoreSchema } from "@/common/schemas";
-import { THEME_MODE } from "@/common/types";
 
 export const defaultStoreData: StoreSchema = {
   settings: {
@@ -8,7 +7,7 @@ export const defaultStoreData: StoreSchema = {
       port: 6767,
     },
     appearance: {
-      mode: THEME_MODE.SYSTEM,
+      mode: "system",
       activeThemeFile: "default.json",
     },
     activeProfileFile: "default.json",

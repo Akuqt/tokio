@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { THEME_MODE } from "../types";
 
 export const ProviderSchema = z.object({
   name: z.string(),
@@ -17,7 +16,7 @@ export const AppSettingsSchema = z.object({
     port: z.number().min(1024).max(65535),
   }),
   appearance: z.object({
-    mode: z.enum(THEME_MODE),
+    mode: z.enum(["dark", "light", "system"]),
     activeThemeFile: z.string(),
   }),
   activeProfileFile: z.string(),

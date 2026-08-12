@@ -1,9 +1,3 @@
-export enum THEME_MODE {
-  DARK = "dark",
-  LIGHT = "light",
-  SYSTEM = "system",
-}
-
 export interface AppTheme {
   id?: number;
   file: string;
@@ -28,7 +22,7 @@ export interface AppConfig {
   id?: number;
   enable_server: boolean;
   server_port: number;
-  theme_mode: THEME_MODE;
+  theme_mode: "dark" | "light" | "system";
   theme: AppTheme;
   profile: AppProfile;
   connector_provider: AppProvider;

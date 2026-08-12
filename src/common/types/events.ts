@@ -13,6 +13,7 @@ export enum APP_EVENTS {
   // THEME
   GET_THEME = "app:get:theme",
   RES_GET_THEME = "app:res:theme",
+  SET_THEME_MODE = "app:set:theme:mode",
 
   // PROFILE
   GET_PROFILE = "app:get:profile",
@@ -46,6 +47,9 @@ export interface AppEventsMap {
 
   // THEME
   [APP_EVENTS.GET_THEME]: void;
+  [APP_EVENTS.SET_THEME_MODE]: {
+    mode: "dark" | "light";
+  };
   [APP_EVENTS.RES_GET_THEME]: {
     success: boolean;
     theme: Theme;
