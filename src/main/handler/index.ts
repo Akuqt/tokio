@@ -1,18 +1,14 @@
-import { EventCallback } from "@/common/types";
-import { EventStack } from "@/common/util";
-import { AppHandlerVariables } from "@/types";
-import { IpcMainEvent } from "electron";
+import { APP_EVENTS } from "@/common/types";
+import { Stack } from "@/helper";
+import { EventCallback } from "@/types";
 import { AppHandler } from "./app";
 
 export default class Handler extends AppHandler {
-  private addEvent(
-    name: string,
-    cb: EventCallback<AppHandlerVariables, IpcMainEvent, any>,
-  ) {
+  private addEvent(name: APP_EVENTS, cb: EventCallback<APP_EVENTS>) {
     this.ipcMain.on(name, (ev, params) => cb(this, ev, params));
   }
 
-  public async init(events: EventStack<AppHandlerVariables, IpcMainEvent>) {
+  public async init(events: Stack) {
     await this.initApp();
 
     for (const { event, callback } of events.getEvents()) {

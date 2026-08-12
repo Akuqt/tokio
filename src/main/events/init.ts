@@ -1,34 +1,11 @@
-import { Profile, ProfileSchema, ThemeSchema } from "@/common/schemas";
-import { THEME_MODE, TIKTOK_EVENTS } from "@/common/types";
-import { cleanText, createStack } from "@/helper";
+import { ProfileSchema, ThemeSchema } from "@/common/schemas";
+import { APP_EVENTS, THEME_MODE } from "@/common/types";
+import { createStack } from "@/helper";
 
 const events = createStack();
 
-events.push<string>(
-  "app:listener:start",
-  async ({ connectorService, win, ttsService }, e, username) => {
-    connectorService.on(TIKTOK_EVENTS.CONNECTED, () => {
-      e.reply("app:listener:done");
-    });
-    // NOTE: Testing TTS
-    connectorService.on(TIKTOK_EVENTS.CHAT, async (chatData) => {
-      const template = `${cleanText(chatData.user.username)} dice ${cleanText(chatData.comment.content)}`;
-      console.log(template);
-      const res = await ttsService.generateBuffer(
-        template,
-        "es",
-        "Spanish MX - Male",
-      );
-      if (!res.success || !res.buffer) return;
-      const audio = new Uint8Array(res.buffer);
-      win?.webContents.send("app:audio:data", audio);
-    });
-    await connectorService.connect(username);
-  },
-);
-
 events.push(
-  "app:get:theme",
+  APP_EVENTS.GET_THEME,
   async ({ dbManagerService, jsonManagerService, nativeTheme }, e) => {
     try {
       const config = await dbManagerService.getAppConfig();
@@ -42,19 +19,19 @@ events.push(
       }
       const path = config.theme.path;
       const theme = await jsonManagerService.loadFile(path, ThemeSchema);
-      e.reply("app:res:theme", {
+      e.reply(APP_EVENTS.RES_GET_THEME, {
         success: true,
         theme,
         mode,
       });
     } catch {
-      e.reply("app:res:theme", { success: false });
+      e.reply(APP_EVENTS.RES_GET_THEME, { success: false });
     }
   },
 );
 
 events.push(
-  "app:get:profile",
+  APP_EVENTS.GET_PROFILE,
   async ({ dbManagerService, jsonManagerService }, e) => {
     try {
       const config = await dbManagerService.getAppConfig();
@@ -65,19 +42,19 @@ events.push(
         file: p.file,
         active: p.file === config.profile.file,
       }));
-      e.reply("app:res:profile", {
+      e.reply(APP_EVENTS.RES_GET_PROFILE, {
         success: true,
         profile,
         profiles,
       });
     } catch {
-      e.reply("app:res:profile", { success: false });
+      e.reply(APP_EVENTS.RES_GET_PROFILE, { success: false });
     }
   },
 );
 
-events.push<{ file: string }>(
-  "app:set:profile",
+events.push(
+  APP_EVENTS.SET_PROFILE,
   async ({ dbManagerService, jsonManagerService }, e, { file }) => {
     try {
       const config = await dbManagerService.getAppConfig();
@@ -97,7 +74,7 @@ events.push<{ file: string }>(
         active: p.file === file,
       }));
       await dbManagerService.updateAppConfigProfile(tmp.id || 1);
-      e.reply("app:res:profile", {
+      e.reply(APP_EVENTS.RES_GET_PROFILE, {
         success: true,
         profile,
         profiles,
@@ -108,38 +85,41 @@ events.push<{ file: string }>(
   },
 );
 
-events.push("app:get:services", async ({ ttsService, connectorService }, e) => {
-  try {
-    const ttsProviders = ttsService
-      .getProviders()
-      .map((p) => ({ ...p, type: "tts" }));
-    const connProviders = connectorService
-      .getProviders()
-      .map((p) => ({ ...p, type: "connector" }));
+events.push(
+  APP_EVENTS.GET_SERVICE_PROVIDERS,
+  async ({ ttsService, connectorService }, e) => {
+    try {
+      const ttsProviders = ttsService
+        .getProviders()
+        .map((p) => ({ ...p, type: "tts" }));
+      const connProviders = connectorService
+        .getProviders()
+        .map((p) => ({ ...p, type: "connector" }));
 
-    e.reply("app:res:services", {
-      services: [...ttsProviders, ...connProviders],
-      success: true,
-    });
-  } catch {
-    e.reply("app:res:services", { success: false });
-  }
-});
+      e.reply(APP_EVENTS.RES_GET_SERVICE_PROVIDERS, {
+        services: [...ttsProviders, ...connProviders],
+        success: true,
+      });
+    } catch {
+      e.reply(APP_EVENTS.RES_GET_SERVICE_PROVIDERS, { success: false });
+    }
+  },
+);
 
-events.push("app:get:voices", async ({ ttsService }, e) => {
+events.push(APP_EVENTS.GET_VOICES, async ({ ttsService }, e) => {
   try {
     const voices = ttsService.getVoices();
-    e.reply("app:res:voices", {
+    e.reply(APP_EVENTS.RES_GET_VOICES, {
       voices,
       success: true,
     });
   } catch {
-    e.reply("app:res:voices", { success: false });
+    e.reply(APP_EVENTS.RES_GET_VOICES, { success: false });
   }
 });
 
-events.push<{ name: string; type: "tts" | "connector"; key?: string }>(
-  "app:set:services",
+events.push(
+  APP_EVENTS.SET_SERVICE_PROVIDER,
   async ({ ttsService, connectorService }, e, { name, type, key }) => {
     try {
       if (type === "tts") {
@@ -154,7 +134,7 @@ events.push<{ name: string; type: "tts" | "connector"; key?: string }>(
       const connProviders = connectorService
         .getProviders()
         .map((p) => ({ ...p, type: "connector" }));
-      e.reply("app:res:services", {
+      e.reply(APP_EVENTS.RES_GET_SERVICE_PROVIDERS, {
         services: [...ttsProviders, ...connProviders],
         success: true,
       });
@@ -164,19 +144,43 @@ events.push<{ name: string; type: "tts" | "connector"; key?: string }>(
   },
 );
 
-events.push<{ settings: Profile["tts"] }>(
-  "app:update:tts:profile",
+events.push(
+  APP_EVENTS.UPDATE_TTS_SETTINGS,
   async ({ dbManagerService, jsonManagerService }, e, { settings }) => {
     try {
       const config = await dbManagerService.getAppConfig();
       await jsonManagerService.updateFile(config.profile.path, ProfileSchema, {
         tts: settings,
       });
-      e.reply("app:update:res:tts:profile", {
+      e.reply(APP_EVENTS.RES_UPDATE_TTS_SETTINGS, {
         success: true,
       });
     } catch {
-      e.reply("app:update:res:tts:profile", {
+      e.reply(APP_EVENTS.RES_UPDATE_TTS_SETTINGS, {
+        success: false,
+      });
+    }
+  },
+);
+
+events.push(
+  APP_EVENTS.GET_TTS_TEST,
+  async ({ ttsService }, e, { text, voice }) => {
+    try {
+      const res = await ttsService.generateBuffer(text, voice.lang, voice.name);
+      if (!res.success || !res.buffer) {
+        e.reply(APP_EVENTS.RES_GET_TTS_TEST, {
+          success: false,
+        });
+        return;
+      }
+      const audio = new Uint8Array(res.buffer);
+      e.reply(APP_EVENTS.RES_GET_TTS_TEST, {
+        data: audio,
+        success: true,
+      });
+    } catch {
+      e.reply(APP_EVENTS.RES_GET_TTS_TEST, {
         success: false,
       });
     }

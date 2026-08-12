@@ -1,3 +1,4 @@
+import { APP_EVENTS, AppEventsMap } from "@/common/types";
 import {
   DBManagerService,
   JSONManagerService,
@@ -11,6 +12,7 @@ import {
   App,
   BrowserWindow,
   IpcMain,
+  IpcMainEvent,
   NativeTheme,
   session as Session,
   Shell,
@@ -31,4 +33,15 @@ export interface AppHandlerVariables {
   readonly jsonManagerService: JSONManagerService;
   readonly dbManagerService: DBManagerService;
   readonly pathManagerService: PathManagerService;
+}
+
+export type EventCallback<K extends APP_EVENTS> = (
+  handler: AppHandlerVariables,
+  event: IpcMainEvent,
+  data: AppEventsMap[K],
+) => void;
+
+export interface EventItem<K extends APP_EVENTS> {
+  event: K;
+  callback: EventCallback<K>;
 }

@@ -1,3 +1,4 @@
+import { APP_EVENTS } from "@/common/types";
 import config from "@/config";
 import { checkInternetConnection } from "@/helper";
 import type {
@@ -103,11 +104,11 @@ export class AppHandler implements AppHandlerVariables {
       this.win?.show();
     });
 
-    this.ipcMain.on("window-minimize", () => {
+    this.ipcMain.on(APP_EVENTS.MINIMIZE_WINDOW, () => {
       this.win.minimize();
     });
 
-    this.ipcMain.on("window-maximize", () => {
+    this.ipcMain.on(APP_EVENTS.MAXIMIZE_WINDOW, () => {
       if (this.win.isMaximized()) {
         this.win.unmaximize();
       } else {
@@ -117,14 +118,17 @@ export class AppHandler implements AppHandlerVariables {
 
     this.win?.on("resize", () => {
       if (this.win?.isNormal()) {
-        this.win.webContents.send("window-resize", "normal");
+        this.win.webContents.send(APP_EVENTS.RESIZE_WINDOW, {
+          state: "normal",
+        });
       } else {
-        this.win?.webContents.send("window-resize", "mazimized");
+        this.win?.webContents.send(APP_EVENTS.RESIZE_WINDOW, {
+          state: "maximized",
+        });
       }
-      this.win?.webContents.send("close:sidebar", true);
     });
 
-    this.ipcMain.on("window-close", () => {
+    this.ipcMain.on(APP_EVENTS.CLOSE_WINDOW, () => {
       this.win.close();
     });
   }
