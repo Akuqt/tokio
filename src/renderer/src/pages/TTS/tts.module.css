@@ -91,10 +91,11 @@
   font-size: 14px;
   white-space: nowrap;
   height: 38px !important;
-}
-
-.tester_btn:hover {
-  opacity: 0.75 !important;
+  display: flex;
+  justify-content: center;
+  flex-direction: row;
+  align-items: center;
+  width: 90px;
 }
 
 /*

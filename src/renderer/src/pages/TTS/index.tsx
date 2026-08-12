@@ -5,6 +5,7 @@ import { useServices } from "@renderer/hooks/useServices";
 import isEqual from "fast-deep-equal";
 import { useEffect, useMemo, useReducer, useRef } from "react";
 import { FiArrowRight, FiPlus, FiSave, FiTrash2 } from "react-icons/fi";
+import { ClipLoader } from "react-spinners";
 import { reducer } from "./helper";
 import styles from "./tts.module.css";
 
@@ -26,6 +27,7 @@ export function TTS() {
       bannedlistTemp,
       blacklistTemp,
       whitelistTemp,
+      testLoading,
     },
     dispatch,
   ] = useReducer(reducer, {
@@ -36,6 +38,7 @@ export function TTS() {
     bannedlistTemp: "",
     blacklistTemp: "",
     whitelistTemp: "",
+    testLoading: false,
   });
 
   useEffect(() => {
@@ -74,6 +77,7 @@ export function TTS() {
       APP_EVENTS.RES_GET_TTS_TEST,
       (res) => {
         if (res?.success) {
+          dispatch({ type: "setTestLoading", payload: false });
           ttsTestQueue.enqueue(res.data, true);
         }
       },
@@ -199,18 +203,31 @@ export function TTS() {
           <div className={styles.tester_container}>
             <button
               className={styles.tester_btn}
-              disabled={testMSG === ""}
+              disabled={testMSG === "" || testLoading}
               style={{
-                cursor: testMSG !== "" ? "pointer" : "inherit",
+                cursor:
+                  testMSG !== "" && !testLoading ? "pointer" : "not-allowed",
               }}
               onClick={() => {
+                dispatch({ type: "setTestLoading", payload: true });
                 window.api.emit(APP_EVENTS.GET_TTS_TEST, {
                   text: testMSG,
                   voice: settings.voice,
                 });
               }}
             >
-              Test Voice
+              {testLoading ? (
+                <ClipLoader
+                  size={16}
+                  color="var(--logo-secondary)"
+                  cssOverride={{
+                    margin: 4,
+                    padding: 0,
+                  }}
+                />
+              ) : (
+                <>Test Voice</>
+              )}
             </button>
             <input
               type="text"

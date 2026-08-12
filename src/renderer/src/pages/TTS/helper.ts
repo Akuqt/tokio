@@ -11,6 +11,7 @@ export interface TTSState {
   blacklistTemp: string;
   whitelistTemp: string;
   bannedlistTemp: string;
+  testLoading: boolean;
 }
 
 export type TTSAction =
@@ -23,6 +24,7 @@ export type TTSAction =
   | { type: "setPitch"; payload: number }
   | { type: "setVolume"; payload: number }
   | { type: "setTestMSG"; payload: string }
+  | { type: "setTestLoading"; payload: boolean }
   | {
       type: "setTrigger";
       payload: { mode: "any" | "dot" | "slash" | "custom"; value: string };
@@ -145,6 +147,9 @@ export const reducer = produce((draft: TTSState, action: TTSAction) => {
       break;
     case "setReplacements":
       draft.settings.replacements = action.payload;
+      break;
+    case "setTestLoading":
+      draft.testLoading = action.payload;
       break;
   }
 });
