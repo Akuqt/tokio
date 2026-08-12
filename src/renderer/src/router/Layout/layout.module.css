@@ -1,0 +1,180 @@
+/* GLOBAL */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  background-color: var(--background-color-primary);
+  color: var(--font-color-primary);
+}
+
+.main_area_container {
+  flex: 1;
+  display: flex;
+  width: 100%;
+  overflow: hidden;
+}
+
+.main_content_container {
+  flex: 1;
+  background-color: var(--background-color-primary);
+  padding: 2rem;
+  overflow-y: auto;
+  width: 100%;
+}
+
+/* LOGO */
+
+.logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background-color: var(--logo-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: var(--logo-secondary);
+  margin-left: 1.25rem;
+}
+
+/* THEME MODE TOGGLE */
+
+.theme_mode_toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--font-color-secondary);
+  background-color: transparent;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+  margin-right: 8px;
+  -webkit-app-region: no-drag;
+}
+
+.theme_mode_toggle:hover {
+  background-color: var(--nav-bar-profile-hover);
+  color: var(--font-color-primary);
+}
+
+/* NAVBAR - SIDEBAR */
+
+.nav {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--background-color-secundary);
+  border-bottom: 1px solid var(--nav-bar-profile-selected-background);
+  width: 100%;
+  -webkit-app-region: drag;
+}
+
+.sidebar {
+  width: 72px;
+  background-color: var(--background-color-secundary);
+  border-right: 1px solid var(--nav-bar-profile-selected-background);
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  gap: 4px;
+  z-index: 10;
+}
+
+.sidebar_item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--side-bar-items-color);
+  text-decoration: none;
+  font-size: 12px;
+  padding: 12px 4px;
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+
+.sidebar_item:hover {
+  color: var(--side-bar-items-hover);
+}
+
+.nav_top_items_container {
+  display: flex;
+  height: 100%;
+  align-items: center;
+}
+
+.window_controls_container {
+  -webkit-app-region: no-drag;
+  display: flex;
+  height: 100%;
+}
+
+.window_control_min {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 100%;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  color: var(--nav-bar-controls-minimize-color);
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+
+.window_control_min:hover {
+  background-color: var(--nav-bar-controls-minimize-hover);
+}
+
+.window_control_max {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 100%;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  color: var(--nav-bar-controls-maximize-color);
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+
+.window_control_max:hover {
+  background-color: var(--nav-bar-controls-maximize-hover);
+}
+
+.window_control_close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 100%;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  color: var(--nav-bar-controls-close-color);
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+
+.window_control_close:hover {
+  background-color: var(--nav-bar-controls-close-hover);
+}
