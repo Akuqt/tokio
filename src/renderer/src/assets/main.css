@@ -105,29 +105,3 @@ body,
     Cantarell,
     sans-serif;
 }
-
-/* Base style for nav links */
-.nav-link {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  color: var(--text-primary);
-  text-decoration: none;
-  font-size: 11px; /* Match the small, condensed sidebar font */
-  padding: 8px 4px;
-  border-radius: 6px;
-}
-
-.nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.05); /* Subtle dark hover */
-}
-
-.drag-region {
-  -webkit-app-region: drag;
-}
-
-.no-drag {
-  -webkit-app-region: no-drag;
-}
