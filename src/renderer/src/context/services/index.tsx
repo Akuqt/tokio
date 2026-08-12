@@ -1,9 +1,9 @@
-import { ServiceAppProvider } from "@/common/types";
+import { APP_EVENTS, ServiceAppProvider } from "@/common/types";
 import React, { createContext, useEffect, useState } from "react";
 
-export interface ServicesContextType {
+export interface ServiceProviderContextType {
   services: ServiceAppProvider[];
-  changeServices: (
+  changeServiceProvider: (
     name: string,
     type: "tts" | "connector",
     key?: string,
@@ -17,11 +17,11 @@ const defaultServices: ServiceAppProvider[] = [
   { name: "TikTok", type: "connector", active: true },
 ];
 
-export const ServicesContext = createContext<ServicesContextType | undefined>(
-  undefined,
-);
+export const ServiceProviderContext = createContext<
+  ServiceProviderContextType | undefined
+>(undefined);
 
-export function ServicesProvider({ children }: { children: React.ReactNode }) {
+export function ServiceProvider({ children }: { children: React.ReactNode }) {
   const [services, setServices] = useState<ServiceAppProvider[]>([]);
   const [servicesLoading, setServicesLoading] = useState(true);
 
@@ -32,44 +32,51 @@ export function ServicesProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    window.api.onGetServices((response) => {
-      let servicesToApply = defaultServices;
-      if (response.success && response.services) {
-        servicesToApply = response.services;
-      } else {
-        console.warn(
-          "Failed to load services from main, using default fallback.",
-        );
-      }
-      setServices(servicesToApply);
-      setServicesLoading(false);
-    });
+    const removeGetServices = window.api.on(
+      APP_EVENTS.RES_GET_SERVICE_PROVIDERS,
+      (response) => {
+        let servicesToApply = defaultServices;
+        if (response?.success && response.services) {
+          servicesToApply = response.services;
+        } else {
+          console.warn(
+            "Failed to load services from main, using default fallback.",
+          );
+        }
+        setServices(servicesToApply);
+        setServicesLoading(false);
+      },
+    );
 
-    window.api.getServices();
+    window.api.emit(APP_EVENTS.GET_SERVICE_PROVIDERS);
+
+    return () => {
+      removeGetServices();
+    };
   }, []);
 
-  const changeServices = (
+  const changeServiceProvider = (
     name: string,
     type: "tts" | "connector",
     key?: string,
   ) => {
     if (!services.find((p) => p.name === name)) return;
-    window.api.setServices(name, type, key);
+    window.api.emit(APP_EVENTS.SET_SERVICE_PROVIDER, { name, type, key });
   };
 
   const getVoices = () => {
-    window.api.getVoices();
+    window.api.emit(APP_EVENTS.GET_VOICES);
   };
 
   return (
-    <ServicesContext.Provider
-      value={{ services, changeServices, servicesLoading, getVoices }}
+    <ServiceProviderContext.Provider
+      value={{ services, changeServiceProvider, servicesLoading, getVoices }}
     >
       {servicesLoading ? (
         <div style={{ background: "#000", height: "100vh" }} /> // TODO: Handle Load later
       ) : (
         children
       )}
-    </ServicesContext.Provider>
+    </ServiceProviderContext.Provider>
   );
 }

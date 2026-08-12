@@ -1,5 +1,6 @@
-import { defaultProfile } from "@/common/util";
+import { APP_EVENTS } from "@/common/types";
 import { VoiceDropdown } from "@renderer/components/VoiceDropdown";
+import { useAudio, useProfile } from "@renderer/hooks";
 import { useServices } from "@renderer/hooks/useServices";
 import isEqual from "fast-deep-equal";
 import { useEffect, useMemo, useReducer, useRef } from "react";
@@ -8,9 +9,13 @@ import { reducer } from "./helper";
 import styles from "./tts.module.css";
 
 export function TTS() {
-  const { getVoices } = useServices();
-
   const isInitialMount = useRef(true);
+
+  const { getVoices } = useServices();
+  const { profile } = useProfile();
+  const { getQueue } = useAudio();
+
+  const ttsTestQueue = getQueue("tts_test");
 
   const [
     {
@@ -24,8 +29,8 @@ export function TTS() {
     },
     dispatch,
   ] = useReducer(reducer, {
-    settings: defaultProfile["tts"],
-    settingsTemp: defaultProfile["tts"],
+    settings: profile["tts"],
+    settingsTemp: profile["tts"],
     voices: [],
     testMSG: "",
     bannedlistTemp: "",
@@ -36,23 +41,50 @@ export function TTS() {
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      window.api.onGetVoices((res) => {
-        if (res.success) dispatch({ type: "setVoices", payload: res.voices });
-      });
-      window.api.onGetProfile((res) => {
-        if (res.success) {
-          dispatch({ type: "initSettings", payload: res.profile["tts"] });
-        }
-      });
-      window.api.onUpdateTTSProfile((res) => {
-        if (res.success) {
-          dispatch({ type: "setSettingsTemp" });
-        }
+      dispatch({ type: "initSettings", payload: profile["tts"] }); // First Time
+      ttsTestQueue.setFilters({
+        pitch: profile["tts"].filters.pitch,
+        speed: profile["tts"].filters.speed,
+        volume: profile["tts"].filters.volume / 100,
       });
       getVoices();
-      window.api.getProfile();
-      return;
     }
+
+    const removeGetVoices = window.api.on(APP_EVENTS.RES_GET_VOICES, (res) => {
+      if (res?.success) dispatch({ type: "setVoices", payload: res.voices });
+    });
+    const removeGetProfile = window.api.on(
+      APP_EVENTS.RES_GET_PROFILE,
+      (res) => {
+        if (res?.success) {
+          dispatch({ type: "initSettings", payload: res.profile["tts"] });
+        }
+      },
+    );
+    const removeUpdateTTSSettings = window.api.on(
+      APP_EVENTS.RES_UPDATE_TTS_SETTINGS,
+      (res) => {
+        if (res?.success) {
+          window.api.emit(APP_EVENTS.GET_PROFILE);
+        }
+      },
+    );
+
+    const removeGetTTSTest = window.api.on(
+      APP_EVENTS.RES_GET_TTS_TEST,
+      (res) => {
+        if (res?.success) {
+          ttsTestQueue.enqueue(res.data, true);
+        }
+      },
+    );
+
+    return () => {
+      removeGetProfile();
+      removeGetVoices();
+      removeUpdateTTSSettings();
+      removeGetTTSTest();
+    };
   }, []);
 
   const hasChanges = useMemo(() => {
@@ -65,7 +97,7 @@ export function TTS() {
         <button
           className={styles.floating_save_btn}
           onClick={() => {
-            window.api.updateTTSProfile(settings);
+            window.api.emit(APP_EVENTS.UPDATE_TTS_SETTINGS, { settings });
           }}
           style={{
             opacity: hasChanges ? 1 : 0,
@@ -106,12 +138,15 @@ export function TTS() {
                 max="2.0"
                 step="0.1"
                 value={settings.filters.speed}
-                onChange={(e) =>
+                onChange={(e) => {
                   dispatch({
                     type: "setSpeed",
                     payload: parseFloat(e.target.value),
-                  })
-                }
+                  });
+                  ttsTestQueue.setFilters({
+                    speed: settings.filters.speed,
+                  });
+                }}
               />
             </div>
 
@@ -125,12 +160,15 @@ export function TTS() {
                 max="2.0"
                 step="0.1"
                 value={settings.filters.pitch}
-                onChange={(e) =>
+                onChange={(e) => {
                   dispatch({
                     type: "setPitch",
                     payload: parseFloat(e.target.value),
-                  })
-                }
+                  });
+                  ttsTestQueue.setFilters({
+                    pitch: settings.filters.pitch,
+                  });
+                }}
               />
             </div>
 
@@ -144,12 +182,16 @@ export function TTS() {
                 max="100"
                 step="1"
                 value={settings.filters.volume}
-                onChange={(e) =>
+                onChange={(e) => {
                   dispatch({
                     type: "setVolume",
                     payload: parseFloat(e.target.value),
-                  })
-                }
+                  });
+
+                  ttsTestQueue.setFilters({
+                    volume: settings.filters.volume / 100,
+                  });
+                }}
               />
             </div>
           </div>
@@ -157,9 +199,15 @@ export function TTS() {
           <div className={styles.tester_container}>
             <button
               className={styles.tester_btn}
+              disabled={testMSG === ""}
+              style={{
+                cursor: testMSG !== "" ? "pointer" : "inherit",
+              }}
               onClick={() => {
-                // TODO: Handle voice testing
-                console.log(testMSG);
+                window.api.emit(APP_EVENTS.GET_TTS_TEST, {
+                  text: testMSG,
+                  voice: settings.voice,
+                });
               }}
             >
               Test Voice

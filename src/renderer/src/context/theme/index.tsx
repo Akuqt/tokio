@@ -1,4 +1,5 @@
 import { Theme } from "@/common/schemas";
+import { APP_EVENTS } from "@/common/types";
 import { defaultTheme } from "@/common/util";
 import React, { createContext, useEffect, useState } from "react";
 
@@ -41,22 +42,31 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    window.api.onGetTheme((response) => {
-      let themeToApply = defaultTheme;
-      let modeToApply: ThemeMode = "dark";
-      if (response.success && response.theme) {
-        themeToApply = response.theme;
-        modeToApply = response.mode;
-      } else {
-        console.warn("Failed to load theme from main, using default fallback.");
-      }
-      setTheme(themeToApply);
-      setMode(modeToApply);
-      applyThemeVariables(themeToApply[modeToApply]);
-      setThemeLoading(false);
-    });
+    const removeGetTheme = window.api.on(
+      APP_EVENTS.RES_GET_THEME,
+      (response) => {
+        let themeToApply = defaultTheme;
+        let modeToApply: ThemeMode = "dark";
+        if (response?.success && response.theme) {
+          themeToApply = response.theme;
+          modeToApply = response.mode;
+        } else {
+          console.warn(
+            "Failed to load theme from main, using default fallback.",
+          );
+        }
+        setTheme(themeToApply);
+        setMode(modeToApply);
+        applyThemeVariables(themeToApply[modeToApply]);
+        setThemeLoading(false);
+      },
+    );
 
-    window.api.getTheme();
+    window.api.emit(APP_EVENTS.GET_THEME);
+
+    return () => {
+      removeGetTheme();
+    };
   }, []);
 
   const toggleMode = () => {
