@@ -1,10 +1,10 @@
-import { AudioContext } from "@/context";
+import { AudioContext, AudioContextType } from "@/context";
 import { useContext } from "react";
 
-export const useAudio = () => {
+export function useAudio(): AudioContextType {
   const context = useContext(AudioContext);
   if (!context) {
     throw new Error("useAudio must be used within a AudioProvider");
   }
   return context;
-};
+}
