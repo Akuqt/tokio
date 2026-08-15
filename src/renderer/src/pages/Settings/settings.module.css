@@ -1,0 +1,151 @@
+/* GLOBAL */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding-top: 2rem;
+  padding-bottom: 12rem;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-bottom: 32px;
+  margin-bottom: 32px;
+  border-bottom: 1px solid var(--nav-bar-profile-selected-background);
+}
+
+.section_header {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--font-color-primary);
+  margin: 0 0 4px 0;
+}
+
+.section_description {
+  font-size: 14px;
+  color: var(--font-color-secondary);
+  margin: 0 0 16px 0;
+}
+
+.label_title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--font-color-primary);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.input_style {
+  background-color: var(--background-color-secondary);
+  color: var(--font-color-primary);
+  border: 1px solid var(--nav-bar-profile-selected-background);
+  border-radius: 4px;
+  padding: 0 12px;
+  height: 40px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.secondary_text {
+  color: var(--font-color-secondary);
+  font-size: 12px;
+  opacity: 0.8;
+  font-weight: 600;
+}
+
+.action_btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 16px;
+  height: 40px;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: var(--nav-bar-profile-selected-background);
+  color: var(--font-color-primary);
+  border: 1px solid transparent;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.action_btn:hover {
+  background-color: var(--nav-bar-profile-hover);
+}
+
+/* OVERLAY SERVER */
+
+.server_container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: center;
+}
+
+.port_container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-direction: row;
+  gap: 12px;
+}
+
+.port_label {
+  font-size: 14px;
+  color: var(--font-color-primary);
+}
+
+.label_port {
+  width: 140px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.checkbox_label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--font-color-primary);
+  cursor: pointer;
+}
+
+.server_check {
+  accent-color: var(--logo-primary);
+  transform: scale(1.2);
+}
+
+/* PROVIDERS */
+
+.providers_container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.provider_container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* SELECTS */
+
+.selects_container {
+  display: flex;
+  gap: 24px;
+  align-items: flex-end;
+}
