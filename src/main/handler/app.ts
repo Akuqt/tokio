@@ -1,15 +1,13 @@
-import { APP_EVENTS } from "@/common/types";
+import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
 import config from "@/config";
-import { checkInternetConnection } from "@/helper";
-import type {
-  JSONManagerService,
-  PathManagerService,
-  ServerService,
-  StoreManagerService,
-  TikTokConnectorService,
-  TTSService,
-  URLManagerService,
-} from "@/services";
+import { checkInternetConnection } from "@/helper/network";
+import { TikTokConnectorService } from "@/services/connector";
+import { JSONManagerService } from "@/services/json";
+import { PathManagerService } from "@/services/path";
+import { ServerService } from "@/services/server";
+import { StoreManagerService } from "@/services/store";
+import { TTSService } from "@/services/tts";
+import { URLManagerService } from "@/services/url";
 import { AppHandlerVariables } from "@/types";
 import type {
   App,
@@ -69,11 +67,13 @@ export class AppHandler implements AppHandlerVariables {
     await this.checkInternet();
     await this.storeManagerService.initialize(
       config.DB.name,
-      config.DB.providers,
+      {
+        connector: this.connectorService,
+        tts: this.ttsService,
+      },
       this.jsonManagerService,
       this.pathManagerService,
     );
-    await this.initOverlayServer();
     this.serverService.initEvents(this.connectorService);
     this.initSession();
     this.initWindow();
@@ -87,11 +87,6 @@ export class AppHandler implements AppHandlerVariables {
     this.win.on("closed", () => {
       clearInterval(interval);
     });
-  }
-
-  private async initOverlayServer() {
-    const res = await this.serverService.start();
-    if (!res.success) throw new Error(res.message);
   }
 
   private initWindow() {
@@ -118,11 +113,11 @@ export class AppHandler implements AppHandlerVariables {
 
     this.win?.on("resize", () => {
       if (this.win?.isNormal()) {
-        this.win.webContents.send(APP_EVENTS.RESIZE_WINDOW, {
+        this.win.webContents.send(APP_EVENTS_RESPONSE.RESIZE_WINDOW, {
           state: "normal",
         });
       } else {
-        this.win?.webContents.send(APP_EVENTS.RESIZE_WINDOW, {
+        this.win?.webContents.send(APP_EVENTS_RESPONSE.RESIZE_WINDOW, {
           state: "maximized",
         });
       }

@@ -292,22 +292,39 @@ export class TikTokLiveConnector extends ConnectorProvider {
 
   // --- HELPER METHODS ---
 
-  private getUserData(tdata: {
+  private getFanLevel(badgeList?: any[]): number {
+    if (!badgeList || badgeList.length === 0) return 0;
+
+    const fanBadge = badgeList.find((b) =>
+      b.combine?.icon?.uri?.includes("fans_badge"),
+    );
+
+    return Number(fanBadge?.privilegeLogExtra?.level || 0);
+  }
+
+  private withDefault<T>(data: T | undefined | null, defaultValue: T): T {
+    if (data === undefined || data === null) {
+      return defaultValue;
+    }
+
+    return data;
+  }
+
+  private getUserData({
+    user,
+    userIdentity,
+  }: {
     user?: User;
     userIdentity?: UserIdentity;
   }): UserData {
     return {
-      username: tdata.user?.nickname || "",
-      handle: tdata.user?.displayId || "",
-      profilePictures: tdata.user?.avatarThumb?.urlList ?? [],
-      superfan: tdata.userIdentity?.isSubscriberOfAnchor ?? false,
-      follower: tdata.userIdentity?.isFollowerOfAnchor ?? false,
-      moderator: tdata.userIdentity?.isModeratorOfAnchor ?? false,
-      fanLevel: Number(
-        tdata.user?.badgeList.find((b) =>
-          b.combine?.icon?.uri.includes("fans_badge"),
-        )?.privilegeLogExtra?.level || 0,
-      ),
+      username: this.withDefault(user?.nickname, ""),
+      handle: this.withDefault(user?.displayId, ""),
+      profilePictures: this.withDefault(user?.avatarThumb?.urlList, []),
+      superfan: this.withDefault(userIdentity?.isSubscriberOfAnchor, false),
+      follower: this.withDefault(userIdentity?.isFollowerOfAnchor, false),
+      moderator: this.withDefault(userIdentity?.isModeratorOfAnchor, false),
+      fanLevel: this.getFanLevel(user?.badgeList),
     };
   }
 

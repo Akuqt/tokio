@@ -35,41 +35,46 @@ export class URLManagerService extends Service {
       "## Tokio App Hostname - End ##",
     ];
 
-    try {
-      const hostsContent = fs.readFileSync(hostsFilePath, "utf-8");
-      if (hostsContent.includes(config.CMD.FQDN)) {
-        return;
-      } else {
-        let command = `echo.>> ${hostsFilePath}\n`;
-        for (let i = 0; i < TEMPLATE.length; i++) {
-          command += `echo ${TEMPLATE[i]}>> ${hostsFilePath}${i < TEMPLATE.length - 1 ? "\n" : ""}`;
-        }
-        const options = {
-          name: config.CMD.NAME,
-        };
-        Logger.info(
-          `<System> Prompting for admin rights to add ${config.CMD.FQDN} to the hosts file.`,
-          this._logFile,
-        );
-        exec(command, options, (error) => {
-          if (error) {
-            Logger.error(
-              `<System> Failed to modify hosts file -- ${formatError(error)}`,
-              this._logFile,
-            );
-            return;
+    return new Promise<boolean>((res) => {
+      try {
+        const hostsContent = fs.readFileSync(hostsFilePath, "utf-8");
+        if (hostsContent.includes(config.CMD.FQDN)) {
+          res(true);
+        } else {
+          let command = `echo.>> ${hostsFilePath}\n`;
+          for (let i = 0; i < TEMPLATE.length; i++) {
+            command += `echo ${TEMPLATE[i]}>> ${hostsFilePath}${i < TEMPLATE.length - 1 ? "\n" : ""}`;
           }
-          Logger.success(
-            "<System> Successfully updated hosts file.",
+          const options = {
+            name: config.CMD.NAME,
+          };
+          Logger.info(
+            `<System> Prompting for admin rights to add ${config.CMD.FQDN} to the hosts file.`,
             this._logFile,
           );
-        });
+          exec(command, options, (error) => {
+            if (error) {
+              Logger.error(
+                `<System> Failed to modify hosts file -- ${formatError(error)}`,
+                this._logFile,
+              );
+              res(false);
+            } else {
+              res(true);
+              Logger.success(
+                "<System> Successfully updated hosts file.",
+                this._logFile,
+              );
+            }
+          });
+        }
+      } catch (error) {
+        Logger.error(
+          `<System> Unable to read hosts file -- ${formatError(error)}`,
+          this._logFile,
+        );
+        res(false);
       }
-    } catch (error) {
-      Logger.error(
-        `<System> Unable to read hosts file -- ${formatError(error)}`,
-        this._logFile,
-      );
-    }
+    });
   }
 }

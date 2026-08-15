@@ -8,10 +8,11 @@ export class TTSService extends ProviderService<TTSProvider> {
     super();
     this._current = {
       name: "",
+      key: "",
       provider: null,
     };
     this._providerPool = new Map();
-    this.addProvider("TikTok", new TikTokTTS(), true); // NOTE: DO NOT CHANGE, Add your providers below.
+    this.addProvider("Default", new TikTokTTS(), true); // NOTE: DO NOT CHANGE, Add your providers below.
   }
 
   public addProvider(name: string, provider: TTSProvider, start?: boolean) {
@@ -29,7 +30,7 @@ export class TTSService extends ProviderService<TTSProvider> {
   public setProvider(name: string, key?: string) {
     const provider = this._providerPool?.get(name);
     if (!provider) return;
-    this._current = { name, provider };
+    this._current = { name, provider, key: key || "" };
     this.setKey(key || "");
   }
 
@@ -38,7 +39,16 @@ export class TTSService extends ProviderService<TTSProvider> {
     return providers.map((s) => ({
       name: s,
       active: s == this._current?.name,
+      key: this._current?.key || "",
     }));
+  }
+
+  public getActiveProvider(): Provider {
+    return {
+      name: this._current?.name || "Default",
+      active: true,
+      key: this._current?.key || "",
+    };
   }
 
   public getVoices(): VoiceData[] {

@@ -1,5 +1,12 @@
 import "reflect-metadata";
 
+import { TikTokConnectorService } from "@/services/connector";
+import { JSONManagerService } from "@/services/json";
+import { PathManagerService } from "@/services/path";
+import { ServerService } from "@/services/server";
+import { StoreManagerService } from "@/services/store";
+import { TTSService } from "@/services/tts";
+import { URLManagerService } from "@/services/url";
 import { electronApp, is, optimizer } from "@electron-toolkit/utils";
 import {
   app,
@@ -12,15 +19,6 @@ import {
 import { join } from "path";
 import events from "./events";
 import Handler from "./handler";
-import {
-  JSONManagerService,
-  PathManagerService,
-  ServerService,
-  StoreManagerService,
-  TikTokConnectorService,
-  TTSService,
-  URLManagerService,
-} from "./services";
 
 app.commandLine.appendSwitch(
   "webrtc-ip-handling-policy",
@@ -31,12 +29,16 @@ app.commandLine.appendSwitch("disable-blink-features", "AutomationControlled");
 
 let win: BrowserWindow | null = null;
 
+const H = 400 * 2;
+const W = 600 * 2;
+
 function createWindow(): void {
   win = new BrowserWindow({
-    width: 1200,
-    minWidth: 1200,
-    height: 800,
-    minHeight: 800,
+    width: W,
+    minWidth: W,
+    height: H,
+    minHeight: H,
+    resizable: false,
     show: false,
     titleBarStyle: "hidden",
     title: "Tokio",

@@ -111,13 +111,19 @@ export class ServerService extends Service {
     }
   }
 
-  public updatePort(port: number) {
-    if (port === this._port) return;
-    this._port = port;
-    this.stop();
-    setTimeout(() => {
-      this.start();
-    }, 500);
+  public updatePort(port: number, start: boolean) {
+    return new Promise<boolean>((res) => {
+      if (port === this._port) res(false);
+      this._port = port;
+      this.stop();
+      if (start) {
+        setTimeout(async () => {
+          const t = await this.start();
+          res(t.success);
+        }, 500);
+      }
+      res(true);
+    });
   }
 
   public addOverlayApp(overlayApp: Omit<OverlayApp, "id">): OverlayApp[] {
@@ -179,40 +185,24 @@ export class ServerService extends Service {
   }
 
   private broadcast<T extends TIKTOK_EVENTS>(type: T, data: TikTokEventMap[T]) {
-    switch (type) {
-      case TIKTOK_EVENTS.CHAT:
-        this.multiBroadcast(["CHAT", "GLOBAL"], data);
-        break;
-      case TIKTOK_EVENTS.LIKE:
-        this.multiBroadcast(["LIKE", "GLOBAL"], data);
-        break;
-      case TIKTOK_EVENTS.GIFT:
-        this.multiBroadcast(["GIFT", "GLOBAL"], data);
-        break;
-      case TIKTOK_EVENTS.FOLLOW:
-        this.multiBroadcast(["FOLLOW", "GLOBAL"], data);
-        break;
-      case TIKTOK_EVENTS.SHARE:
-        this.multiBroadcast(["SHARE", "GLOBAL"], data);
-        break;
-      case TIKTOK_EVENTS.ENVELOPE:
-        this.multiBroadcast(["ENVELOPE", "GLOBAL"], data);
-        break;
-      case TIKTOK_EVENTS.SUPER_FAN:
-        this.multiBroadcast(["SUPER_FAN", "GLOBAL"], data);
-        break;
-      case TIKTOK_EVENTS.SUPER_FAN_BOX:
-        this.multiBroadcast(["SUPER_FAN_BOX", "GLOBAL"], data);
-        break;
-      case TIKTOK_EVENTS.MEMBER_JOIN:
-        this.multiBroadcast(["MEMBER_JOIN", "GLOBAL"], data);
-        break;
-      case TIKTOK_EVENTS.SUPER_FAN_JOIN:
-        this.multiBroadcast(["SUPER_FAN_JOIN", "GLOBAL"], data);
-        break;
-      default:
-        Logger.warn(`<Server> Unknown Broadcast Event ${type}`, this._logFile);
-        break;
+    const EVENT_ROOM_MAP: Partial<Record<TIKTOK_EVENTS, WSRoom>> = {
+      [TIKTOK_EVENTS.CHAT]: "CHAT",
+      [TIKTOK_EVENTS.LIKE]: "LIKE",
+      [TIKTOK_EVENTS.GIFT]: "GIFT",
+      [TIKTOK_EVENTS.FOLLOW]: "FOLLOW",
+      [TIKTOK_EVENTS.SHARE]: "SHARE",
+      [TIKTOK_EVENTS.ENVELOPE]: "ENVELOPE",
+      [TIKTOK_EVENTS.SUPER_FAN]: "SUPER_FAN",
+      [TIKTOK_EVENTS.SUPER_FAN_BOX]: "SUPER_FAN_BOX",
+      [TIKTOK_EVENTS.MEMBER_JOIN]: "MEMBER_JOIN",
+      [TIKTOK_EVENTS.SUPER_FAN_JOIN]: "SUPER_FAN_JOIN",
+    };
+    const room = EVENT_ROOM_MAP[type];
+
+    if (room) {
+      this.multiBroadcast([room, "GLOBAL"], data);
+    } else {
+      Logger.warn(`<Server> Unknown Broadcast Event ${type}`, this._logFile);
     }
   }
 }

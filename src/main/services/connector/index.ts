@@ -11,9 +11,10 @@ export class TikTokConnectorService extends ProviderService<ConnectorProvider> {
     this._current = {
       name: "",
       provider: null,
+      key: "",
     };
     this._providerPool = new Map();
-    this.addProvider("TikTok", new TikTokLiveConnector(), true); // NOTE: DO NOT CHANGE, Add your providers below.
+    this.addProvider("Default", new TikTokLiveConnector(), true); // NOTE: DO NOT CHANGE, Add your providers below.
   }
 
   public addProvider(
@@ -31,13 +32,25 @@ export class TikTokConnectorService extends ProviderService<ConnectorProvider> {
   public setProvider(name: string, key?: string) {
     const provider = this._providerPool?.get(name);
     if (!provider) return;
-    this._current = { name, provider };
+    this._current = { name, provider, key: key || "" };
     this.setKey(key || "");
   }
 
   public getProviders(): Provider[] {
-    const provides = this._providerPool?.keys().toArray() || [];
-    return provides.map((s) => ({ name: s, active: s == this._current?.name }));
+    const providers = this._providerPool?.keys().toArray() || [];
+    return providers.map((s) => ({
+      name: s,
+      active: s == this._current?.name,
+      key: this._current?.key || "",
+    }));
+  }
+
+  public getActiveProvider(): Provider {
+    return {
+      name: this._current?.name || "Default",
+      active: true,
+      key: this._current?.key || "",
+    };
   }
 
   public setKey(key: string): void {

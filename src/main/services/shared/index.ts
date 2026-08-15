@@ -6,7 +6,8 @@ export abstract class Service {
 }
 
 export abstract class ProviderService<T> extends Service {
-  protected _current: { name: string; provider: T | null } | undefined;
+  protected _current:
+    { name: string; provider: T | null; key: string } | undefined;
   protected _providerPool: Map<string, T> | undefined;
   abstract addProvider(name: string, provider: T, start?: boolean): void;
   abstract setProvider(name: string, key?: string): void;

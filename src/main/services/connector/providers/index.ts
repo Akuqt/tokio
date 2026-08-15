@@ -1,1 +1,1 @@
-export * from "./TLC";
+export * from "./default";

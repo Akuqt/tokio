@@ -1,1 +1,1 @@
-export * from "./tiktok";
+export * from "./default";

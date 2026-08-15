@@ -1,5 +1,5 @@
 import { formatError } from "@/common/util";
-import { cleanText } from "@/helper";
+import { cleanText } from "@/helper/chat";
 import Logger from "@/logger";
 import { promises as fs } from "fs";
 import { z } from "zod";
@@ -62,9 +62,6 @@ export class JSONManagerService extends Service {
       const validation = schema.safeParse(rawJson);
 
       if (!validation.success) {
-        console.log(rawJson);
-        console.log(validation.error);
-
         Logger.error(
           `<System> Schema validation failed while loading json file ${filePath} -- ${cleanText(z.prettifyError(validation.error))}`,
           this._logFile,

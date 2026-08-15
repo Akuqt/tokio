@@ -1,4 +1,4 @@
-import { APP_EVENTS } from "@/common/types";
+import { APP_EVENTS } from "@/common/types/events";
 import { EventCallback, EventItem } from "@/types";
 
 export type Stack = EventStack<APP_EVENTS>;

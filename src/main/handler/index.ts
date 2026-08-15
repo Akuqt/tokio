@@ -1,5 +1,5 @@
 import { APP_EVENTS } from "@/common/types";
-import { Stack } from "@/helper";
+import { Stack } from "@/helper/events";
 import { EventCallback } from "@/types";
 import { AppHandler } from "./app";
 
