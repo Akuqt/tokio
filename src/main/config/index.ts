@@ -1,10 +1,3 @@
-// NOTE: DO NOT CHANGE
-const DEFAULT_PROVIDER = {
-  name: "TikTok",
-  active: true,
-  key: "",
-};
-
 export default {
   CSP: {
     prod: "default-src 'self'; media-src 'self' blob:; script-src 'self'; style-src 'self' 'unsafe-inline';",
@@ -18,10 +11,6 @@ export default {
   },
   DB: {
     name: "tokio",
-    providers: {
-      tts: DEFAULT_PROVIDER,
-      connector: DEFAULT_PROVIDER,
-    },
   },
   APP: {
     folderName: ".tokio",
