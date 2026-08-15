@@ -1,21 +1,28 @@
 import { StoreSchema } from "@/common/schemas";
 
+export const defaultEntity = {
+  file: "default.json",
+  name: "Default",
+};
+
+const defaultProvider = { name: "Default", key: "", active: true };
+
 export const defaultStoreData: StoreSchema = {
   settings: {
     server: {
       enabled: false,
       port: 6767,
     },
-    appearance: {
-      mode: "system",
-      activeThemeFile: "default.json",
-    },
-    activeProfileFile: "default.json",
+    theme_mode: "system",
+    activeTheme: defaultEntity,
+    activeProfile: defaultEntity,
+    activeConnProvider: defaultProvider,
+    activeTTSProvider: defaultProvider,
     providers: {
-      tts: { name: "TikTok", key: "" },
-      connector: { name: "TikTok", key: "" },
+      tts: [defaultProvider],
+      connector: [defaultProvider],
     },
   },
-  themes: [{ file: "default.json", name: "Default" }],
-  profiles: [{ file: "default.json", name: "Default" }],
+  themes: [defaultEntity],
+  profiles: [defaultEntity],
 };

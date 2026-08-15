@@ -1,28 +1,29 @@
 import { z } from "zod";
 
-export const ProviderSchema = z.object({
+const ProviderSchema = z.object({
   name: z.string(),
   key: z.string(),
+  active: z.boolean(),
 });
 
-export const EntityMetadataSchema = z.object({
+const EntityMetadataSchema = z.object({
   file: z.string(),
   name: z.string(),
 });
 
-export const AppSettingsSchema = z.object({
+const AppSettingsSchema = z.object({
   server: z.object({
     enabled: z.boolean(),
     port: z.number().min(1024).max(65535),
   }),
-  appearance: z.object({
-    mode: z.enum(["dark", "light", "system"]),
-    activeThemeFile: z.string(),
-  }),
-  activeProfileFile: z.string(),
+  theme_mode: z.enum(["dark", "light", "system"]),
+  activeTheme: EntityMetadataSchema,
+  activeProfile: EntityMetadataSchema,
+  activeTTSProvider: ProviderSchema,
+  activeConnProvider: ProviderSchema,
   providers: z.object({
-    tts: ProviderSchema,
-    connector: ProviderSchema,
+    tts: z.array(ProviderSchema),
+    connector: z.array(ProviderSchema),
   }),
 });
 
