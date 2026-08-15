@@ -29,8 +29,8 @@ app.commandLine.appendSwitch("disable-blink-features", "AutomationControlled");
 
 let win: BrowserWindow | null = null;
 
-const H = 400 * 2;
-const W = 600 * 2;
+const H = 400;
+const W = 600;
 
 function createWindow(): void {
   win = new BrowserWindow({
@@ -42,6 +42,7 @@ function createWindow(): void {
     show: false,
     titleBarStyle: "hidden",
     title: "Tokio",
+    center: true,
     autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, "../preload/index.mjs"),

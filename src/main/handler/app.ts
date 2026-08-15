@@ -52,29 +52,7 @@ export class AppHandler implements AppHandlerVariables {
   }
 
   public async initApp() {
-    await this.pathManagerService.initialize(
-      this.app.getPath("home"),
-      config.APP.folderName,
-      ({ files }) => {
-        this.connectorService.setLogFile(files.logs.connector);
-        this.ttsService.setLogFile(files.logs.tts);
-        this.serverService.setLogFile(files.logs.server);
-        this.urlManagerService.setLogFile(files.logs.system);
-        this.storeManagerService.setLogFile(files.logs.system);
-        this.jsonManagerService.setLogFile(files.logs.system);
-      },
-    );
     await this.checkInternet();
-    await this.storeManagerService.initialize(
-      config.DB.name,
-      {
-        connector: this.connectorService,
-        tts: this.ttsService,
-      },
-      this.jsonManagerService,
-      this.pathManagerService,
-    );
-    this.serverService.initEvents(this.connectorService);
     this.initSession();
     this.initWindow();
   }
