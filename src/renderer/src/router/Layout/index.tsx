@@ -14,7 +14,7 @@ import {
 import styles from "./layout.module.css";
 
 export function Layout() {
-  const { mode, toggleMode } = useTheme();
+  const { theme_mode, toggleThemeMode } = useTheme();
   const { resumeContext } = useAudio();
 
   const [isMaximized, setIsMaximized] = useState(false);
@@ -63,10 +63,10 @@ export function Layout() {
         <div className={styles.nav_top_items_container}>
           <div
             className={styles.theme_mode_toggle}
-            onClick={toggleMode}
+            onClick={toggleThemeMode}
             title="Toggle Theme"
           >
-            {mode === "dark" ? <FiSun size={16} /> : <FiMoon size={16} />}
+            {theme_mode === "dark" ? <FiSun size={16} /> : <FiMoon size={16} />}
           </div>
 
           <ProfileDropdown

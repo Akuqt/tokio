@@ -1,21 +1,19 @@
 import { Theme } from "@/common/schemas";
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
 import { defaultTheme } from "@/common/util";
-import { Loader } from "@renderer/inits";
-import React, { createContext, useEffect, useState } from "react";
+import { SplashScreen } from "@/splash";
+import React, { createContext, useEffect, useRef, useState } from "react";
 
 type ThemeMode = "light" | "dark";
 
-export interface ThemeContextType {
+export interface AppContextType {
   theme: Theme | null;
-  mode: ThemeMode;
-  toggleMode: () => void;
-  themeLoading: boolean;
+  theme_mode: ThemeMode;
+  toggleThemeMode: () => void;
+  appLoading: boolean;
 }
 
-export const ThemeContext = createContext<ThemeContextType | undefined>(
-  undefined,
-);
+export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const applyThemeVariables = (themeBranch: any, prefix = "-") => {
   Object.entries(themeBranch).forEach(([key, value]) => {
@@ -30,62 +28,67 @@ const applyThemeVariables = (themeBranch: any, prefix = "-") => {
   });
 };
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+export function AppProvider({ children }: { children: React.ReactNode }) {
+  const isInitialMount = useRef(true);
   const [theme, setTheme] = useState<Theme | null>(null);
-  const [mode, setMode] = useState<ThemeMode>("dark");
-  const [themeLoading, setThemeLoading] = useState(true);
+  const [theme_mode, setThemeMode] = useState<ThemeMode>("dark");
+  const [appLoading, setAppLoading] = useState(true);
 
   useEffect(() => {
     if (!window.api) {
       setTheme(defaultTheme);
       applyThemeVariables(defaultTheme.dark);
-      setThemeLoading(false);
+      setAppLoading(false);
       return;
     }
 
-    const removeGetTheme = window.api.on(
-      APP_EVENTS_RESPONSE.GET_THEME,
+    const removeLoadApp = window.api.on(
+      APP_EVENTS_RESPONSE.LOAD_APP,
       (response) => {
         let themeToApply = defaultTheme;
         let modeToApply: ThemeMode = "dark";
-        if (response?.success && response.theme) {
-          themeToApply = response.theme;
-          modeToApply = response.mode!;
+        if (response?.success && response.data!.theme) {
+          themeToApply = response.data!.theme.data;
+          modeToApply = response.data!.theme.mode;
         } else {
           console.warn(
             "Failed to load theme from main, using default fallback.",
           );
         }
         setTheme(themeToApply);
-        setMode(modeToApply);
+        setThemeMode(modeToApply);
         applyThemeVariables(themeToApply[modeToApply]);
-        setThemeLoading(false);
+        setAppLoading(false);
       },
     );
-
-    window.api.emit(APP_EVENTS.GET_THEME);
+    if (isInitialMount.current) {
+      window.api.emit(APP_EVENTS.LOAD_APP);
+      isInitialMount.current = false;
+    }
 
     return () => {
-      removeGetTheme();
+      removeLoadApp();
     };
   }, []);
 
-  const toggleMode = () => {
+  const toggleThemeMode = () => {
     if (!theme) return;
 
-    const newMode = mode === "dark" ? "light" : "dark";
+    const newMode = theme_mode === "dark" ? "light" : "dark";
     window.api.emit(APP_EVENTS.SET_THEME_MODE, { mode: newMode });
     applyThemeVariables(theme[newMode]);
-    setMode(newMode);
+    setThemeMode(newMode);
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, mode, toggleMode, themeLoading }}>
-      {themeLoading ? (
-        <Loader /> // TODO: Handle Load later
+    <AppContext.Provider
+      value={{ theme, theme_mode, toggleThemeMode, appLoading }}
+    >
+      {appLoading ? (
+        <SplashScreen /> // TODO: Handle Load later
       ) : (
         children
       )}
-    </ThemeContext.Provider>
+    </AppContext.Provider>
   );
 }

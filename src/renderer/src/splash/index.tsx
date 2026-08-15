@@ -1,7 +1,7 @@
 import { BarLoader } from "react-spinners";
 import styles from "./loader.module.css";
 
-export function Loader() {
+export function SplashScreen() {
   return (
     <div className={styles.container}>
       <div className={styles.glow_wrapper}>

@@ -23,7 +23,7 @@ export function Settings() {
     dispatch,
   ] = useReducer(reducer, defaultState);
 
-  const { mode } = useTheme();
+  const { theme_mode } = useTheme();
 
   useEffect(() => {
     const removeGetSettings = window.api.on(
@@ -120,7 +120,7 @@ export function Settings() {
           dispatch={dispatch}
         />
 
-        <ThemeSection store={store} mode={mode} dispatch={dispatch} />
+        <ThemeSection store={store} mode={theme_mode} dispatch={dispatch} />
 
         <ProfileSection store={store} dispatch={dispatch} />
       </div>
