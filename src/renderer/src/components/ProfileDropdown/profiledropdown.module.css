@@ -34,7 +34,7 @@
   top: calc(100% + 4px);
   right: 16px;
   width: 200px;
-  background-color: var(--background-color-secundary);
+  background-color: var(--background-color-secondary);
   border: 1px solid var(--nav-bar-profile-selected-background);
   border-radius: 6px;
   padding: 4px;

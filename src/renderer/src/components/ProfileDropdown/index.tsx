@@ -1,23 +1,21 @@
+import { EntityMetadata } from "@/common/schemas";
 import { useEffect, useRef, useState } from "react";
 import { FiCheck, FiChevronDown } from "react-icons/fi";
 import styles from "./profiledropdown.module.css";
 
-type Profile = {
-  name: string;
-  active: boolean;
-  file: string;
-};
-
 type Props = {
   onProfileSelected: (file: string) => void;
-  profiles: Profile[];
+  active: EntityMetadata;
+  profiles: EntityMetadata[];
 };
 
-export function ProfileDropdown({ profiles, onProfileSelected }: Props) {
+export function ProfileDropdown({
+  profiles,
+  onProfileSelected,
+  active,
+}: Props) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [activeProfile, setActiveProfile] = useState(
-    profiles.find((p) => p.active),
-  );
+  const [activeProfile, setActiveProfile] = useState(active);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,6 +32,10 @@ export function ProfileDropdown({ profiles, onProfileSelected }: Props) {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    setActiveProfile(active);
+  }, [active]);
 
   return (
     <div className={styles.container} ref={dropdownRef}>
