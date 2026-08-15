@@ -1,6 +1,7 @@
-import { APP_EVENTS } from "@/common/types";
+import { EntityMetadata } from "@/common/schemas";
+import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
 import { ProfileDropdown } from "@/components";
-import { useAudio, useProfile, useTheme } from "@/hooks";
+import { useAudio, useTheme } from "@/hooks";
 import { Link, Outlet } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { FiHome, FiMoon, FiSettings, FiSun, FiVolume2 } from "react-icons/fi";
@@ -14,26 +15,43 @@ import styles from "./layout.module.css";
 
 export function Layout() {
   const { mode, toggleMode } = useTheme();
-  const { profiles, changeProfile } = useProfile();
   const { resumeContext } = useAudio();
 
   const [isMaximized, setIsMaximized] = useState(false);
+  const [profiles, setProfiles] = useState<EntityMetadata[]>([]);
+  const [activeProfile, setActiveProfile] = useState<EntityMetadata>({
+    file: "",
+    name: "",
+  });
 
   const handleMinimize = () => window.api.emit(APP_EVENTS.MINIMIZE_WINDOW);
   const handleClose = () => window.api.emit(APP_EVENTS.CLOSE_WINDOW);
   const handleMaximize = () => window.api.emit(APP_EVENTS.MAXIMIZE_WINDOW);
 
   useEffect(() => {
-    const removeResize = window.api.on(APP_EVENTS.RESIZE_WINDOW, (res) => {
-      if (!res) return;
-      if (res.state === "normal") {
-        setIsMaximized(false);
-      } else {
-        setIsMaximized(true);
-      }
-    });
+    const removeResize = window.api.on(
+      APP_EVENTS_RESPONSE.RESIZE_WINDOW,
+      (res) => {
+        if (!res) return;
+        if (res.state === "normal") {
+          setIsMaximized(false);
+        } else {
+          setIsMaximized(true);
+        }
+      },
+    );
+    const removeGetSettings = window.api.on(
+      APP_EVENTS_RESPONSE.GET_SETTINGS,
+      (res) => {
+        if (!res?.success) return;
+        setProfiles(res.data!.profiles);
+        setActiveProfile(res.data!.settings.activeProfile);
+      },
+    );
+    window.api.emit(APP_EVENTS.GET_SETTINGS);
     resumeContext();
     return () => {
+      removeGetSettings();
       removeResize();
     };
   }, []);
@@ -53,7 +71,10 @@ export function Layout() {
 
           <ProfileDropdown
             profiles={profiles}
-            onProfileSelected={changeProfile}
+            active={activeProfile}
+            onProfileSelected={(val) => {
+              window.api.emit(APP_EVENTS.SET_PROFILE, { file: val });
+            }}
           />
 
           <div className={styles.window_controls_container}>
