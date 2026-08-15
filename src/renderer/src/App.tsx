@@ -1,10 +1,5 @@
 import { RouterProvider } from "@tanstack/react-router";
-import {
-  AudioProvider,
-  ProfileProvider,
-  ServiceProvider,
-  ThemeProvider,
-} from "./context";
+import { AudioProvider, ThemeProvider } from "./context";
 import { router } from "./router";
 
 declare module "@tanstack/react-router" {
@@ -16,13 +11,9 @@ declare module "@tanstack/react-router" {
 export default function App() {
   return (
     <AudioProvider>
-      <ServiceProvider>
-        <ProfileProvider>
-          <ThemeProvider>
-            <RouterProvider router={router} />
-          </ThemeProvider>
-        </ProfileProvider>
-      </ServiceProvider>
+      <ThemeProvider>
+        <RouterProvider router={router} />
+      </ThemeProvider>
     </AudioProvider>
   );
 }
