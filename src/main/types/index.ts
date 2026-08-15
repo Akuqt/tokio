@@ -1,13 +1,16 @@
-import { APP_EVENTS, AppEventsMap } from "@/common/types";
 import {
-  JSONManagerService,
-  PathManagerService,
-  ServerService,
-  StoreManagerService,
-  TikTokConnectorService,
-  TTSService,
-  URLManagerService,
-} from "@/services";
+  APP_EVENTS,
+  APP_EVENTS_RESPONSE,
+  AppEventsMap,
+  AppEventsResponseMap,
+} from "@/common/types";
+import { TikTokConnectorService } from "@/services/connector";
+import { JSONManagerService } from "@/services/json";
+import { PathManagerService } from "@/services/path";
+import { ServerService } from "@/services/server";
+import { StoreManagerService } from "@/services/store";
+import { TTSService } from "@/services/tts";
+import { URLManagerService } from "@/services/url";
 import {
   App,
   BrowserWindow,
@@ -37,7 +40,12 @@ export interface AppHandlerVariables {
 
 export type EventCallback<K extends APP_EVENTS> = (
   handler: AppHandlerVariables,
-  event: IpcMainEvent,
+  event: Omit<IpcMainEvent, "reply"> & {
+    reply: <T extends APP_EVENTS_RESPONSE>(
+      event: T,
+      args: AppEventsResponseMap[T],
+    ) => void;
+  },
   data: AppEventsMap[K],
 ) => void;
 

@@ -1,45 +1,8 @@
-export interface AppTheme {
-  id?: number;
-  file: string;
-  name: string;
-  path: string;
-}
-
-export interface AppProfile {
-  id?: number;
-  name: string;
-  file: string;
-  path: string;
-}
-
-export interface AppProvider {
-  id?: number;
-  name: string;
-  key: string;
-}
-
-export interface AppConfig {
-  id?: number;
-  enable_server: boolean;
-  server_port: number;
-  theme_mode: "dark" | "light" | "system";
-  theme: AppTheme;
-  profile: AppProfile;
-  connector_provider: AppProvider;
-  tts_provider: AppProvider;
-}
-
-export type Provider = { name: string; active: boolean };
+export type Provider = { name: string; active: boolean; key: string };
 
 export type VoiceData = {
   name: string;
   lang: string;
-};
-
-export type ServiceAppProvider = {
-  name: string;
-  active: boolean;
-  type: "tts" | "connector";
 };
 
 export interface Folders {
