@@ -1,6 +1,7 @@
 import { Theme } from "@/common/schemas";
-import { APP_EVENTS } from "@/common/types";
+import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
 import { defaultTheme } from "@/common/util";
+import { Loader } from "@renderer/inits";
 import React, { createContext, useEffect, useState } from "react";
 
 type ThemeMode = "light" | "dark";
@@ -43,13 +44,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
 
     const removeGetTheme = window.api.on(
-      APP_EVENTS.RES_GET_THEME,
+      APP_EVENTS_RESPONSE.GET_THEME,
       (response) => {
         let themeToApply = defaultTheme;
         let modeToApply: ThemeMode = "dark";
         if (response?.success && response.theme) {
           themeToApply = response.theme;
-          modeToApply = response.mode;
+          modeToApply = response.mode!;
         } else {
           console.warn(
             "Failed to load theme from main, using default fallback.",
@@ -81,7 +82,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   return (
     <ThemeContext.Provider value={{ theme, mode, toggleMode, themeLoading }}>
       {themeLoading ? (
-        <div style={{ background: "#000", height: "100vh" }} /> // TODO: Handle Load later
+        <Loader /> // TODO: Handle Load later
       ) : (
         children
       )}
