@@ -41,7 +41,7 @@ export interface AppEventsResponseMap {
   // INIT
   [APP_EVENTS_RESPONSE.LOAD_APP]: {
     success: boolean;
-    data: {
+    data?: {
       theme: {
         mode: "dark" | "light";
         data: Theme;
