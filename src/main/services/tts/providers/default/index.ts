@@ -43,6 +43,12 @@ export class TikTokTTS extends TTSProvider {
     }
   }
 
+  private checkStatusCode(statusCode?: number) {
+    if (statusCode !== undefined && statusCode !== 0) {
+      handleStatusError(statusCode);
+    }
+  }
+
   private async generateB64TTS(
     text: string,
     lang: string,
@@ -56,17 +62,13 @@ export class TikTokTTS extends TTSProvider {
           Cookie: `sessionid=${this.sessionId}`,
         },
       });
-      const statusCode = response.data?.status_code;
-      if (statusCode !== undefined && statusCode !== 0) {
-        handleStatusError(statusCode);
-      }
+
+      this.checkStatusCode(response.data?.status_code);
+
       return response.data.data.v_str;
     } catch (error) {
-      if (isAxiosError(error) && error.response?.data) {
-        const statusCode = error.response.data.status_code;
-        if (statusCode !== undefined && statusCode !== 0) {
-          handleStatusError(statusCode);
-        }
+      if (isAxiosError(error)) {
+        this.checkStatusCode(error.response?.data?.status_code);
       }
       throw error;
     }

@@ -134,6 +134,22 @@ export class TikTokLiveConnector extends ConnectorProvider {
     return this._connector?.isConnected || false;
   }
 
+  private extractRawGifts(data: any): any[] {
+    if (!data?.data) return [];
+
+    const payload = data.data;
+    return payload.gifts || payload.giftList || payload.pages?.[0]?.gifts || [];
+  }
+
+  private formatGift(g: any): Gift {
+    return {
+      id: g.id,
+      name: g.name,
+      coins: g.diamond_count,
+      image: g.image?.url_list?.[0],
+    };
+  }
+
   public async fetchGifts(): Promise<GiftResponse> {
     try {
       const region = await this.getUserRegionAndLanguage();
@@ -147,24 +163,16 @@ export class TikTokLiveConnector extends ConnectorProvider {
       if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
 
       const data = await response.json();
-      const rawGifts =
-        data?.data?.gifts ||
-        data?.data?.giftList ||
-        data?.data?.pages?.[0]?.gifts ||
-        [];
 
-      const availableGifts: Gift[] = rawGifts.map((g: any) => ({
-        id: g.id,
-        name: g.name,
-        diamondCount: g.diamond_count,
-        image: g.image?.url_list?.[0],
-      }));
+      const rawGifts = this.extractRawGifts(data);
+      const mapper = (g: any) => this.formatGift(g);
+      const availableGifts: Gift[] = rawGifts.map(mapper);
 
       return { data: availableGifts, warn: region.error?.message };
     } catch (err) {
       return {
         data: [],
-        error: err as Error,
+        error: new Error("Failed to fetch Gifts", { cause: err }),
       };
     }
   }
@@ -356,7 +364,7 @@ export class TikTokLiveConnector extends ConnectorProvider {
     } catch (err) {
       return {
         data: { region: "US", language: "en-US" },
-        error: err as Error,
+        error: new Error("Failed to fetch user region", { cause: err }),
       };
     }
   }
