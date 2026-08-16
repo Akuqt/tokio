@@ -224,8 +224,8 @@ export class TikTokLiveConnector extends ConnectorProvider {
       if (tdata.emotes.length > 0) {
         for (const em of tdata.emotes) {
           emotes.push({
-            emoteID: em.emote?.emoteId || "",
-            images: em.emote?.image?.urlList ?? [],
+            emoteID: this.withDefault(em.emote?.emoteId, ""),
+            images: this.withDefault(em.emote?.image?.urlList, []),
             index: em.index,
           });
         }
@@ -247,11 +247,11 @@ export class TikTokLiveConnector extends ConnectorProvider {
         user: tdata.user,
       });
       const gift = {
-        id: tdata.giftId ?? "",
-        type: tdata.gift?.type ?? 1,
-        name: tdata.gift?.name ?? "",
-        repeatEnd: (tdata.repeatEnd ?? 1) == 1,
-        comboCount: tdata.repeatCount ?? 0,
+        id: this.withDefault(tdata.giftId, ""),
+        type: this.withDefault(tdata.gift?.type, 1),
+        name: this.withDefault(tdata.gift?.name, ""),
+        repeatEnd: this.withDefault(tdata.repeatEnd, 1) == 1,
+        comboCount: this.withDefault(tdata.repeatCount, 0),
       };
       const data: GiftEvent = {
         user,
