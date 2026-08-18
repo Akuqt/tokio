@@ -1,15 +1,15 @@
 import { BarLoader } from "react-spinners";
-import styles from "./loader.module.css";
+import styles from "./splash.module.css";
 
 export function SplashScreen() {
   return (
     <div className={styles.container}>
       <div className={styles.glow_wrapper}>
         <div className={styles.content}>
+          <div className={styles.logo}>東</div>
           <div className={styles.app_name}>
             <h1>Tok</h1>
-            <h1 className={styles.accent_pink}>i</h1>
-            <h1 className={styles.accent_blue}>o</h1>
+            <h1 className={styles.accent_red}>io</h1>
           </div>
 
           <div className={styles.loading}>

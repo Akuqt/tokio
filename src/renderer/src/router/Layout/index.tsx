@@ -4,7 +4,16 @@ import { ProfileDropdown } from "@/components";
 import { useAudio, useTheme } from "@/hooks";
 import { Link, Outlet } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { FiHome, FiMoon, FiSettings, FiSun, FiVolume2 } from "react-icons/fi";
+import { BsLightningCharge } from "react-icons/bs";
+import {
+  FiHome,
+  FiMoon,
+  FiMusic,
+  FiSettings,
+  FiSun,
+  FiVolume2,
+} from "react-icons/fi";
+import { LuMonitorCog } from "react-icons/lu";
 import {
   VscChromeClose,
   VscChromeMaximize,
@@ -59,7 +68,7 @@ export function Layout() {
   return (
     <div className={styles.container}>
       <header className={styles.nav}>
-        <div className={styles.logo}>T</div>
+        <div className={styles.logo}>東</div>
         <div className={styles.nav_top_items_container}>
           <div
             className={styles.theme_mode_toggle}
@@ -126,6 +135,20 @@ export function Layout() {
           </Link>
 
           <Link
+            to="/overlays"
+            className={styles.sidebar_item}
+            activeProps={{
+              style: {
+                color: "var(--accent-primary)",
+                fontWeight: "bold",
+              },
+            }}
+          >
+            <LuMonitorCog size={22} />
+            Overlays
+          </Link>
+
+          <Link
             to="/tts"
             className={styles.sidebar_item}
             activeProps={{
@@ -137,6 +160,34 @@ export function Layout() {
           >
             <FiVolume2 size={22} />
             TTS
+          </Link>
+
+          <Link
+            to="/alerts"
+            className={styles.sidebar_item}
+            activeProps={{
+              style: {
+                color: "var(--accent-primary)",
+                fontWeight: "bold",
+              },
+            }}
+          >
+            <BsLightningCharge size={24} />
+            Alerts
+          </Link>
+
+          <Link
+            to="/music"
+            className={styles.sidebar_item}
+            activeProps={{
+              style: {
+                color: "var(--accent-primary)",
+                fontWeight: "bold",
+              },
+            }}
+          >
+            <FiMusic size={22} />
+            Music
           </Link>
 
           <Link

@@ -4,7 +4,7 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import { Home, Settings, TTS } from "../pages";
+import { Alerts, Home, Music, Overlays, Settings, TTS } from "../pages";
 import { Layout } from "./Layout";
 
 const rootRoute = createRootRoute({
@@ -17,10 +17,28 @@ const homeRoute = createRoute({
   component: Home,
 });
 
+const overlaysRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/overlays",
+  component: Overlays,
+});
+
 const ttsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/tts",
   component: TTS,
+});
+
+const alertsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/alerts",
+  component: Alerts,
+});
+
+const musicRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/music",
+  component: Music,
 });
 
 const settingsRoute = createRoute({
@@ -29,7 +47,14 @@ const settingsRoute = createRoute({
   component: Settings,
 });
 
-const routeTree = rootRoute.addChildren([homeRoute, ttsRoute, settingsRoute]);
+const routeTree = rootRoute.addChildren([
+  homeRoute,
+  overlaysRoute,
+  ttsRoute,
+  alertsRoute,
+  musicRoute,
+  settingsRoute,
+]);
 
 const hashHistory = createHashHistory();
 

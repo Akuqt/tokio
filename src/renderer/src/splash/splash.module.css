@@ -71,6 +71,8 @@
   gap: 24px;
   position: relative;
   z-index: 1;
+  padding: 30px;
+  border-radius: 10px;
 }
 
 .app_name {
@@ -87,15 +89,10 @@
   color: #ffffff;
 }
 
-.accent_pink {
-  color: #ff3366 !important;
+.accent_red {
+  color: #f43f5e !important;
   margin-left: 2px !important;
   text-shadow: 0 0 10px rgba(255, 51, 102, 0.4);
-}
-
-.accent_blue {
-  color: #00d4ff !important;
-  text-shadow: 0 0 10px rgba(0, 212, 255, 0.4);
 }
 
 .loading {
@@ -136,4 +133,17 @@
   font-size: 10px;
   color: #333333;
   line-height: 1.5;
+}
+
+.logo {
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 400;
+  position: absolute;
+  font-size: 16px;
+  right: 14px;
+  top: 40px;
+  color: #f43f5e;
 }

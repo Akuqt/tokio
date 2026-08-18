@@ -30,13 +30,14 @@
   width: 32px;
   height: 32px;
   border-radius: 6px;
-  background-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background-color: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  color: var(--font-primary);
+  font-weight: 400;
   margin-left: 1.25rem;
+  font-size: 18px;
 }
 
 /* THEME MODE TOGGLE */
