@@ -64,7 +64,7 @@ export function VoiceDropdown({ voices, onChange, current }: Props) {
           <div className={styles.dropdown_container}>
             <div className={styles.search_container}>
               <div className={styles.input_container}>
-                <FiSearch color="var(--font-color-secondary)" />
+                <FiSearch color="var(--font-secondary)" />
                 <input
                   type="text"
                   placeholder="Search language or voice..."
@@ -96,18 +96,18 @@ export function VoiceDropdown({ voices, onChange, current }: Props) {
                           backgroundColor:
                             currentVoice.name === voice.name &&
                             currentVoice.lang === voice.lang
-                              ? "var(--nav-bar-profile-hover)"
+                              ? "var(--background-secondary)"
                               : "transparent",
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.backgroundColor =
-                            "var(--nav-bar-profile-selected-background)";
+                            "var(--background-primary)";
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.backgroundColor =
                             currentVoice.name === voice.name &&
                             currentVoice.lang === voice.lang
-                              ? "var(--nav-bar-profile-hover)"
+                              ? "var(--background-secondary)"
                               : "transparent";
                         }}
                       >

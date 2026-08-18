@@ -4,90 +4,54 @@ export const defaultTheme: Theme = {
   name: "Default",
   dark: {
     backgroundColor: {
-      primary: "#1a1a1a", // Main content area
-      secondary: "#242424", // Sidebar and Navbar
+      primary: {
+        color: "#121212",
+        hover: "#27272a", // Lighter step for clear background hover
+      },
+      secondary: {
+        color: "#1e1e1e",
+        hover: "#3f3f46", // Lighter step for clear secondary hover
+      },
+    },
+    accentColor: {
+      primary: {
+        color: "#f43f5e", // Smooth Rose
+        hover: "#fb7185", // Brighter Rose to "pop" in dark mode
+      },
+      secondary: {
+        color: "#14b8a6", // Calm Teal
+        hover: "#2dd4bf", // Brighter Teal to "pop" in dark mode
+      },
     },
     fontColor: {
-      primary: "#f4f4f5", // Main text (white-ish)
-      secondary: "#a1a1aa", // Muted text / unselected icons
-    },
-    logo: {
-      primary: "#ff4757", // Red background
-      secondary: "#ffffff", // White 'T' text
-    },
-    navBar: {
-      controls: {
-        minimize: {
-          color: "#a1a1aa",
-          hover: "#27272a", // Subtle grey hover
-        },
-        maximize: {
-          color: "#a1a1aa",
-          hover: "#27272a",
-        },
-        close: {
-          color: "#a1a1aa",
-          hover: "#e81123", // Red hover for close
-        },
-      },
-      profile: {
-        hover: "#18181b",
-        selected: {
-          tick: "#10b981", // Green checkmark
-          background: "#27272a", // Lighter grey for active selection
-        },
-      },
-    },
-    sideBar: {
-      items: {
-        color: "#a1a1aa",
-        hover: "#f4f4f5", // Lighten on hover
-        selected: "#ff4757", // Accent red for active route
-      },
+      primary: "#f1f5f9",
+      secondary: "#a1a1aa",
     },
   },
   light: {
     backgroundColor: {
-      primary: "#ffffff", // White main content area
-      secondary: "#f4f4f5", // Light grey Sidebar and Navbar
+      primary: {
+        color: "#ffffff",
+        hover: "#e4e4e7", // Darker gray for obvious interaction
+      },
+      secondary: {
+        color: "#f4f4f5",
+        hover: "#d4d4d8", // Darker gray for obvious interaction
+      },
+    },
+    accentColor: {
+      primary: {
+        color: "#e11d48", // Deeper Rose
+        hover: "#9f1239", // Much darker Rose for a solid click/hover feel
+      },
+      secondary: {
+        color: "#0f766e", // Deeper Teal
+        hover: "#134e4a", // Much darker Teal for a solid click/hover feel
+      },
     },
     fontColor: {
-      primary: "#09090b", // Almost black text
-      secondary: "#52525b", // Muted grey text
-    },
-    logo: {
-      primary: "#ff4757", // Keep the red accent
-      secondary: "#ffffff", // White 'T' text
-    },
-    navBar: {
-      controls: {
-        minimize: {
-          color: "#52525b",
-          hover: "#e4e4e7", // Light grey hover
-        },
-        maximize: {
-          color: "#52525b",
-          hover: "#e4e4e7",
-        },
-        close: {
-          color: "#52525b",
-          hover: "#e81123", // Keep standard red close hover
-        },
-      },
-      profile: {
-        hover: "#e4e4e7",
-        selected: {
-          tick: "#10b981", // Green checkmark
-          background: "#d4d4d8", // Darker grey for active selection in light mode
-        },
-      },
-    },
-    sideBar: {
-      items: {
-        color: "#52525b",
-        hover: "#09090b", // Darken on hover
-        selected: "#ff4757", // Accent red for active route
-      },
+      primary: "#09090b",
+      secondary: "#71717a",
     },
   },
 };

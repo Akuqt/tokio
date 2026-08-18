@@ -125,7 +125,7 @@ export function VoiceSection({
           {testLoading ? (
             <ClipLoader
               size={16}
-              color="var(--logo-secondary)"
+              color="var(--font-primary)"
               cssOverride={{
                 margin: 4,
                 padding: 0,

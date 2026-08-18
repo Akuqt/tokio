@@ -2,15 +2,14 @@ import React, { useEffect, useRef, useState } from "react";
 import { FiChevronDown } from "react-icons/fi";
 
 const inputStyle: React.CSSProperties = {
-  backgroundColor: "var(--background-color-secondary)",
-  color: "var(--font-color-primary)",
-  border: "1px solid var(--nav-bar-profile-selected-background)",
+  backgroundColor: "var(--background-secondary)",
+  color: "var(--font-primary)",
+  border: "1px solid var(--background-primary)",
   borderRadius: "4px",
   padding: "0 12px", // Removed vertical padding, relying on explicit height
   height: "40px", // Explicit height guarantees perfect alignment
   fontSize: "14px",
   outline: "none",
-  transition: "border-color 0.2s",
   boxSizing: "border-box",
   width: "100%",
 };
@@ -71,8 +70,8 @@ export function CustomSelect({
             top: "calc(100% + 4px)",
             left: 0,
             right: 0,
-            backgroundColor: "var(--background-color-primary)",
-            border: "1px solid var(--nav-bar-profile-selected-background)",
+            backgroundColor: "var(--background-primary)",
+            border: "1px solid var(--background-primary)",
             borderRadius: "4px",
             boxShadow: "0 8px 16px rgba(0, 0, 0, 0.6)",
             zIndex: 1000,
@@ -95,19 +94,19 @@ export function CustomSelect({
                 fontSize: "14px",
                 color:
                   value === opt.value
-                    ? "var(--font-color-primary)"
-                    : "var(--font-color-secondary)",
+                    ? "var(--font-primary)"
+                    : "var(--font-secondary)",
                 cursor: "pointer",
                 borderRadius: "4px",
                 backgroundColor:
                   value === opt.value
-                    ? "var(--nav-bar-profile-selected-background)"
+                    ? "var(--background-primary)"
                     : "transparent",
               }}
               onMouseEnter={(e) => {
                 if (value !== opt.value)
                   e.currentTarget.style.backgroundColor =
-                    "var(--nav-bar-profile-hover)";
+                    "var(--background-secondary)";
               }}
               onMouseLeave={(e) => {
                 if (value !== opt.value)

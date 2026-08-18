@@ -113,6 +113,8 @@ export function Settings() {
       <div className={styles.container}>
         <ServerSection store={store} dispatch={dispatch} />
 
+        <span className={styles.section_delimiter} />
+
         <ProvidersSection
           store={store}
           newTTSProvider={newTTSProvider}

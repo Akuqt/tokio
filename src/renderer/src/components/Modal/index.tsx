@@ -9,12 +9,11 @@ const actionButtonStyle: React.CSSProperties = {
   height: "40px", // Explicit height strictly matches inputStyle
   borderRadius: "4px",
   cursor: "pointer",
-  backgroundColor: "var(--nav-bar-profile-selected-background)",
-  color: "var(--font-color-primary)",
+  backgroundColor: "var(--background-primary)",
+  color: "var(--font-primary)",
   border: "1px solid transparent",
   fontSize: "14px",
   fontWeight: 500,
-  transition: "background-color 0.2s",
   boxSizing: "border-box",
 };
 
@@ -51,8 +50,8 @@ export function Modal({
     >
       <div
         style={{
-          backgroundColor: "var(--background-color-primary)",
-          border: "1px solid var(--nav-bar-profile-selected-background)",
+          backgroundColor: "var(--background-primary)",
+          border: "1px solid var(--background-primary)",
           borderRadius: "8px",
           padding: "24px",
           maxWidth: "400px",
@@ -66,7 +65,7 @@ export function Modal({
         <h3
           style={{
             margin: 0,
-            color: "var(--font-color-primary)",
+            color: "var(--font-primary)",
             fontSize: "18px",
           }}
         >
@@ -75,7 +74,7 @@ export function Modal({
         <p
           style={{
             margin: 0,
-            color: "var(--font-color-secondary)",
+            color: "var(--font-secondary)",
             fontSize: "14px",
             lineHeight: 1.5,
           }}
@@ -109,11 +108,11 @@ export function Modal({
             style={{
               ...actionButtonStyle,
               backgroundColor: "transparent",
-              border: "1px solid var(--nav-bar-profile-selected-background)",
+              border: "1px solid var(--background-primary)",
             }}
             onMouseEnter={(e) =>
               (e.currentTarget.style.backgroundColor =
-                "var(--nav-bar-profile-hover)")
+                "var(--background-secondary)")
             }
             onMouseLeave={(e) =>
               (e.currentTarget.style.backgroundColor = "transparent")
@@ -125,8 +124,8 @@ export function Modal({
             onClick={onConfirm}
             style={{
               ...actionButtonStyle,
-              backgroundColor: "var(--logo-primary)",
-              color: "var(--logo-secondary)",
+              backgroundColor: "var(--accent-primary)",
+              color: "var(--font-primary)",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
             onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}

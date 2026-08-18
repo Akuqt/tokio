@@ -116,7 +116,7 @@ export function Layout() {
             className={styles.sidebar_item}
             activeProps={{
               style: {
-                color: "var(--side-bar-items-selected)",
+                color: "var(--accent-primary)",
                 fontWeight: "bold",
               },
             }}
@@ -130,7 +130,7 @@ export function Layout() {
             className={styles.sidebar_item}
             activeProps={{
               style: {
-                color: "var(--side-bar-items-selected)",
+                color: "var(--accent-primary)",
                 fontWeight: "bold",
               },
             }}
@@ -145,7 +145,7 @@ export function Layout() {
             style={{ marginTop: "auto" }}
             activeProps={{
               style: {
-                color: "var(--side-bar-items-selected)",
+                color: "var(--accent-primary)",
                 fontWeight: "bold",
               },
             }}

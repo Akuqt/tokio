@@ -1,4 +1,28 @@
-@import "./base.css";
+:root {
+  --background-primary: var(--background-color-primary-color);
+  --background-primary-hover: var(--background-color-primary-hover);
+  --background-secondary: var(--background-color-secondary-color);
+  --background-secondary-hover: var(--background-color-secondary-hover);
+  --accent-primary: var(--accent-color-primary-color);
+  --accent-primary-hover: var(--accent-color-primary-hover);
+  --accent-secondary: var(--accent-color-secondary-color);
+  --accent-secondary-hover: var(--accent-color-secondary-hover);
+  --font-primary: var(--font-color-primary);
+  --font-secondary: var(--font-color-secondary);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  font-weight: normal;
+  transition: color 250ms;
+}
+
+ul {
+  list-style: none;
+}
 
 body {
   display: flex;
@@ -17,21 +41,20 @@ body {
 }
 
 :root {
-  /* Custom Scrollbars */
   ::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background-color: var(--nav-bar-profile-selected-background);
+    background-color: var(--accent-primary);
     border-radius: 10px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--font-color-secondary);
+    background-color: var(--accent-primary-hover);
   }
-  /* Hide Number Spinners */
+
   input[type="number"]::-webkit-inner-spin-button,
   input[type="number"]::-webkit-outer-spin-button {
     appearance: none;
@@ -43,7 +66,6 @@ body {
     -moz-appearance: textfield;
   }
 
-  /* Flat Custom Sliders - Completely Strips Native Animations */
   input[type="range"] {
     appearance: none;
     -webkit-appearance: none;
@@ -58,14 +80,14 @@ body {
     width: 100%;
     height: 6px;
     cursor: pointer;
-    background: var(--nav-bar-profile-selected-background);
+    background: var(--background-secondary);
     border-radius: 4px;
   }
   input[type="range"]::-webkit-slider-thumb {
     height: 16px;
     width: 16px;
     border-radius: 50%;
-    background: var(--logo-primary);
+    background: var(--accent-primary);
     cursor: pointer;
     -webkit-appearance: none;
     margin-top: -5px;
@@ -73,7 +95,7 @@ body {
   }
   input[type="range"]:hover::-webkit-slider-thumb,
   input[type="range"]:active::-webkit-slider-thumb {
-    background: var(--logo-primary);
+    background: var(--accent-primary);
     box-shadow: none;
   }
 }
@@ -104,4 +126,25 @@ body,
     Ubuntu,
     Cantarell,
     sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  line-height: 1.6;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    "Fira Sans",
+    "Droid Sans",
+    "Helvetica Neue",
+    sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

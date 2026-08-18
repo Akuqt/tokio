@@ -16,46 +16,49 @@
   gap: 24px;
   padding-bottom: 32px;
   margin-bottom: 32px;
-  border-bottom: 1px solid var(--nav-bar-profile-selected-background);
+  border-bottom: 1px solid var(--background-primary);
+}
+
+.section_delimiter {
+  width: 100%;
 }
 
 .section_header {
   font-size: 20px;
   font-weight: 600;
-  color: var(--font-color-primary);
+  color: var(--font-primary);
   margin: 0 0 4px 0;
 }
 
 .section_description {
   font-size: 14px;
-  color: var(--font-color-secondary);
+  color: var(--font-secondary);
   margin: 0 0 16px 0;
 }
 
 .label_title {
   font-size: 14px;
   font-weight: 700;
-  color: var(--font-color-primary);
+  color: var(--font-primary);
   margin-bottom: 8px;
   display: block;
 }
 
 .input_style {
-  background-color: var(--background-color-secondary);
-  color: var(--font-color-primary);
-  border: 1px solid var(--nav-bar-profile-selected-background);
+  background-color: var(--background-secondary);
+  color: var(--font-primary);
+  border: 1px solid var(--background-primary);
   border-radius: 4px;
   padding: 0 12px;
   height: 40px;
   font-size: 14px;
   outline: none;
-  transition: border-color 0.2s;
   box-sizing: border-box;
   width: 100%;
 }
 
 .secondary_text {
-  color: var(--font-color-secondary);
+  color: var(--font-secondary);
   font-size: 12px;
   opacity: 0.8;
   font-weight: 600;
@@ -70,18 +73,17 @@
   height: 40px;
   border-radius: 4px;
   cursor: pointer;
-  background-color: var(--nav-bar-profile-selected-background);
-  color: var(--font-color-primary);
-  border: 1px solid transparent;
+  background-color: var(--background-primary);
+  color: var(--font-primary);
+  border: 1px solid var(--background-secondary);
   font-size: 14px;
   font-weight: 500;
-  transition: background-color 0.2s;
   box-sizing: border-box;
   outline: none;
 }
 
 .action_btn:hover {
-  background-color: var(--nav-bar-profile-hover);
+  background-color: var(--background-secondary);
 }
 
 /* OVERLAY SERVER */
@@ -103,7 +105,7 @@
 
 .port_label {
   font-size: 14px;
-  color: var(--font-color-primary);
+  color: var(--font-primary);
 }
 
 .label_port {
@@ -119,12 +121,12 @@
   align-items: center;
   gap: 10px;
   font-size: 14px;
-  color: var(--font-color-primary);
+  color: var(--font-primary);
   cursor: pointer;
 }
 
 .server_check {
-  accent-color: var(--logo-primary);
+  accent-color: var(--accent-primary);
   transform: scale(1.2);
 }
 

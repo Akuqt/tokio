@@ -1,20 +1,19 @@
 .label_title {
   font-size: 14px;
   font-weight: 700;
-  color: var(--font-color-primary);
+  color: var(--font-primary);
   margin-bottom: 8px;
   display: block;
 }
 
 .input_style {
-  color: var(--font-color-primary);
-  background-color: var(--background-color-secondary) !important;
-  border: 1px solid var(--nav-bar-profile-selected-background) !important;
+  color: var(--font-primary);
+  background-color: var(--background-secondary) !important;
+  border: 1px solid var(--background-primary) !important;
   border-radius: 4px;
   padding: 10px 12px;
   font-size: 14px;
   outline: none;
-  transition: border-color 0.2s;
   box-sizing: border-box;
   width: 100%;
   cursor: pointer;
@@ -28,8 +27,8 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background-color: var(--background-color-secondary);
-  border: 1px solid var(--nav-bar-profile-selected-background);
+  background-color: var(--background-secondary);
+  border: 1px solid var(--background-primary);
   border-radius: 4px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
   z-index: 50;
@@ -41,17 +40,17 @@
 
 .search_container {
   padding: 8px;
-  border-bottom: 1px solid var(--nav-bar-profile-selected-background);
+  border-bottom: 1px solid var(--background-primary);
   position: sticky;
   top: 0;
-  background-color: var(--background-color-secondary);
+  background-color: var(--background-secondary);
 }
 
 .input_container {
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: var(--background-color-primary);
+  background-color: var(--background-primary);
   border-radius: 4px;
   padding: 6px 10px;
 }
@@ -60,7 +59,7 @@
   background: transparent;
   border: none;
   outline: none;
-  color: var(--font-color-primary);
+  color: var(--font-primary);
   font-size: 14px;
   width: 100%;
 }
@@ -76,7 +75,7 @@
 .search_empty {
   padding: 8px 12px;
   font-size: 14px;
-  color: var(--font-color-secondary);
+  color: var(--font-secondary);
   text-align: center;
 }
 
@@ -84,14 +83,14 @@
   padding: 4px 12px;
   font-size: 12px;
   font-weight: bold;
-  color: var(--font-color-secondary);
+  color: var(--font-secondary);
   text-transform: uppercase;
 }
 
 .search_item {
   padding: 8px 12px 8px 24px;
   font-size: 14px;
-  color: var(--font-color-primary);
+  color: var(--font-primary);
   cursor: pointer;
 }
 

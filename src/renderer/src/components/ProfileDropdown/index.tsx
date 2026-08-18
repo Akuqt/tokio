@@ -44,10 +44,10 @@ export function ProfileDropdown({
         className={styles.toggle}
         style={{
           color: isProfileOpen
-            ? "var(--font-color-primary)"
-            : "var(--font-color-secondary)",
+            ? "var(--font-primary)"
+            : "var(--font-secondary)",
           backgroundColor: isProfileOpen
-            ? "var(--nav-bar-profile-selected-background)"
+            ? "var(--background-secondary-hover)"
             : "transparent",
         }}
       >
@@ -78,20 +78,17 @@ export function ProfileDropdown({
               style={{
                 color:
                   activeProfile?.file === profile.file
-                    ? "var(--font-color-primary)"
-                    : "var(--font-color-secondary)",
+                    ? "var(--font-primary)"
+                    : "var(--font-secondary)",
                 backgroundColor:
                   activeProfile?.file === profile.file
-                    ? "var(--nav-bar-profile-selected-background)"
+                    ? "var(--background-primary)"
                     : "transparent",
               }}
             >
               {profile.name}
               {activeProfile?.file === profile.file && (
-                <FiCheck
-                  size={14}
-                  color="var(--nav-bar-profile-selected-tick)"
-                />
+                <FiCheck size={14} color="var(--accent-primary)" />
               )}
             </div>
           ))}
