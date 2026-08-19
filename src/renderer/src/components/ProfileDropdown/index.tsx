@@ -82,7 +82,7 @@ export function ProfileDropdown({
                     : "var(--font-secondary)",
                 backgroundColor:
                   activeProfile?.file === profile.file
-                    ? "var(--background-primary)"
+                    ? "var(--background-secondary-hover)"
                     : "transparent",
               }}
             >
