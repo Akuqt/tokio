@@ -40,6 +40,11 @@
   font-size: 18px;
 }
 
+.logo img {
+  width: 28px;
+  height: 28px;
+}
+
 /* THEME MODE TOGGLE */
 
 .theme_mode_toggle {

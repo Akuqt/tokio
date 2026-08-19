@@ -1,3 +1,4 @@
+import Logo from "@/assets/logo.png";
 import { EntityMetadata } from "@/common/schemas";
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
 import { ProfileDropdown } from "@/components";
@@ -68,7 +69,9 @@ export function Layout() {
   return (
     <div className={styles.container}>
       <header className={styles.nav}>
-        <div className={styles.logo}>東</div>
+        <div className={styles.logo}>
+          <img src={Logo} alt="都" />
+        </div>
         <div className={styles.nav_top_items_container}>
           <div
             className={styles.theme_mode_toggle}
