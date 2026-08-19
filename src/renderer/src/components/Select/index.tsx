@@ -1,18 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FiChevronDown } from "react-icons/fi";
-
-const inputStyle: React.CSSProperties = {
-  backgroundColor: "var(--background-secondary)",
-  color: "var(--font-primary)",
-  border: "1px solid var(--background-primary)",
-  borderRadius: "4px",
-  padding: "0 12px", // Removed vertical padding, relying on explicit height
-  height: "40px", // Explicit height guarantees perfect alignment
-  fontSize: "14px",
-  outline: "none",
-  boxSizing: "border-box",
-  width: "100%",
-};
+import styles from "./select.module.css";
 
 export function CustomSelect({
   value,
@@ -43,17 +31,8 @@ export function CustomSelect({
     options.find((opt) => opt.label === value)?.label || value;
 
   return (
-    <div style={{ position: "relative", width: "100%" }} ref={dropdownRef}>
-      <div
-        onClick={() => setIsOpen(!isOpen)}
-        style={{
-          ...inputStyle,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          cursor: "pointer",
-        }}
-      >
+    <div className={styles.container} ref={dropdownRef}>
+      <div onClick={() => setIsOpen(!isOpen)} className={styles.select_display}>
         <span>{selectedLabel}</span>
         <FiChevronDown
           style={{
@@ -64,24 +43,7 @@ export function CustomSelect({
       </div>
 
       {isOpen && (
-        <div
-          style={{
-            position: "absolute",
-            top: "calc(100% + 4px)",
-            left: 0,
-            right: 0,
-            backgroundColor: "var(--background-primary)",
-            border: "1px solid var(--background-primary)",
-            borderRadius: "4px",
-            boxShadow: "0 8px 16px rgba(0, 0, 0, 0.6)",
-            zIndex: 1000,
-            maxHeight: "200px",
-            overflowY: "auto",
-            display: "flex",
-            flexDirection: "column",
-            padding: "4px",
-          }}
-        >
+        <div className={styles.select_area}>
           {options.map((opt) => (
             <div
               key={opt.value}
@@ -89,28 +51,16 @@ export function CustomSelect({
                 onChange(opt.value, opt.label);
                 setIsOpen(false);
               }}
+              className={styles.select_item}
               style={{
-                padding: "10px 12px",
-                fontSize: "14px",
                 color:
-                  value === opt.value
+                  value === opt.label
                     ? "var(--font-primary)"
                     : "var(--font-secondary)",
-                cursor: "pointer",
-                borderRadius: "4px",
                 backgroundColor:
-                  value === opt.value
-                    ? "var(--background-primary)"
+                  value === opt.label
+                    ? "var(--background-secondary)"
                     : "transparent",
-              }}
-              onMouseEnter={(e) => {
-                if (value !== opt.value)
-                  e.currentTarget.style.backgroundColor =
-                    "var(--background-secondary)";
-              }}
-              onMouseLeave={(e) => {
-                if (value !== opt.value)
-                  e.currentTarget.style.backgroundColor = "transparent";
               }}
             >
               {opt.label}
