@@ -120,7 +120,11 @@ export function TTS() {
           ttsTestQueue={ttsTestQueue}
         />
 
+        <span className={styles.section_delimiter} />
+
         <FormatSection format={state.settings.format} dispatch={dispatch} />
+
+        <span className={styles.section_delimiter} />
 
         <PermissionsSection
           permissions={state.settings.permissions}
@@ -129,11 +133,15 @@ export function TTS() {
           dispatch={dispatch}
         />
 
+        <span className={styles.section_delimiter} />
+
         <ProtectionSection
           protection={state.settings.protection}
           bannedlistTemp={state.bannedlistTemp}
           dispatch={dispatch}
         />
+
+        <span className={styles.section_delimiter} />
 
         <ReplacementsSection
           replacements={state.settings.replacements}

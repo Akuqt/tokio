@@ -122,7 +122,11 @@ export function Settings() {
           dispatch={dispatch}
         />
 
+        <span className={styles.section_delimiter} />
+
         <ThemeSection store={store} mode={theme_mode} dispatch={dispatch} />
+
+        <span className={styles.section_delimiter} />
 
         <ProfileSection store={store} dispatch={dispatch} />
       </div>
