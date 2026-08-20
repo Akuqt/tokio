@@ -7,3 +7,5 @@ out
 *.mp*
 bin
 .fallow/
+obj
+output
