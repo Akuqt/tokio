@@ -6,14 +6,7 @@ export type InstallerStep =
   | "complete"
   | "error";
 
-type InstallerEvent =
-  | "STATE"
-  | "UI_READY"
-  | "DRAG"
-  | "INSTALL"
-  | "LAUNCH_APP"
-  | "CLOSE"
-  | "NON_FOUND";
+type InstallerEvent = "STATE" | "NON_FOUND";
 
 type StateValue = {
   Progress: number;

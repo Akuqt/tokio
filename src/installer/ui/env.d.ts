@@ -2,8 +2,7 @@
 
 export {};
 
-type InstallerEvent =
-  "STATE" | "UI_READY" | "DRAG" | "INSTALL" | "LAUNCH" | "CLOSE" | "NON_FOUND";
+type InstallerEvent = "UI_READY" | "DRAG" | "INSTALL" | "LAUNCH" | "CLOSE";
 
 declare global {
   interface Window {
