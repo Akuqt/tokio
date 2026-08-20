@@ -1,5 +1,5 @@
 appId: com.ialfaro.tokio
-productName: tokio
+productName: Tokio
 directories:
   buildResources: build
 files:
@@ -19,6 +19,7 @@ nsis:
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
+  runAfterFinish: false
 npmRebuild: false
 publish:
   provider: generic
