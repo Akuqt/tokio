@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <AssemblyName>tokio</AssemblyName>
+
+    <InstallerUrl Condition="'$(INSTALLER_URL)' != ''">$(INSTALLER_URL)</InstallerUrl>
+
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>partial</TrimMode>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+
+    <ApplicationIcon>assets\icon.ico</ApplicationIcon>
+    <PublishDir>..\..\output\</PublishDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="InstallerUrl" Value="$(InstallerUrl)" />
+    <TrimmerRootAssembly Include="Photino.NET" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Photino.NET" Version="4.0.16" />
+  </ItemGroup>
+
+  <Target Name="BuildReactApp" BeforeTargets="BeforeBuild">
+    <Exec Command="yarn build:installer:ui" WorkingDirectory="$(ProjectDir).." />
+  </Target>
+
+  <ItemGroup>
+    <EmbeddedResource Include="dist\index.html" LogicalName="UI.index.html" />
+  </ItemGroup>
+</Project>
