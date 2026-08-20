@@ -1,7 +1,5 @@
-import { ProfileSchema } from "@/common/schemas";
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
 import { createStack } from "@/helper/events";
-import { join } from "path";
 
 const events = createStack();
 
@@ -19,26 +17,13 @@ events.push(APP_EVENTS.GET_VOICES, async ({ ttsService }, e) => {
 
 events.push(
   APP_EVENTS.UPDATE_TTS_SETTINGS,
-  async (
-    { storeManagerService, jsonManagerService, pathManagerService },
-    e,
-    { settings },
-  ) => {
+  async ({ storeManagerService }, e, { settings }) => {
     try {
-      const config = storeManagerService.getSettings();
-
-      await jsonManagerService.updateFile(
-        join(
-          pathManagerService.folders.profilesFolder,
-          config.activeProfile.file,
-        ),
-        ProfileSchema,
-        {
-          tts: settings,
-        },
-      );
+      const res = await storeManagerService.updateProfileData({
+        tts: settings,
+      });
       e.reply(APP_EVENTS_RESPONSE.UPDATE_TTS_SETTINGS, {
-        success: true,
+        success: res,
       });
     } catch {
       e.reply(APP_EVENTS_RESPONSE.UPDATE_TTS_SETTINGS, {

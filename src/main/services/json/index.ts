@@ -92,7 +92,7 @@ export class JSONManagerService extends Service {
     filePath: string,
     schema: z.ZodType<T>,
     updates: Partial<T>,
-  ): Promise<boolean> {
+  ): Promise<{ success: boolean; data: T | null }> {
     const currentLock = this._writeLocks.get(filePath) || Promise.resolve();
 
     const updatePromise = currentLock.then(async () => {
@@ -102,10 +102,13 @@ export class JSONManagerService extends Service {
           `<System> Unable to update json file ${filePath} -- File does not exist or is invalid.`,
           this._logFile,
         );
-        return false;
+        return { success: false, data: null };
       }
+
       const mergedData = this._deepMerge(existingData, updates);
-      return this.saveFile(filePath, schema, mergedData);
+      const saveSuccess = await this.saveFile(filePath, schema, mergedData);
+
+      return { success: saveSuccess, data: saveSuccess ? mergedData : null };
     });
 
     this._writeLocks.set(filePath, updatePromise);

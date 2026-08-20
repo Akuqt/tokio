@@ -2,6 +2,7 @@ import {
   AppProvider,
   AppSettings,
   EntityMetadata,
+  Profile,
   ProfileSchema,
   StoreSchema,
   StoreZodSchema,
@@ -34,18 +35,16 @@ export class StoreManagerService extends Service {
   private _providers!: Providers;
   private _storeFilePath!: string;
   private _storeData: StoreSchema | null = null;
+  private _memoryProfile: Profile | null = null;
 
   public setLogFile(logFile: string) {
     this._logFile = logFile;
   }
 
   public async getProfileData() {
-    const bn = this._storeData?.settings.activeProfile.file || "default.json";
-    const profile = await this._jsonManagerService.loadFile(
-      join(this._pathManagerService.folders.profilesFolder, bn),
-      ProfileSchema,
-    );
-    return profile;
+    if (this._memoryProfile !== null) return this._memoryProfile;
+    this._memoryProfile = await this._getProfileData();
+    return this._memoryProfile;
   }
 
   public async initialize(
@@ -109,6 +108,14 @@ export class StoreManagerService extends Service {
     }
   }
 
+  public async _getProfileData() {
+    const bn = this._storeData?.settings.activeProfile.file || "default.json";
+    return await this._jsonManagerService.loadFile(
+      join(this._pathManagerService.folders.profilesFolder, bn),
+      ProfileSchema,
+    );
+  }
+
   private async _generatePhysicalDefaults(): Promise<void> {
     const defaultThemePath = join(
       this._pathManagerService.folders.themesFolder,
@@ -138,16 +145,12 @@ export class StoreManagerService extends Service {
 
     const clonedSettings = structuredClone(this._storeData!.settings);
 
-    const tts_providers: AppProvider[] = [];
-    const conn_providers: AppProvider[] = [];
-
-    for (const tts_p of clonedSettings.providers.tts) {
-      tts_providers.push(this._decryptProviderKey(tts_p));
-    }
-
-    for (const conn_p of clonedSettings.providers.connector) {
-      conn_providers.push(this._decryptProviderKey(conn_p));
-    }
+    clonedSettings.providers = {
+      connector: clonedSettings.providers.connector.map((p) =>
+        this._decryptProviderKey(p),
+      ),
+      tts: clonedSettings.providers.tts.map((p) => this._decryptProviderKey(p)),
+    };
 
     clonedSettings.activeConnProvider = this._decryptProviderKey(
       clonedSettings.activeConnProvider,
@@ -155,11 +158,6 @@ export class StoreManagerService extends Service {
     clonedSettings.activeTTSProvider = this._decryptProviderKey(
       clonedSettings.activeTTSProvider,
     );
-
-    clonedSettings.providers = {
-      connector: conn_providers,
-      tts: tts_providers,
-    };
 
     return clonedSettings;
   }
@@ -191,7 +189,7 @@ export class StoreManagerService extends Service {
     this._storeData!.settings.theme_mode = mode;
     if (activeThemeFile) {
       this._storeData!.settings.activeTheme =
-        this._storeData?.themes.find((t) => t.file == activeThemeFile) ||
+        this._storeData?.themes.find((t) => t.file === activeThemeFile) ||
         defaultStoreData.themes[0];
     }
     await this._queueSave();
@@ -200,10 +198,11 @@ export class StoreManagerService extends Service {
   public async updateActiveProfile(activeProfileFile: string) {
     this._ensureInitialized();
     this._storeData!.settings.activeProfile =
-      this._storeData?.profiles.find((p) => p.file == activeProfileFile) ||
+      this._storeData?.profiles.find((p) => p.file === activeProfileFile) ||
       defaultStoreData.profiles[0];
 
     await this._queueSave();
+    this._memoryProfile = await this._getProfileData();
   }
 
   public async updateProvider(
@@ -212,20 +211,35 @@ export class StoreManagerService extends Service {
     key?: string,
   ): Promise<AppProvider | null> {
     this._ensureInitialized();
-    let provider: AppProvider | null = null;
-    if (!name) return provider;
-    provider = this._encryptProviderKey({
+    if (!name) return null;
+
+    const provider = this._encryptProviderKey({
       name,
       key: key || "",
       active: true,
     });
-    if (type === "tts") {
-      this._storeData!.settings.activeTTSProvider = provider;
-      this._providers.tts.setProvider(name, key);
+
+    const settings = this._storeData!.settings;
+    const targetList =
+      type === "tts" ? settings.providers.tts : settings.providers.connector;
+    const providerService =
+      type === "tts" ? this._providers.tts : this._providers.connector;
+
+    const existingIndex = targetList.findIndex((p) => p.name === name);
+    if (existingIndex !== -1) {
+      targetList[existingIndex] = provider;
     } else {
-      this._storeData!.settings.activeConnProvider = provider;
-      this._providers.connector.setProvider(name, key);
+      targetList.push(provider);
     }
+
+    if (type === "tts") {
+      settings.activeTTSProvider = provider;
+    } else {
+      settings.activeConnProvider = provider;
+    }
+
+    providerService.setProvider(name, key);
+
     await this._queueSave();
     return provider;
   }
@@ -248,6 +262,7 @@ export class StoreManagerService extends Service {
       ProfileSchema,
       newProfileData,
     );
+
     if (!saved) {
       Logger.error(
         `<System> Failed to write new profile file: ${fileName}`,
@@ -256,160 +271,7 @@ export class StoreManagerService extends Service {
       return null;
     }
 
-    return await this.addProfile({
-      file: fileName,
-      name: profileName,
-    });
-  }
-
-  public async exportTheme(ref: string, path: string): Promise<boolean> {
-    if (!ref || !path) return false;
-
-    const refPath = join(this._pathManagerService.folders.themesFolder, ref);
-
-    const newPath = resolve(path);
-
-    const existingData = await this._jsonManagerService.loadFile(
-      refPath,
-      ThemeSchema,
-    );
-    if (!existingData) {
-      Logger.error(
-        `<System> Clone failed: Reference theme ${ref} not found.`,
-        this._logFile,
-      );
-      return false;
-    }
-
-    const saved = await this._jsonManagerService.saveFile(
-      newPath,
-      ThemeSchema,
-      existingData,
-    );
-    if (!saved) {
-      Logger.error(
-        `<System> Failed to write cloned theme file: ${path}`,
-        this._logFile,
-      );
-      return false;
-    }
-
-    return true;
-  }
-
-  public async exportProfile(ref: string, path: string): Promise<boolean> {
-    if (!ref || !path) return false;
-
-    const refPath = join(this._pathManagerService.folders.profilesFolder, ref);
-
-    const newPath = resolve(path);
-
-    const existingData = await this._jsonManagerService.loadFile(
-      refPath,
-      ProfileSchema,
-    );
-    if (!existingData) {
-      Logger.error(
-        `<System> Clone failed: Reference profile ${ref} not found.`,
-        this._logFile,
-      );
-      return false;
-    }
-
-    const saved = await this._jsonManagerService.saveFile(
-      newPath,
-      ProfileSchema,
-      existingData,
-    );
-    if (!saved) {
-      Logger.error(
-        `<System> Failed to write cloned profile file: ${path}`,
-        this._logFile,
-      );
-      return false;
-    }
-
-    return true;
-  }
-
-  public async importProfile(ref: string): Promise<boolean> {
-    if (!ref) return false;
-
-    const refPath = resolve(ref);
-    const file = basename(refPath);
-    const newPath = join(this._pathManagerService.folders.profilesFolder, file);
-
-    const existingData = await this._jsonManagerService.loadFile(
-      refPath,
-      ProfileSchema,
-    );
-    if (!existingData) {
-      Logger.error(
-        `<System> Import failed: Reference profile ${ref} not found.`,
-        this._logFile,
-      );
-      return false;
-    }
-
-    const saved = await this._jsonManagerService.saveFile(
-      newPath,
-      ProfileSchema,
-      existingData,
-    );
-    if (!saved) {
-      Logger.error(
-        `<System> Failed to write imported profile file: ${newPath}`,
-        this._logFile,
-      );
-      return false;
-    }
-
-    await this.addProfile({
-      file: file,
-      name: cleanText(file.split(".")[0]).replace(/_|-|\./, " "),
-    });
-
-    return true;
-  }
-
-  public async importTheme(ref: string): Promise<boolean> {
-    if (!ref) return false;
-
-    const refPath = resolve(ref);
-    const file = basename(refPath);
-    const newPath = join(this._pathManagerService.folders.themesFolder, file);
-
-    const existingData = await this._jsonManagerService.loadFile(
-      refPath,
-      ThemeSchema,
-    );
-    if (!existingData) {
-      Logger.error(
-        `<System> Import failed: Reference theme ${ref} not found.`,
-        this._logFile,
-      );
-      return false;
-    }
-
-    const saved = await this._jsonManagerService.saveFile(
-      newPath,
-      ThemeSchema,
-      existingData,
-    );
-    if (!saved) {
-      Logger.error(
-        `<System> Failed to write imported theme file: ${newPath}`,
-        this._logFile,
-      );
-      return false;
-    }
-
-    await this.addTheme({
-      file: file,
-      name: cleanText(file.split(".")[0]).replace(/_|-|\./, " "),
-    });
-
-    return true;
+    return await this.addProfile({ file: fileName, name: profileName });
   }
 
   public async cloneProfile(
@@ -445,12 +307,12 @@ export class StoreManagerService extends Service {
       ...structuredClone(existingData),
       name: newProfileName,
     };
-
     const saved = await this._jsonManagerService.saveFile(
       newPath,
       ProfileSchema,
       clonedData,
     );
+
     if (!saved) {
       Logger.error(
         `<System> Failed to write cloned profile file: ${newFileName}`,
@@ -459,32 +321,171 @@ export class StoreManagerService extends Service {
       return null;
     }
 
-    return await this.addProfile({
-      file: newFileName,
-      name: newProfileName,
-    });
+    return await this.addProfile({ file: newFileName, name: newProfileName });
+  }
+
+  // --- Start: Consolidated Imports & Exports ---
+
+  public async exportTheme(ref: string, path: string): Promise<boolean> {
+    return this._exportEntity(
+      ref,
+      path,
+      this._pathManagerService.folders.themesFolder,
+      ThemeSchema,
+      "theme",
+    );
+  }
+
+  public async exportProfile(ref: string, path: string): Promise<boolean> {
+    return this._exportEntity(
+      ref,
+      path,
+      this._pathManagerService.folders.profilesFolder,
+      ProfileSchema,
+      "profile",
+    );
+  }
+
+  public async importProfile(ref: string): Promise<boolean> {
+    const result = await this._importEntity(
+      ref,
+      this._pathManagerService.folders.profilesFolder,
+      ProfileSchema,
+      "profile",
+    );
+    if (!result) return false;
+    await this.addProfile(result);
+    return true;
+  }
+
+  public async importTheme(ref: string): Promise<boolean> {
+    const result = await this._importEntity(
+      ref,
+      this._pathManagerService.folders.themesFolder,
+      ThemeSchema,
+      "theme",
+    );
+    if (!result) return false;
+    await this.addTheme(result);
+    return true;
+  }
+
+  private async _exportEntity(
+    ref: string,
+    destPath: string,
+    sourceFolder: string,
+    schema: any,
+    typeName: string,
+  ): Promise<boolean> {
+    if (!ref || !destPath) return false;
+
+    const refPath = join(sourceFolder, ref);
+    const newPath = resolve(destPath);
+    const existingData = await this._jsonManagerService.loadFile(
+      refPath,
+      schema,
+    );
+
+    if (!existingData) {
+      Logger.error(
+        `<System> Clone failed: Reference ${typeName} ${ref} not found.`,
+        this._logFile,
+      );
+      return false;
+    }
+
+    const saved = await this._jsonManagerService.saveFile(
+      newPath,
+      schema,
+      existingData,
+    );
+    if (!saved) {
+      Logger.error(
+        `<System> Failed to write cloned ${typeName} file: ${destPath}`,
+        this._logFile,
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  private async _importEntity(
+    ref: string,
+    destFolder: string,
+    schema: any,
+    typeName: string,
+  ): Promise<EntityMetadata | null> {
+    if (!ref) return null;
+
+    const refPath = resolve(ref);
+    const file = basename(refPath);
+    const newPath = join(destFolder, file);
+
+    const existingData = await this._jsonManagerService.loadFile(
+      refPath,
+      schema,
+    );
+    if (!existingData) {
+      Logger.error(
+        `<System> Import failed: Reference ${typeName} ${ref} not found.`,
+        this._logFile,
+      );
+      return null;
+    }
+
+    const saved = await this._jsonManagerService.saveFile(
+      newPath,
+      schema,
+      existingData,
+    );
+    if (!saved) {
+      Logger.error(
+        `<System> Failed to write imported ${typeName} file: ${newPath}`,
+        this._logFile,
+      );
+      return null;
+    }
+
+    const name = cleanText(file.split(".")[0]).replace(/[_.-]/g, " ");
+    return { file, name };
   }
 
   public async addProfile(
     profile: EntityMetadata,
   ): Promise<EntityMetadata | null> {
-    this._ensureInitialized();
-    if (!profile) return null;
-    if (this._storeData!.profiles.some((p) => p.file === profile.file))
-      return profile;
-    this._storeData!.profiles.push(profile);
-    await this._queueSave();
-    return profile;
+    return this._addEntity(profile, this._storeData!.profiles);
   }
 
   public async addTheme(theme: EntityMetadata): Promise<EntityMetadata | null> {
+    return this._addEntity(theme, this._storeData!.themes);
+  }
+
+  public async updateProfileData<T>(updates: Partial<T>): Promise<boolean> {
+    const res = await this._jsonManagerService.updateFile(
+      join(
+        this._pathManagerService.folders.profilesFolder,
+        this._storeData?.settings.activeProfile.file || "default.json",
+      ),
+      ProfileSchema,
+      updates,
+    );
+    if (!res.success || !res.data) return false;
+    this._memoryProfile = res.data;
+    return true;
+  }
+
+  private async _addEntity(
+    entity: EntityMetadata,
+    collection: EntityMetadata[],
+  ): Promise<EntityMetadata | null> {
     this._ensureInitialized();
-    if (!theme) return null;
-    if (this._storeData!.themes.some((t) => t.file === theme.file))
-      return theme;
-    this._storeData!.themes.push(theme);
+    if (!entity) return null;
+    if (collection.some((e) => e.file === entity.file)) return entity;
+
+    collection.push(entity);
     await this._queueSave();
-    return theme;
+    return entity;
   }
 
   private _ensureInitialized() {
