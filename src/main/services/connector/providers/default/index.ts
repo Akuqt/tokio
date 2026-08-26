@@ -251,6 +251,7 @@ export class TikTokLiveConnector extends ConnectorProvider {
         type: this.withDefault(tdata.gift?.type, 1),
         name: this.withDefault(tdata.gift?.name, ""),
         repeatEnd: this.withDefault(tdata.repeatEnd, 1) == 1,
+        coins: this.withDefault(tdata.gift?.diamondCount, 0),
         comboCount: this.withDefault(tdata.repeatCount, 0),
       };
       const data: GiftEvent = {
