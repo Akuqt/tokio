@@ -1,11 +1,65 @@
 import { ThemeSchema } from "@/common/schemas";
-import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
+import { APP_EVENTS, APP_EVENTS_RESPONSE, TIKTOK_EVENTS } from "@/common/types";
 import { delay } from "@/common/util";
 import config from "@/config";
 import { createStack } from "@/helper/events";
+import { TikTokConnectorService } from "@/services/connector";
+import { StoreManagerService } from "@/services/store";
+import { TTSService } from "@/services/tts";
+import { CustomBrowserWindow } from "@/types";
 import { join } from "path";
 
 const events = createStack();
+
+const registerConnectorEvents = (
+  conn: TikTokConnectorService,
+  win: CustomBrowserWindow,
+  store: StoreManagerService,
+  tts: TTSService,
+) => {
+  conn.on(TIKTOK_EVENTS.ROOM_USER, (d) => {
+    store.updateLiveStats({ viewers: d.viewers, views: d.views });
+    win.webContents.send(APP_EVENTS_RESPONSE.VIEWS, {
+      data: {
+        views: d.views,
+        viewers: d.viewers,
+      },
+    });
+  });
+  conn.on(TIKTOK_EVENTS.LIKE, (d) => {
+    store.updateLiveStats({ likes: d.totalLikes });
+    win.webContents.send(APP_EVENTS_RESPONSE.LIKES, {
+      likes: d.totalLikes,
+    });
+  });
+  conn.on(TIKTOK_EVENTS.DISCONNECTED, () => {
+    win.webContents.send(APP_EVENTS_RESPONSE.CONNECTED, {
+      success: false,
+      stats: {
+        likes: 0,
+        viewers: 0,
+        views: 0,
+      },
+    });
+  });
+  conn.on(TIKTOK_EVENTS.CHAT, async (d) => {
+    const settings = store.getSettings();
+    if (settings.activeFeatures.tts) {
+      const profile = await store.getProfileData();
+      if (!profile) return;
+      const ttsSettings = profile.tts;
+      tts.talk(d, ttsSettings, (res) => {
+        win.webContents.send(APP_EVENTS_RESPONSE.TTS_AUDIO, {
+          data: res.data!,
+          filters: res.filters,
+          queueOptions: res.queueOptions,
+        });
+      });
+    } else {
+      tts.clearTalk();
+    }
+  });
+};
 
 events.push(
   APP_EVENTS.GET_THEME,
@@ -49,7 +103,7 @@ events.push(
   APP_EVENTS.SET_THEME_MODE,
   async ({ storeManagerService }, _, { mode }) => {
     try {
-      await storeManagerService.updateAppearance(mode);
+      storeManagerService.updateAppearance(mode);
     } catch {
       // next
     }
@@ -112,6 +166,17 @@ events.push(
         pathManagerService,
       );
       serverService.initEvents(connectorService);
+      storeManagerService.updateLiveStats({
+        likes: 0,
+        viewers: 0,
+        views: 0,
+      });
+      registerConnectorEvents(
+        connectorService,
+        win,
+        storeManagerService,
+        ttsService,
+      );
       const settings = storeManagerService.getSettings();
       let mode: "dark" | "light" = "dark";
       if (settings.theme_mode == "system") {
