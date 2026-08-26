@@ -37,6 +37,12 @@ export enum APP_EVENTS {
   SET_SERVER = "app:settings:set:server",
   REQ_FDQN = "app:settings:req:fqdn",
   SET_THEME = "app:settings:set:theme",
+
+  // HOME
+  CONNECT = "app:home:connect",
+  DISCONNECT = "app:home:disconnect",
+  IS_CONNECTED = "app:home:isconnected",
+  ACTIVE_FEATURES = "app:home:activefeatures",
 }
 
 export interface AppEventsMap {
@@ -109,5 +115,15 @@ export interface AppEventsMap {
   [APP_EVENTS.SET_THEME]: {
     file: string;
     mode: "dark" | "light";
+  };
+
+  // HOME
+  [APP_EVENTS.CONNECT]: {
+    username: string;
+  };
+  [APP_EVENTS.DISCONNECT]: void;
+  [APP_EVENTS.IS_CONNECTED]: void;
+  [APP_EVENTS.ACTIVE_FEATURES]: {
+    tts: boolean;
   };
 }

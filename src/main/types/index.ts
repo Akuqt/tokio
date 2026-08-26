@@ -19,12 +19,23 @@ import {
   NativeTheme,
   session as Session,
   Shell,
+  WebContents,
 } from "electron";
 
+type TypedWebContents = Omit<WebContents, "send"> & {
+  send: <T extends APP_EVENTS_RESPONSE>(
+    channel: T,
+    args: AppEventsResponseMap[T],
+  ) => void;
+};
+
+export type CustomBrowserWindow = Omit<BrowserWindow, "webContents"> & {
+  webContents: TypedWebContents;
+};
+
 export interface AppHandlerVariables {
-  internet: boolean;
   readonly app: App;
-  readonly win: BrowserWindow;
+  readonly win: CustomBrowserWindow;
   readonly ipcMain: IpcMain;
   readonly shell: Shell;
   readonly session: typeof Session;

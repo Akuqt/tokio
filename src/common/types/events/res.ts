@@ -7,6 +7,10 @@ export enum APP_EVENTS_RESPONSE {
   // INIT
   LOAD_APP = "app:load:res:all",
 
+  // GLOBAL
+
+  TTS_AUDIO = "app:tts:audio",
+
   // WINDOW
   RESIZE_WINDOW = "app:window:res:resize",
 
@@ -35,6 +39,11 @@ export enum APP_EVENTS_RESPONSE {
   SET_SERVER = "app:settings:res:set:server",
   REQ_FDQN = "app:settings:res:fqdn",
   SET_THEME = "app:settings:res:set:theme",
+
+  //HOME
+  CONNECTED = "app:home:res:connect",
+  VIEWS = "app:home:res:views",
+  LIKES = "app:home:res:likes",
 }
 
 export interface AppEventsResponseMap {
@@ -46,6 +55,17 @@ export interface AppEventsResponseMap {
         mode: "dark" | "light";
         data: Theme;
       };
+    };
+  };
+
+  // GLOBAL
+
+  [APP_EVENTS_RESPONSE.TTS_AUDIO]: {
+    data: Uint8Array<ArrayBufferLike>;
+    filters: Profile["tts"]["filters"];
+    queueOptions: {
+      gapTime: number;
+      maxQueueLength: number;
     };
   };
 
@@ -122,5 +142,25 @@ export interface AppEventsResponseMap {
 
   [APP_EVENTS_RESPONSE.SET_THEME]: {
     success: boolean;
+  };
+
+  // HOME
+  [APP_EVENTS_RESPONSE.CONNECTED]: {
+    success: boolean;
+    stats: {
+      views: number;
+      viewers: number;
+      likes: number;
+    };
+  };
+
+  [APP_EVENTS_RESPONSE.VIEWS]: {
+    data: {
+      views: number;
+      viewers: number;
+    };
+  };
+  [APP_EVENTS_RESPONSE.LIKES]: {
+    likes: number;
   };
 }

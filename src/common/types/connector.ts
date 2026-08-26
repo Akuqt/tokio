@@ -17,6 +17,12 @@ export interface ChatEvent {
   };
 }
 
+export type RoomUserEvent = {
+  ranks: (UserData & { score: number; position: number })[];
+  views: number;
+  viewers: number;
+};
+
 export interface Emotes {
   emoteID: string;
   index: number;
@@ -44,6 +50,7 @@ export interface GiftEvent {
   user: UserData;
   gift: {
     id: string;
+    coins: number;
     repeatEnd: boolean;
     type: number;
     name: string;
@@ -77,6 +84,7 @@ export enum TIKTOK_EVENTS {
   SUPER_FAN_BOX = "tiktok:superfanbox",
   SUPER_FAN_JOIN = "tiktok:superfanjoin",
   MEMBER_JOIN = "tiktok:memberjoin",
+  ROOM_USER = "tiktok:roomuser",
 }
 
 export interface TikTokEventMap {
@@ -92,4 +100,5 @@ export interface TikTokEventMap {
   [TIKTOK_EVENTS.SUPER_FAN]: SuperFanEvent;
   [TIKTOK_EVENTS.MEMBER_JOIN]: MemberEvent;
   [TIKTOK_EVENTS.SUPER_FAN_JOIN]: SuperFanJoinEvent;
+  [TIKTOK_EVENTS.ROOM_USER]: RoomUserEvent;
 }
