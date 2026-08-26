@@ -4,6 +4,7 @@ import {
   Gift,
   GiftEvent,
   LikeEvent,
+  RoomUserEvent,
   ShareEvent,
   TIKTOK_EVENTS,
   TikTokEventMap,
@@ -296,6 +297,23 @@ export class TikTokLiveConnector extends ConnectorProvider {
     this._connector.on(WebcastEvent.SUPER_FAN_JOIN, (tdata) => {
       const user = this.getUserData({ user: tdata.user });
       this.emit(TIKTOK_EVENTS.SUPER_FAN_JOIN, { user });
+    });
+
+    this._connector.on(WebcastEvent.ROOM_USER, (tdata) => {
+      const ranks: RoomUserEvent["ranks"] = [];
+      for (const rank of tdata.ranks) {
+        const user = rank.user;
+        ranks.push({
+          handle: this.withDefault(user?.nickname, ""),
+          profilePictures: this.withDefault(user?.avatarThumb?.urlList, []),
+          username: this.withDefault(user?.displayId, ""),
+          score: this.withDefault(Number(rank.score), 0),
+          position: this.withDefault(Number(rank.rank), 0),
+        });
+      }
+      const viewers = this.withDefault(Number(tdata.total), 0);
+      const views = this.withDefault(Number(tdata.totalUser), 0);
+      this.emit(TIKTOK_EVENTS.ROOM_USER, { ranks, viewers, views });
     });
   }
 
