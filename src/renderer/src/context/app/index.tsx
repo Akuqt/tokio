@@ -2,6 +2,7 @@ import { Theme } from "@/common/schemas";
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
 import { defaultTheme } from "@/common/util";
 import { SplashScreen } from "@/splash";
+import { useAudio } from "@renderer/hooks";
 import React, { createContext, useEffect, useRef, useState } from "react";
 
 type ThemeMode = "light" | "dark";
@@ -34,6 +35,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [theme_mode, setThemeMode] = useState<ThemeMode>("dark");
   const [appLoading, setAppLoading] = useState(true);
 
+  const { getQueue } = useAudio();
+
+  const ttsQueue = getQueue("tts_data");
+
   useEffect(() => {
     if (!window.api) {
       setTheme(defaultTheme);
@@ -61,6 +66,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setAppLoading(false);
       },
     );
+
+    const removeTTSData = window.api.on(
+      APP_EVENTS_RESPONSE.TTS_AUDIO,
+      (res) => {
+        if (res) {
+          ttsQueue.setQueueOptions(res.queueOptions);
+          ttsQueue.setFilters({
+            ...res.filters,
+            volume: res.filters.volume / 100,
+          });
+          ttsQueue.enqueue(res.data!, true);
+        }
+      },
+    );
+
     if (isInitialMount.current) {
       window.api.emit(APP_EVENTS.LOAD_APP);
       isInitialMount.current = false;
@@ -68,6 +88,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       removeLoadApp();
+      removeTTSData();
     };
   }, []);
 
@@ -84,11 +105,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider
       value={{ theme, theme_mode, toggleThemeMode, appLoading }}
     >
-      {appLoading ? (
-        <SplashScreen /> // TODO: Handle Load later
-      ) : (
-        children
-      )}
+      {appLoading ? <SplashScreen /> : children}
     </AppContext.Provider>
   );
 }
