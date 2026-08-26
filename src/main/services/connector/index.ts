@@ -87,13 +87,13 @@ export class TikTokConnectorService extends ProviderService<ConnectorProvider> {
         this._logFile,
       );
     } else {
-      Logger.error(`<Connector> Connected to ${username}.`, this._logFile);
+      Logger.success(`<Connector> Connected to ${username}.`, this._logFile);
     }
     return res;
   }
 
   public async disconnect(): Promise<void> {
-    if (this._current?.provider) this._current.provider.disconnect();
+    if (this._current?.provider) await this._current.provider.disconnect();
   }
 
   public isConnected(): boolean {

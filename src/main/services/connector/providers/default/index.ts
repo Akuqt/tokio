@@ -58,8 +58,7 @@ export class TikTokLiveConnector extends ConnectorProvider {
   ): Promise<ConnectorResponse> {
     if (this.isConnected()) {
       return {
-        success: false,
-        error: new Error("Instance already connected"),
+        success: true,
       };
     }
     this._username = username.replace("@", "") || "";
@@ -89,7 +88,9 @@ export class TikTokLiveConnector extends ConnectorProvider {
     try {
       const state = await this._connector.connect();
       if (state.isConnected) {
-        this.emit(TIKTOK_EVENTS.CONNECTED);
+        this.emit(TIKTOK_EVENTS.CONNECTED, {
+          success: true,
+        });
         await delay(1000);
         this.registerEvents();
         this._connector.on(WebcastEvent.STREAM_END, async () => {
