@@ -17,6 +17,7 @@ import { JSONManagerService } from "@/services/json";
 import { PathManagerService } from "@/services/path";
 import { TTSService } from "@/services/tts";
 import { safeStorage } from "electron";
+import { debounce } from "es-toolkit";
 import { EventEmitter } from "events";
 import { access, copyFile } from "fs/promises";
 import { basename, join, resolve } from "path";
@@ -108,13 +109,17 @@ export class StoreManagerService extends Service {
     }
   }
 
-  public async _getProfileData() {
+  private async _getProfileData() {
     const bn = this._storeData?.settings.activeProfile.file || "default.json";
     return await this._jsonManagerService.loadFile(
       join(this._pathManagerService.folders.profilesFolder, bn),
       ProfileSchema,
     );
   }
+
+  private _debouncedSave = debounce(() => {
+    this._queueSave();
+  }, 500);
 
   private async _generatePhysicalDefaults(): Promise<void> {
     const defaultThemePath = join(
@@ -181,10 +186,29 @@ export class StoreManagerService extends Service {
     await this._queueSave();
   }
 
-  public async updateAppearance(
-    mode: "dark" | "light",
-    activeThemeFile?: string,
-  ): Promise<void> {
+  public updateLiveStats(data: {
+    likes?: number;
+    viewers?: number;
+    views?: number;
+  }) {
+    this._ensureInitialized();
+    this._storeData!.settings.liveStats = {
+      ...this._storeData!.settings.liveStats,
+      ...data,
+    };
+    this._debouncedSave();
+  }
+
+  public updateActiveFeatures(data: { tts: boolean }) {
+    this._ensureInitialized();
+    this._storeData!.settings.activeFeatures = {
+      ...this._storeData!.settings.activeFeatures,
+      ...data,
+    };
+    this._debouncedSave();
+  }
+
+  public updateAppearance(mode: "dark" | "light", activeThemeFile?: string) {
     this._ensureInitialized();
     this._storeData!.settings.theme_mode = mode;
     if (activeThemeFile) {
@@ -192,7 +216,7 @@ export class StoreManagerService extends Service {
         this._storeData?.themes.find((t) => t.file === activeThemeFile) ||
         defaultStoreData.themes[0];
     }
-    await this._queueSave();
+    this._debouncedSave();
   }
 
   public async updateActiveProfile(activeProfileFile: string) {
@@ -461,7 +485,7 @@ export class StoreManagerService extends Service {
     return this._addEntity(theme, this._storeData!.themes);
   }
 
-  public async updateProfileData<T>(updates: Partial<T>): Promise<boolean> {
+  public async updateProfileData(updates: Partial<Profile>): Promise<boolean> {
     const res = await this._jsonManagerService.updateFile(
       join(
         this._pathManagerService.folders.profilesFolder,
