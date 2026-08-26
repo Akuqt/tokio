@@ -316,6 +316,8 @@ export class TikTokLiveConnector extends ConnectorProvider {
       return defaultValue;
     }
 
+    if (typeof data === "number" && isNaN(data)) return defaultValue;
+
     return data;
   }
 
