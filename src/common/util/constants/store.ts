@@ -13,6 +13,14 @@ export const defaultStoreData: StoreSchema = {
       enabled: false,
       port: 6767,
     },
+    activeFeatures: {
+      tts: false,
+    },
+    liveStats: {
+      likes: 0,
+      viewers: 0,
+      views: 0,
+    },
     theme_mode: "system",
     activeTheme: defaultEntity,
     activeProfile: defaultEntity,

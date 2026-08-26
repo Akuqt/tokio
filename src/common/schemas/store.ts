@@ -16,6 +16,14 @@ const AppSettingsSchema = z.object({
     enabled: z.boolean(),
     port: z.number().min(1024).max(65535),
   }),
+  activeFeatures: z.object({
+    tts: z.boolean(),
+  }),
+  liveStats: z.object({
+    likes: z.number(),
+    views: z.number(),
+    viewers: z.number(),
+  }),
   theme_mode: z.enum(["dark", "light", "system"]),
   activeTheme: EntityMetadataSchema,
   activeProfile: EntityMetadataSchema,
