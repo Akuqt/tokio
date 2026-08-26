@@ -1,6 +1,5 @@
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
 import config from "@/config";
-import { checkInternetConnection } from "@/helper/network";
 import { TikTokConnectorService } from "@/services/connector";
 import { JSONManagerService } from "@/services/json";
 import { PathManagerService } from "@/services/path";
@@ -8,10 +7,9 @@ import { ServerService } from "@/services/server";
 import { StoreManagerService } from "@/services/store";
 import { TTSService } from "@/services/tts";
 import { URLManagerService } from "@/services/url";
-import { AppHandlerVariables } from "@/types";
+import { AppHandlerVariables, CustomBrowserWindow } from "@/types";
 import type {
   App,
-  BrowserWindow,
   IpcMain,
   NativeTheme,
   session as Session,
@@ -19,9 +17,8 @@ import type {
 } from "electron";
 
 export class AppHandler implements AppHandlerVariables {
-  public internet: boolean;
   public readonly app: App;
-  public readonly win: BrowserWindow;
+  public readonly win: CustomBrowserWindow;
   public readonly ipcMain: IpcMain;
   public readonly shell: Shell;
   public readonly nativeTheme: NativeTheme;
@@ -34,7 +31,7 @@ export class AppHandler implements AppHandlerVariables {
   public readonly storeManagerService: StoreManagerService;
   public readonly pathManagerService: PathManagerService;
 
-  constructor(deps: Omit<AppHandlerVariables, "internet">) {
+  constructor(deps: AppHandlerVariables) {
     this.app = deps.app;
     this.win = deps.win;
     this.ipcMain = deps.ipcMain;
@@ -48,23 +45,11 @@ export class AppHandler implements AppHandlerVariables {
     this.jsonManagerService = deps.jsonManagerService;
     this.storeManagerService = deps.storeManagerService;
     this.pathManagerService = deps.pathManagerService;
-    this.internet = true;
   }
 
   public async initApp() {
-    await this.checkInternet();
     this.initSession();
     this.initWindow();
-  }
-
-  private async checkInternet() {
-    const interval = setInterval(async () => {
-      this.internet = await checkInternetConnection();
-      this.win?.webContents.send("internet:connection", this.internet);
-    }, 500);
-    this.win.on("closed", () => {
-      clearInterval(interval);
-    });
   }
 
   private initWindow() {
