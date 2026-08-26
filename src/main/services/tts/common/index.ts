@@ -1,6 +1,7 @@
 export type GenerationResponse = {
   success: boolean;
   buffer?: Buffer<ArrayBuffer>;
+  error?: Error;
 };
 
 export type VoiceData = {

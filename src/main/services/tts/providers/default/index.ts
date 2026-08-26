@@ -100,10 +100,9 @@ export class TikTokTTS extends TTSProvider {
       );
       const audioBuffer = Buffer.from(base64Audio, "base64");
       return { buffer: audioBuffer, success: true };
-    } catch {
-      // Next
+    } catch (e) {
+      return { success: false, error: e as Error };
     }
-    return { success: false };
   }
 
   public getVoices(): VoiceData[] {
