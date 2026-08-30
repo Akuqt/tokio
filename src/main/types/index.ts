@@ -6,6 +6,7 @@ import {
 } from "@/common/types";
 import { TikTokConnectorService } from "@/services/connector";
 import { JSONManagerService } from "@/services/json";
+import { MusicService } from "@/services/music";
 import { PathManagerService } from "@/services/path";
 import { ServerService } from "@/services/server";
 import { StoreManagerService } from "@/services/store";
@@ -36,12 +37,14 @@ export type CustomBrowserWindow = Omit<BrowserWindow, "webContents"> & {
 export interface AppHandlerVariables {
   readonly app: App;
   readonly win: CustomBrowserWindow;
+  readonly musicWin: CustomBrowserWindow;
   readonly ipcMain: IpcMain;
   readonly shell: Shell;
   readonly session: typeof Session;
   readonly nativeTheme: NativeTheme;
   readonly connectorService: TikTokConnectorService;
   readonly ttsService: TTSService;
+  readonly musicService: MusicService;
   readonly serverService: ServerService;
   readonly urlManagerService: URLManagerService;
   readonly jsonManagerService: JSONManagerService;
