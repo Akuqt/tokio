@@ -1,28 +1,34 @@
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
-import { defaultProfile } from "@/common/util";
 import isEqual from "fast-deep-equal";
 import { useEffect, useMemo, useReducer, useRef } from "react";
 import { FiSave } from "react-icons/fi";
-import { reducer } from "./helper";
+import { defaultState, reducer } from "./helper";
 import styles from "./music.module.css";
 import { ControlsSection } from "./sections/ControlsSection";
 import { PermissionsSection } from "./sections/PermissionsSection";
+import { ProtectionSection } from "./sections/ProtectionSection";
+import { ProviderSection } from "./sections/ProviderSection";
 
 export function Music() {
   const isInitialMount = useRef(true);
 
-  const [state, dispatch] = useReducer(reducer, {
-    settings: defaultProfile["music"],
-    settingsTemp: defaultProfile["music"],
-    blacklistTemp: "",
-    whitelistTemp: "",
-  });
+  const [
+    {
+      settings,
+      blacklistTemp,
+      settingsTemp,
+      whitelistTemp,
+      connected,
+      loading,
+    },
+    dispatch,
+  ] = useReducer(reducer, defaultState);
 
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      window.api.emit(APP_EVENTS.GET_VOICES);
       window.api.emit(APP_EVENTS.GET_PROFILE);
+      window.api.emit(APP_EVENTS.IS_MUSIC_CONNECTED);
     }
 
     const removeGetProfile = window.api.on(
@@ -34,7 +40,7 @@ export function Music() {
       },
     );
 
-    const removeUpdateTTSSettings = window.api.on(
+    const removeUpdateMusicSettings = window.api.on(
       APP_EVENTS_RESPONSE.UPDATE_MUSIC_SETTINGS,
       (res) => {
         if (res?.success) {
@@ -43,15 +49,24 @@ export function Music() {
       },
     );
 
+    const removeMusicConnected = window.api.on(
+      APP_EVENTS_RESPONSE.MUSIC_CONNECTED,
+      (res) => {
+        dispatch({ type: "setConnected", payload: res?.success ?? false });
+        dispatch({ type: "setLoading", payload: false });
+      },
+    );
+
     return () => {
       removeGetProfile();
-      removeUpdateTTSSettings();
+      removeUpdateMusicSettings();
+      removeMusicConnected();
     };
   }, []);
 
   const hasChanges = useMemo(() => {
-    return !isEqual(state.settings, state.settingsTemp);
-  }, [state.settings, state.settingsTemp]);
+    return !isEqual(settings, settingsTemp);
+  }, [settings, settingsTemp]);
 
   return (
     <>
@@ -60,7 +75,7 @@ export function Music() {
           className={styles.floating_save_btn}
           onClick={() => {
             window.api.emit(APP_EVENTS.UPDATE_MUSIC_SETTINGS, {
-              settings: state.settings,
+              settings,
             });
           }}
           style={{
@@ -75,17 +90,43 @@ export function Music() {
       </div>
 
       <div className={styles.container}>
-        <ControlsSection />
+        <ProviderSection
+          dispatch={dispatch}
+          provider={settings.provider}
+          connected={connected}
+          loading={loading}
+          onConnect={() => {
+            dispatch({ type: "setLoading", payload: true });
+            window.api.emit(APP_EVENTS.UPDATE_MUSIC_SETTINGS, { settings });
+            if (!connected) {
+              window.api.emit(APP_EVENTS.CONNECT_MUSIC, {
+                ...settings.provider,
+              });
+            } else {
+              window.api.emit(APP_EVENTS.DISCONNECT_MUSIC);
+            }
+          }}
+        />
+
+        <span className={styles.section_delimiter} />
+
+        <ControlsSection dispatch={dispatch} controls={settings.constrols} />
+
         <span className={styles.section_delimiter} />
 
         <PermissionsSection
-          permissions={state.settings.permissions}
-          whitelistTemp={state.whitelistTemp}
-          blacklistTemp={state.blacklistTemp}
+          permissions={settings.permissions}
+          whitelistTemp={whitelistTemp}
+          blacklistTemp={blacklistTemp}
           dispatch={dispatch}
         />
 
         <span className={styles.section_delimiter} />
+
+        <ProtectionSection
+          protection={settings.protection}
+          dispatch={dispatch}
+        />
       </div>
     </>
   );

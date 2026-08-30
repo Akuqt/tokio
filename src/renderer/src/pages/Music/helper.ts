@@ -1,4 +1,5 @@
 import { Profile } from "@/common/schemas";
+import { defaultProfile } from "@/common/util";
 import { produce } from "immer";
 
 export interface MusicState {
@@ -6,7 +7,18 @@ export interface MusicState {
   settingsTemp: Profile["music"];
   blacklistTemp: string;
   whitelistTemp: string;
+  connected: boolean;
+  loading: boolean;
 }
+
+export const defaultState: MusicState = {
+  settings: defaultProfile["music"],
+  settingsTemp: defaultProfile["music"],
+  blacklistTemp: "",
+  whitelistTemp: "",
+  connected: false,
+  loading: false,
+};
 
 export type MusicAction =
   | { type: "initSettings"; payload: Profile["music"] }
@@ -22,7 +34,20 @@ export type MusicAction =
   | { type: "setPermissionsListWhite"; payload: string[] }
   | { type: "setPermissionsListWhiteTemp"; payload: string }
   | { type: "setPermissionsListBlack"; payload: string[] }
-  | { type: "setPermissionsListBlackTemp"; payload: string };
+  | { type: "setPermissionsListBlackTemp"; payload: string }
+  | { type: "setProvider"; payload: "YouTube" | "Spotify" }
+  | { type: "setProviderKey"; payload: string }
+  | { type: "setPlayControlEnabled"; payload: boolean }
+  | { type: "setNextControlEnabled"; payload: boolean }
+  | { type: "setLastControlEnabled"; payload: boolean }
+  | { type: "setPlayControlCommand"; payload: string }
+  | { type: "setNextControlCommand"; payload: string }
+  | { type: "setLastControlCommand"; payload: string }
+  | { type: "setConnected"; payload: boolean }
+  | { type: "toggleConnected" }
+  | { type: "setLoading"; payload: boolean }
+  | { type: "setProtectionCooldown"; payload: number }
+  | { type: "setProtectionQueueLength"; payload: number };
 
 type ActionHandlers = {
   [K in MusicAction["type"]]: (
@@ -80,6 +105,45 @@ const actionHandlers: ActionHandlers = {
   },
   setPermissionsListBlackTemp: (draft, action) => {
     draft.blacklistTemp = action.payload;
+  },
+  setProvider: (draft, action) => {
+    draft.settings.provider.name = action.payload;
+  },
+  setProviderKey: (draft, action) => {
+    draft.settings.provider.key = action.payload;
+  },
+  setPlayControlEnabled: (draft, action) => {
+    draft.settings.constrols.play.enabled = action.payload;
+  },
+  setNextControlEnabled: (draft, action) => {
+    draft.settings.constrols.next.enabled = action.payload;
+  },
+  setLastControlEnabled: (draft, action) => {
+    draft.settings.constrols.last.enabled = action.payload;
+  },
+  setPlayControlCommand: (draft, action) => {
+    draft.settings.constrols.play.command = action.payload;
+  },
+  setNextControlCommand: (draft, action) => {
+    draft.settings.constrols.next.command = action.payload;
+  },
+  setLastControlCommand: (draft, action) => {
+    draft.settings.constrols.last.command = action.payload;
+  },
+  setConnected: (draft, action) => {
+    draft.connected = action.payload;
+  },
+  toggleConnected: (draft) => {
+    draft.connected = !draft.connected;
+  },
+  setLoading: (draft, action) => {
+    draft.loading = action.payload;
+  },
+  setProtectionCooldown: (draft, action) => {
+    draft.settings.protection.cooldown = action.payload;
+  },
+  setProtectionQueueLength: (draft, action) => {
+    draft.settings.protection.queue_length = action.payload;
   },
 };
 
