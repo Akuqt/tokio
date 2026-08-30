@@ -29,6 +29,7 @@ export enum APP_EVENTS_RESPONSE {
 
   //MUSIC PAGE
   UPDATE_MUSIC_SETTINGS = "app:music:res:update:settings",
+  MUSIC_CONNECTED = "app:music:res:music:connected",
 
   // SETTINGS
   GET_SETTINGS = "app:settings:res",
@@ -94,6 +95,10 @@ export interface AppEventsResponseMap {
 
   //MUSIC PAGE
   [APP_EVENTS_RESPONSE.UPDATE_MUSIC_SETTINGS]: {
+    success: boolean;
+  };
+
+  [APP_EVENTS_RESPONSE.MUSIC_CONNECTED]: {
     success: boolean;
   };
 

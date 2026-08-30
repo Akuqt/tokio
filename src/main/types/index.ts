@@ -36,7 +36,6 @@ export type CustomBrowserWindow = Omit<BrowserWindow, "webContents"> & {
 export interface AppHandlerVariables {
   readonly app: App;
   readonly win: CustomBrowserWindow;
-  readonly musicWin: CustomBrowserWindow;
   readonly ipcMain: IpcMain;
   readonly shell: Shell;
   readonly session: typeof Session;

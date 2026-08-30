@@ -29,6 +29,9 @@ export enum APP_EVENTS {
 
   //MUSIC PAGE
   UPDATE_MUSIC_SETTINGS = "app:music:update:settings",
+  CONNECT_MUSIC = "app:music:req:connect",
+  DISCONNECT_MUSIC = "app:music:req:disconnect",
+  IS_MUSIC_CONNECTED = "app:music:req:is:connected",
 
   // SETTINGS
   GET_SETTINGS = "app:settings:get",
@@ -83,6 +86,14 @@ export interface AppEventsMap {
     settings: Profile["music"];
   };
 
+  [APP_EVENTS.CONNECT_MUSIC]: {
+    name: string;
+    key: string;
+  };
+
+  [APP_EVENTS.DISCONNECT_MUSIC]: void;
+  [APP_EVENTS.IS_MUSIC_CONNECTED]: void;
+
   // SETTINGS
   [APP_EVENTS.GET_SETTINGS]: void;
 
@@ -124,6 +135,7 @@ export interface AppEventsMap {
   [APP_EVENTS.DISCONNECT]: void;
   [APP_EVENTS.IS_CONNECTED]: void;
   [APP_EVENTS.ACTIVE_FEATURES]: {
-    tts: boolean;
+    tts?: boolean;
+    music?: boolean;
   };
 }
