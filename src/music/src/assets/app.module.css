@@ -1,0 +1,124 @@
+/* LOGO */
+
+.logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  color: var(--accent-primary);
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 400;
+  margin-left: 1.25rem;
+  font-size: 18px;
+}
+
+.logo img {
+  width: 28px;
+  height: 28px;
+}
+
+/* NAVBAR - SIDEBAR */
+
+.nav {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--background-secondary);
+  border-bottom: 1px solid var(--background-primary);
+  width: 100%;
+  -webkit-app-region: drag;
+}
+
+.sidebar {
+  width: 72px;
+  background-color: var(--background-secondary);
+  border-right: 1px solid var(--background-primary);
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  gap: 4px;
+  z-index: 10;
+}
+
+.sidebar_item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--font-secondary);
+  text-decoration: none;
+  font-size: 12px;
+  padding: 12px 4px;
+  cursor: pointer;
+}
+
+.sidebar_item:hover {
+  color: var(--font-primary);
+}
+
+.nav_top_items_container {
+  display: flex;
+  height: 100%;
+  align-items: center;
+}
+
+.window_controls_container {
+  -webkit-app-region: no-drag;
+  display: flex;
+  height: 100%;
+}
+
+.window_control_min {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 100%;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  color: var(--font-primary);
+  cursor: pointer;
+}
+
+.window_control_min:hover {
+  background-color: var(--background-secondary-hover);
+}
+
+.window_control_max {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 100%;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  color: var(--font-primary);
+  cursor: pointer;
+}
+
+.window_control_max:hover {
+  background-color: var(--background-secondary-hover);
+}
+
+.window_control_close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 100%;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  color: var(--font-primary);
+  cursor: pointer;
+}
+
+.window_control_close:hover {
+  background-color: #e81c3e;
+}
