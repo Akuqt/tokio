@@ -1,0 +1,438 @@
+import { MUSIC_EVENTS, MusicEventMap } from "@/common/types";
+import crypto from "crypto";
+import { BrowserWindow, WebContentsView } from "electron";
+import { EventEmitter } from "node:events";
+import { ConnectionResponse, MusicProvider } from "../../common";
+import { CSSScrollBar } from "./common";
+import config from "./config";
+
+export class Spotify extends MusicProvider {
+  private _clientId: string;
+  private _redirectUri: string;
+  private _scopes: string;
+  private _accessToken: string | null = null;
+  private _refreshToken: string | null = null;
+  private _cachedDeviceId: string | null = null;
+  private _isActive: boolean = false;
+  private _pollingInterval: NodeJS.Timeout | null = null;
+  private _refreshTimeout: NodeJS.Timeout | null = null;
+  private _events: EventEmitter;
+
+  constructor(clientId?: string, redirectUri?: string) {
+    super();
+    this._events = new EventEmitter();
+    this._clientId = clientId ?? "";
+    this._redirectUri = redirectUri ?? config.CALLBACK;
+    this._scopes = config.SCOPES;
+  }
+
+  public setKey(key: string): void {
+    this._clientId = key;
+  }
+
+  public isActive(): boolean {
+    return this._isActive;
+  }
+
+  public disconnect(): void {
+    if (!this._isActive) return;
+    this.stopPolling();
+    this._accessToken = null;
+    this._refreshToken = null;
+    this._isActive = false;
+    this.emit(MUSIC_EVENTS.PROCCESS_ENDED);
+  }
+
+  public connect(shellWindow: BrowserWindow): Promise<ConnectionResponse> {
+    return new Promise((res) => {
+      if (!this._isActive) {
+        res({
+          success: true,
+        });
+      }
+      const codeVerifier = this.generateRandomString(64);
+      const codeChallenge = this.generateCodeChallenge(codeVerifier);
+
+      const authView = new WebContentsView({
+        webPreferences: {
+          partition: "persist:music-spotify",
+        },
+      });
+
+      shellWindow.contentView.addChildView(authView);
+
+      const bounds = shellWindow.getContentBounds();
+      authView.setBounds({
+        x: 0,
+        y: 40,
+        width: bounds.width,
+        height: bounds.height - 40,
+      });
+
+      const resizeHandler = () => {
+        if (!shellWindow.isDestroyed()) {
+          const newBounds = shellWindow.getContentBounds();
+          authView.setBounds({
+            x: 0,
+            y: 40,
+            width: newBounds.width,
+            height: newBounds.height - 40,
+          });
+        }
+      };
+      shellWindow.on("resize", resizeHandler);
+
+      const cleanupView = () => {
+        shellWindow.off("resize", resizeHandler);
+        try {
+          shellWindow.contentView.removeChildView(authView);
+        } catch {
+          // Next
+        }
+
+        if (!authView.webContents.isDestroyed()) {
+          authView.webContents.close();
+        }
+      };
+
+      authView.webContents.on("dom-ready", async () => {
+        try {
+          await authView.webContents.insertCSS(CSSScrollBar);
+        } catch {
+          // Ignore if page unloads rapidly
+        }
+      });
+
+      const authUrl = new URL(config.AUTHORIZE_URL);
+      authUrl.searchParams.append("client_id", this._clientId);
+      authUrl.searchParams.append("response_type", "code");
+      authUrl.searchParams.append("redirect_uri", this._redirectUri);
+      authUrl.searchParams.append("code_challenge_method", "S256");
+      authUrl.searchParams.append("code_challenge", codeChallenge);
+      authUrl.searchParams.append("scope", this._scopes);
+
+      authView.webContents.loadURL(authUrl.toString());
+      shellWindow.show();
+
+      let isProcessing = false;
+
+      const handleUserAbort = () => {
+        if (!isProcessing) {
+          cleanupView();
+          this._isActive = false;
+          res({
+            success: false,
+            error: new Error("Authentication window was closed by the user."),
+          });
+        }
+      };
+
+      shellWindow.once("closed", handleUserAbort);
+
+      const handleRedirect = async (url: string) => {
+        if (isProcessing || !url.startsWith(this._redirectUri)) return;
+        isProcessing = true;
+
+        shellWindow.off("closed", handleUserAbort);
+
+        const urlObj = new URL(url);
+        const code = urlObj.searchParams.get("code");
+        const error = urlObj.searchParams.get("error");
+
+        cleanupView();
+
+        if (!shellWindow.isDestroyed()) {
+          shellWindow.hide();
+        }
+
+        if (error) {
+          this._isActive = false;
+          res({
+            success: false,
+            error: new Error(`Login Error: ${error}`),
+          });
+        } else if (code) {
+          try {
+            await this.exchangeCodeForToken(code, codeVerifier);
+            this._isActive = true;
+            res({
+              success: true,
+            });
+          } catch (err) {
+            this._isActive = false;
+            res({
+              success: false,
+              error: err as Error,
+            });
+          }
+        }
+      };
+
+      authView.webContents.on("will-redirect", (event, url) => {
+        if (url.startsWith(this._redirectUri)) {
+          event.preventDefault();
+          handleRedirect(url);
+        }
+      });
+
+      authView.webContents.on("will-navigate", (event, url) => {
+        if (url.startsWith(this._redirectUri)) {
+          event.preventDefault();
+          handleRedirect(url);
+        }
+      });
+    });
+  }
+
+  public async play(contextUri?: string): Promise<void> {
+    if (!this._isActive) return;
+    const deviceId = await this.getTargetDevice();
+    const body = contextUri ? { context_uri: contextUri } : undefined;
+    await this.fetchApi(`/me/player/play?device_id=${deviceId}`, "PUT", body);
+  }
+
+  public async pause(): Promise<void> {
+    if (!this._isActive) return;
+    const deviceId = await this.getTargetDevice();
+    await this.fetchApi(`/me/player/pause?device_id=${deviceId}`, "PUT");
+  }
+
+  public async next(): Promise<void> {
+    if (!this._isActive) return;
+    const deviceId = await this.getTargetDevice();
+    await this.fetchApi(`/me/player/next?device_id=${deviceId}`, "POST");
+  }
+
+  public async previous(): Promise<void> {
+    if (!this._isActive) return;
+    const deviceId = await this.getTargetDevice();
+    await this.fetchApi(`/me/player/previous?device_id=${deviceId}`, "POST");
+  }
+
+  public async searchAndQueue(query: string): Promise<void> {
+    if (!this._isActive) return;
+    const searchRes = await this.fetchApi(
+      `/search?q=${encodeURIComponent(query)}&type=track&limit=1`,
+    );
+    const track = searchRes?.tracks?.items?.[0];
+    if (track) {
+      const deviceId = await this.getTargetDevice();
+      await this.fetchApi(
+        `/me/player/queue?uri=${encodeURIComponent(track.uri)}&device_id=${deviceId}`,
+        "POST",
+      );
+    }
+  }
+
+  public stopPolling() {
+    if (this._pollingInterval) {
+      clearInterval(this._pollingInterval);
+      this._pollingInterval = null;
+    }
+    if (this._refreshTimeout) {
+      clearTimeout(this._refreshTimeout);
+      this._refreshTimeout = null;
+    }
+  }
+
+  public on<K extends MUSIC_EVENTS>(
+    event: K,
+    listener: (data: MusicEventMap[K]) => void,
+  ): void {
+    this._events.on(event, listener);
+  }
+
+  private async exchangeCodeForToken(
+    code: string,
+    verifier: string,
+  ): Promise<void> {
+    const body = new URLSearchParams({
+      client_id: this._clientId,
+      grant_type: "authorization_code",
+      code: code,
+      redirect_uri: this._redirectUri,
+      code_verifier: verifier,
+    });
+
+    const response = await fetch(config.TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
+    });
+
+    const data = await response.json();
+    if (data.access_token) {
+      this._accessToken = data.access_token;
+      this._refreshToken = data.refresh_token;
+
+      this.scheduleTokenRefresh(data.expires_in);
+      this.startPolling();
+    } else {
+      throw new Error("Failed to retrieve access token.");
+    }
+  }
+
+  private async refreshAccessToken(): Promise<void> {
+    if (!this._refreshToken) throw new Error("No refresh token available.");
+
+    const body = new URLSearchParams({
+      client_id: this._clientId,
+      grant_type: "refresh_token",
+      refresh_token: this._refreshToken,
+    });
+
+    const response = await fetch(config.TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to refresh token. Session may be revoked.");
+    }
+
+    const data = await response.json();
+    this._accessToken = data.access_token;
+
+    if (data.refresh_token) {
+      this._refreshToken = data.refresh_token;
+    }
+
+    this.scheduleTokenRefresh(data.expires_in);
+  }
+
+  private scheduleTokenRefresh(expiresInSeconds: number) {
+    if (this._refreshTimeout) clearTimeout(this._refreshTimeout);
+
+    const refreshMs = (expiresInSeconds - 60) * 1000;
+
+    this._refreshTimeout = setTimeout(
+      () => {
+        this.refreshAccessToken().catch((err) =>
+          console.error("Auto-refresh failed:", err),
+        );
+      },
+      refreshMs > 0 ? refreshMs : 0,
+    );
+  }
+
+  private async fetchApi(endpoint: string, method: string = "GET", body?: any) {
+    if (!this._accessToken)
+      throw new Error("Not authenticated. Call authenticate() first.");
+
+    const makeRequest = () =>
+      fetch(`https://api.spotify.com/v1${endpoint}`, {
+        method,
+        headers: {
+          Authorization: `Bearer ${this._accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+
+    let response = await makeRequest();
+
+    if (response.status === 401 && this._refreshToken) {
+      try {
+        await this.refreshAccessToken();
+        response = await makeRequest();
+      } catch {
+        throw new Error(
+          "Token expired and auto-refresh failed. Please reconnect.",
+        );
+      }
+    }
+
+    if (response.status === 401)
+      throw new Error("Token expired. Please reconnect.");
+    if (response.status === 403)
+      throw new Error("Premium Required or user not whitelisted.");
+    if (response.status === 429) {
+      const retryAfter = response.headers.get("Retry-After") || "60";
+      throw new Error(`Rate Limit Hit. Wait ${retryAfter} seconds.`);
+    }
+
+    if (!response.ok) {
+      if (response.status === 404) this._cachedDeviceId = null;
+      const errorText = await response.text();
+      let errorMessage = `API Error ${response.status}`;
+      try {
+        errorMessage = JSON.parse(errorText).error.message;
+      } catch {}
+      throw new Error(errorMessage);
+    }
+
+    return response.headers.get("content-type")?.includes("application/json")
+      ? response.json()
+      : null;
+  }
+
+  private async getTargetDevice(): Promise<string> {
+    if (this._cachedDeviceId) return this._cachedDeviceId;
+
+    const res = await this.fetchApi("/me/player/devices");
+    const devices = res?.devices || [];
+
+    if (devices.length === 0)
+      throw new Error("No active devices. Play a song on Spotify first.");
+
+    const activeDevice = devices.find((d: any) => d.is_active) || devices[0];
+    this._cachedDeviceId = activeDevice.id;
+    return this._cachedDeviceId!;
+  }
+
+  private startPolling(intervalMs: number = 3000) {
+    this.stopPolling();
+
+    this._pollingInterval = setInterval(async () => {
+      try {
+        const response = await fetch(config.PLAYER_URL, {
+          headers: { Authorization: `Bearer ${this._accessToken}` },
+        });
+
+        if (response.status === 401 && this._refreshToken) {
+          await this.refreshAccessToken();
+          return;
+        }
+
+        if (response.status === 204) {
+          this.emit(MUSIC_EVENTS.TRACK_CHANGE, null);
+          return;
+        }
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.item) {
+            this.emit(MUSIC_EVENTS.TRACK_CHANGE, {
+              title: data.item.name,
+              artist:
+                data.item.artists?.map((a: any) => a.name).join(", ") ||
+                "Unknown",
+              albumArt: data.item.album?.images?.[0]?.url || "",
+              isPlaying: data.is_playing,
+            });
+          } else {
+            this.emit(MUSIC_EVENTS.TRACK_CHANGE, null);
+          }
+        }
+      } catch {
+        // Silently ignore network drops during polling
+      }
+    }, intervalMs);
+  }
+
+  private emit<K extends MUSIC_EVENTS>(
+    event: K,
+    data?: MusicEventMap[K],
+  ): void {
+    this._events.emit(event, data);
+  }
+
+  private generateRandomString(length: number) {
+    return crypto.randomBytes(60).toString("hex").slice(0, length);
+  }
+
+  private generateCodeChallenge(verifier: string) {
+    return crypto.createHash("sha256").update(verifier).digest("base64url");
+  }
+}
