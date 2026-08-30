@@ -75,11 +75,13 @@ events.push(
 
 events.push(
   APP_EVENTS.ACTIVE_FEATURES,
-  async ({ storeManagerService }, _, { tts }) => {
+  async ({ storeManagerService }, _, data) => {
     try {
-      storeManagerService.updateActiveFeatures({ tts });
-    } catch (e) {
-      console.log("ACTIVE", e);
+      storeManagerService.updateActiveFeatures({
+        ...data,
+      });
+    } catch {
+      // Next
     }
   },
 );

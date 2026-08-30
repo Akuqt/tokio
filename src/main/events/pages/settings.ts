@@ -73,9 +73,7 @@ events.push(
         },
         success: true,
       });
-    } catch (err) {
-      console.log(err);
-
+    } catch {
       e.reply(APP_EVENTS_RESPONSE.CLONE_PROFILE, {
         success: false,
       });
