@@ -189,6 +189,23 @@ export function Home() {
             />
             TTS
           </label>
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              className={styles.checkboxInput}
+              checked={settings.activeFeatures.music}
+              onChange={(e) => {
+                window.api.emit(APP_EVENTS.ACTIVE_FEATURES, {
+                  music: e.target.checked,
+                });
+                dispatch({
+                  type: "setMusicFeature",
+                  payload: e.target.checked,
+                });
+              }}
+            />
+            Music
+          </label>
         </div>
       </div>
 

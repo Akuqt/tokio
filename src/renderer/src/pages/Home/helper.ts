@@ -29,6 +29,7 @@ export type HomeAction =
   | { type: "setProfile"; payload: Profile }
   | { type: "setUsername"; payload: string }
   | { type: "setTTSFeature"; payload: boolean }
+  | { type: "setMusicFeature"; payload: boolean }
   | { type: "setLikes"; payload: number }
   | {
       type: "setViews";
@@ -62,6 +63,9 @@ const actionHandlers: ActionHandlers = {
   },
   setTTSFeature: (draft, action) => {
     draft.settings.activeFeatures.tts = action.payload;
+  },
+  setMusicFeature: (draft, action) => {
+    draft.settings.activeFeatures.music = action.payload;
   },
   setLikes: (draft, action) => {
     draft.likes = action.payload;
