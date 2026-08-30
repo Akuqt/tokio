@@ -21,6 +21,28 @@ export const defaultProfile: Profile = {
         black: [],
       },
     },
+    protection: {
+      cooldown: 2,
+      queue_length: 10,
+    },
+    constrols: {
+      play: {
+        enabled: true,
+        command: "!play",
+      },
+      next: {
+        enabled: true,
+        command: "!next",
+      },
+      last: {
+        enabled: true,
+        command: "!last",
+      },
+    },
+    provider: {
+      name: "YouTube",
+      key: "",
+    },
   },
   tts: {
     voice: {
@@ -58,7 +80,7 @@ export const defaultProfile: Profile = {
       comment_length: 300,
       cooldown: 2,
       banned: [],
-      queue_length: 5,
+      queue_length: 10,
     },
     replacements: [],
   },

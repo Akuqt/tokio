@@ -15,6 +15,7 @@ export const defaultStoreData: StoreSchema = {
     },
     activeFeatures: {
       tts: false,
+      music: false,
     },
     liveStats: {
       likes: 0,

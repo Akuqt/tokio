@@ -16,6 +16,11 @@ const Permissions = z.object({
   }),
 });
 
+const MusicControl = z.object({
+  enabled: z.boolean(),
+  command: z.string(),
+});
+
 // TODO: Finish Profile schema
 export const ProfileSchema = z.object({
   name: z.string().min(3),
@@ -24,6 +29,19 @@ export const ProfileSchema = z.object({
   }),
   music: z.object({
     permissions: Permissions,
+    protection: z.object({
+      cooldown: z.number(),
+      queue_length: z.number(),
+    }),
+    constrols: z.object({
+      play: MusicControl,
+      next: MusicControl,
+      last: MusicControl,
+    }),
+    provider: z.object({
+      name: z.enum(["YouTube", "Spotify"]),
+      key: z.string(),
+    }),
   }),
   tts: z.object({
     voice: z.object({

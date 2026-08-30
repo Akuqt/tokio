@@ -18,6 +18,7 @@ const AppSettingsSchema = z.object({
   }),
   activeFeatures: z.object({
     tts: z.boolean(),
+    music: z.boolean(),
   }),
   liveStats: z.object({
     likes: z.number(),
