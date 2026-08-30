@@ -9,3 +9,5 @@ bin
 .fallow/
 obj
 output
+music-out
+installer-out
