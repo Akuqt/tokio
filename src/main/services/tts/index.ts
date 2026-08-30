@@ -1,5 +1,5 @@
 import { Profile } from "@/common/schemas";
-import { ChatEvent, Provider } from "@/common/types";
+import { ChatEvent } from "@/common/types";
 import { formatError, TaskQueue } from "@/common/util";
 import Logger from "@/logger";
 import { ProviderService } from "../shared";
@@ -11,59 +11,17 @@ export class TTSService extends ProviderService<TTSProvider> {
 
   constructor() {
     super();
-    this._current = {
-      name: "",
-      key: "",
-      provider: null,
-    };
-    this._providerPool = new Map();
     this._queue = new TaskQueue();
     this.addProvider("Default", new TikTokTTS(), true); // NOTE: DO NOT CHANGE, Add your providers below.
   }
 
-  public addProvider(name: string, provider: TTSProvider, start?: boolean) {
-    if (!(provider instanceof TTSProvider)) return;
-    this._providerPool?.set(name, provider);
-    if (start) {
-      this.setProvider(name);
-    }
-  }
-
-  public setLogFile(logFile: string): void {
-    this._logFile = logFile;
-  }
-
-  public setProvider(name: string, key?: string) {
-    const provider = this._providerPool?.get(name);
-    if (!provider) return;
-    this._current = { name, provider, key: key || "" };
-    this.setKey(key || "");
-  }
-
-  public getProviders(): Provider[] {
-    const providers = this._providerPool?.keys().toArray() || [];
-    return providers.map((s) => ({
-      name: s,
-      active: s == this._current?.name,
-      key: this._current?.key || "",
-    }));
-  }
-
-  public getActiveProvider(): Provider {
-    return {
-      name: this._current?.name || "Default",
-      active: true,
-      key: this._current?.key || "",
-    };
+  protected override _validProvider(provider: TTSProvider): boolean {
+    return provider instanceof TTSProvider;
   }
 
   public getVoices(): VoiceData[] {
     if (!this._current?.provider) return [];
     return this._current.provider.getVoices();
-  }
-
-  public setKey(key: string): void {
-    if (this._current?.provider) this._current.provider.setKey(key);
   }
 
   public async generateBuffer(

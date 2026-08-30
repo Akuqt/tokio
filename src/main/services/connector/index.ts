@@ -1,4 +1,4 @@
-import { Provider, TIKTOK_EVENTS, TikTokEventMap } from "@/common/types";
+import { TIKTOK_EVENTS, TikTokEventMap } from "@/common/types";
 import { formatError } from "@/common/util";
 import Logger from "@/logger";
 import { ProviderService } from "../shared";
@@ -8,57 +8,11 @@ import { TikTokLiveConnector } from "./providers";
 export class TikTokConnectorService extends ProviderService<ConnectorProvider> {
   constructor() {
     super();
-    this._current = {
-      name: "",
-      provider: null,
-      key: "",
-    };
-    this._providerPool = new Map();
     this.addProvider("Default", new TikTokLiveConnector(), true); // NOTE: DO NOT CHANGE, Add your providers below.
   }
 
-  public addProvider(
-    name: string,
-    provider: ConnectorProvider,
-    start?: boolean,
-  ) {
-    if (!(provider instanceof ConnectorProvider)) return;
-    this._providerPool?.set(name, provider);
-    if (start) {
-      this.setProvider(name);
-    }
-  }
-
-  public setProvider(name: string, key?: string) {
-    const provider = this._providerPool?.get(name);
-    if (!provider) return;
-    this._current = { name, provider, key: key || "" };
-    this.setKey(key || "");
-  }
-
-  public getProviders(): Provider[] {
-    const providers = this._providerPool?.keys().toArray() || [];
-    return providers.map((s) => ({
-      name: s,
-      active: s == this._current?.name,
-      key: this._current?.key || "",
-    }));
-  }
-
-  public getActiveProvider(): Provider {
-    return {
-      name: this._current?.name || "Default",
-      active: true,
-      key: this._current?.key || "",
-    };
-  }
-
-  public setKey(key: string): void {
-    if (this._current?.provider) this._current.provider.setKey(key);
-  }
-
-  public setLogFile(logFile: string): void {
-    this._logFile = logFile;
+  protected override _validProvider(provider: ConnectorProvider): boolean {
+    return provider instanceof ConnectorProvider;
   }
 
   public on<T extends TIKTOK_EVENTS>(
