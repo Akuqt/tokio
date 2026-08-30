@@ -45,27 +45,6 @@
   height: 28px;
 }
 
-/* THEME MODE TOGGLE */
-
-.theme_mode_toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--font-secondary);
-  background-color: transparent;
-  margin-right: 8px;
-  -webkit-app-region: no-drag;
-}
-
-.theme_mode_toggle:hover {
-  background-color: var(--background-secondary);
-  color: var(--font-primary);
-}
-
 /* NAVBAR - SIDEBAR */
 
 .nav {

@@ -8,13 +8,11 @@ const events = createStack();
 events.push(APP_EVENTS.GET_SETTINGS, ({ storeManagerService }, e) => {
   try {
     const settings = storeManagerService.getSettings();
-    const themes = storeManagerService.getThemes();
     const profiles = storeManagerService.getProfiles();
 
     e.reply(APP_EVENTS_RESPONSE.GET_SETTINGS, {
       data: {
         settings,
-        themes,
         profiles,
       },
       success: true,
@@ -34,7 +32,6 @@ events.push(
       const res = await storeManagerService.createNewProfile(fileName, name);
       if (!res) throw new Error("Failed to create Profile.");
       const settings = storeManagerService.getSettings();
-      const themes = storeManagerService.getThemes();
       const profiles = storeManagerService.getProfiles();
 
       e.reply(APP_EVENTS_RESPONSE.CREATE_PROFILE, {
@@ -43,7 +40,6 @@ events.push(
       e.reply(APP_EVENTS_RESPONSE.GET_SETTINGS, {
         data: {
           settings,
-          themes,
           profiles,
         },
         success: true,
@@ -65,7 +61,6 @@ events.push(
       if (!res) throw new Error("Failed to clone Profile.");
 
       const settings = storeManagerService.getSettings();
-      const themes = storeManagerService.getThemes();
       const profiles = storeManagerService.getProfiles();
 
       e.reply(APP_EVENTS_RESPONSE.CLONE_PROFILE, {
@@ -74,7 +69,6 @@ events.push(
       e.reply(APP_EVENTS_RESPONSE.GET_SETTINGS, {
         data: {
           settings,
-          themes,
           profiles,
         },
         success: true,
@@ -96,7 +90,6 @@ events.push(
       await storeManagerService.updateActiveProfile(file);
       const profile = await storeManagerService.getProfileData();
       const settings = storeManagerService.getSettings();
-      const themes = storeManagerService.getThemes();
       const profiles = storeManagerService.getProfiles();
       if (!profile || !profiles) throw new Error("Unable to load profile");
       e.reply(APP_EVENTS_RESPONSE.GET_PROFILE, {
@@ -108,7 +101,6 @@ events.push(
       e.reply(APP_EVENTS_RESPONSE.GET_SETTINGS, {
         data: {
           settings,
-          themes,
           profiles,
         },
         success: true,
@@ -137,8 +129,6 @@ events.push(
       let res = false;
       if (type === "profile") {
         res = await storeManagerService.exportProfile(file, diagRes.filePath);
-      } else if (type === "theme") {
-        res = await storeManagerService.exportTheme(file, diagRes.filePath);
       } else {
         res = false;
       }
@@ -176,8 +166,6 @@ events.push(
       let res = false;
       if (type === "profile") {
         res = await storeManagerService.importProfile(diagRes.filePaths[0]);
-      } else if (type === "theme") {
-        res = await storeManagerService.importTheme(diagRes.filePaths[0]);
       } else {
         res = false;
       }
@@ -185,13 +173,11 @@ events.push(
       if (!res) throw new Error("Failed to import Entity.");
 
       const settings = storeManagerService.getSettings();
-      const themes = storeManagerService.getThemes();
       const profiles = storeManagerService.getProfiles();
 
       e.reply(APP_EVENTS_RESPONSE.GET_SETTINGS, {
         data: {
           settings,
-          themes,
           profiles,
         },
         success: true,
@@ -216,13 +202,11 @@ events.push(
     try {
       await storeManagerService.updateProvider(type, name, key);
       const settings = storeManagerService.getSettings();
-      const themes = storeManagerService.getThemes();
       const profiles = storeManagerService.getProfiles();
 
       e.reply(APP_EVENTS_RESPONSE.GET_SETTINGS, {
         data: {
           settings,
-          themes,
           profiles,
         },
         success: true,
@@ -248,13 +232,11 @@ events.push(
       const res = await serverService.updatePort(port, enabled);
       if (!res) throw new Error("Unable to start server");
       const settings = storeManagerService.getSettings();
-      const themes = storeManagerService.getThemes();
       const profiles = storeManagerService.getProfiles();
 
       e.reply(APP_EVENTS_RESPONSE.GET_SETTINGS, {
         data: {
           settings,
-          themes,
           profiles,
         },
         success: true,
@@ -282,32 +264,5 @@ events.push(APP_EVENTS.REQ_FDQN, async ({ urlManagerService }, e) => {
     });
   }
 });
-
-events.push(
-  APP_EVENTS.SET_THEME,
-  async ({ storeManagerService }, e, { file, mode }) => {
-    try {
-      await storeManagerService.updateAppearance(mode, file);
-      const settings = storeManagerService.getSettings();
-      const themes = storeManagerService.getThemes();
-      const profiles = storeManagerService.getProfiles();
-      e.reply(APP_EVENTS_RESPONSE.GET_SETTINGS, {
-        data: {
-          settings,
-          themes,
-          profiles,
-        },
-        success: true,
-      });
-      e.reply(APP_EVENTS_RESPONSE.SET_THEME, {
-        success: true,
-      });
-    } catch {
-      e.reply(APP_EVENTS_RESPONSE.SET_THEME, {
-        success: false,
-      });
-    }
-  },
-);
 
 export default events;

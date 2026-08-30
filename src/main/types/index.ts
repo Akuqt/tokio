@@ -17,7 +17,6 @@ import {
   BrowserWindow,
   IpcMain,
   IpcMainEvent,
-  NativeTheme,
   session as Session,
   Shell,
   WebContents,
@@ -41,7 +40,6 @@ export interface AppHandlerVariables {
   readonly ipcMain: IpcMain;
   readonly shell: Shell;
   readonly session: typeof Session;
-  readonly nativeTheme: NativeTheme;
   readonly connectorService: TikTokConnectorService;
   readonly ttsService: TTSService;
   readonly musicService: MusicService;

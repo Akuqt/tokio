@@ -1,12 +1,10 @@
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
-import { useTheme } from "@renderer/hooks";
 import { useEffect, useReducer, useRef } from "react";
 import { defaultState, reducer } from "./helper";
 import { ModalsSection } from "./sections/ModalsSection";
 import { ProfileSection } from "./sections/ProfileSection";
 import { ProvidersSection } from "./sections/ProvidersSection";
 import { ServerSection } from "./sections/ServerSection";
-import { ThemeSection } from "./sections/ThemeSection";
 import styles from "./settings.module.css";
 
 export function Settings() {
@@ -22,8 +20,6 @@ export function Settings() {
     },
     dispatch,
   ] = useReducer(reducer, defaultState);
-
-  const { theme_mode } = useTheme();
 
   useEffect(() => {
     const removeGetSettings = window.api.on(
@@ -73,14 +69,6 @@ export function Settings() {
     const removeFQDN = window.api.on(APP_EVENTS_RESPONSE.REQ_FDQN, (res) => {
       dispatch({ type: "setServerEnabled", payload: res?.success || false });
     });
-    const removeSetTheme = window.api.on(
-      APP_EVENTS_RESPONSE.SET_THEME,
-      (res) => {
-        if (res?.success) {
-          window.api.emit(APP_EVENTS.GET_THEME);
-        }
-      },
-    );
 
     if (isInitialMount.current) {
       isInitialMount.current = false;
@@ -96,7 +84,6 @@ export function Settings() {
       removeSetProvider();
       removeEnableServer();
       removeFQDN();
-      removeSetTheme();
     };
   }, []);
 
@@ -121,10 +108,6 @@ export function Settings() {
           newConnProvider={newConnProvider}
           dispatch={dispatch}
         />
-
-        <span className={styles.section_delimiter} />
-
-        <ThemeSection store={store} mode={theme_mode} dispatch={dispatch} />
 
         <span className={styles.section_delimiter} />
 

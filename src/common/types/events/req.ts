@@ -14,10 +14,6 @@ export enum APP_EVENTS {
   MAXIMIZE_MUSIC_WINDOW = "app:music:window:req:maximize",
   CLOSE_MUSIC_WINDOW = "app:music:window:req:close",
 
-  // THEME
-  GET_THEME = "app:theme:get",
-  SET_THEME_MODE = "app:theme:set:mode",
-
   // PROFILE
   GET_PROFILE = "app:profile:get",
   SET_PROFILE = "app:profile:set",
@@ -43,7 +39,6 @@ export enum APP_EVENTS {
   SET_PROVIDER = "app:settings:set:provider",
   SET_SERVER = "app:settings:set:server",
   REQ_FDQN = "app:settings:req:fqdn",
-  SET_THEME = "app:settings:set:theme",
 
   // HOME
   CONNECT = "app:home:connect",
@@ -64,12 +59,6 @@ export interface AppEventsMap {
   [APP_EVENTS.MINIMIZE_MUSIC_WINDOW]: void;
   [APP_EVENTS.MAXIMIZE_MUSIC_WINDOW]: void;
   [APP_EVENTS.CLOSE_MUSIC_WINDOW]: void;
-
-  // THEME
-  [APP_EVENTS.GET_THEME]: void;
-  [APP_EVENTS.SET_THEME_MODE]: {
-    mode: "dark" | "light";
-  };
 
   // PROFILE
   [APP_EVENTS.GET_PROFILE]: void;
@@ -107,11 +96,11 @@ export interface AppEventsMap {
   };
 
   [APP_EVENTS.IMPORT_ENTITY]: {
-    type: "profile" | "theme";
+    type: "profile";
   };
 
   [APP_EVENTS.EXPORT_ENTITY]: {
-    type: "profile" | "theme";
+    type: "profile";
     file: string;
   };
 
@@ -127,11 +116,6 @@ export interface AppEventsMap {
   };
 
   [APP_EVENTS.REQ_FDQN]: void;
-
-  [APP_EVENTS.SET_THEME]: {
-    file: string;
-    mode: "dark" | "light";
-  };
 
   // HOME
   [APP_EVENTS.CONNECT]: {

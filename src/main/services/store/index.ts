@@ -6,9 +6,8 @@ import {
   ProfileSchema,
   StoreSchema,
   StoreZodSchema,
-  ThemeSchema,
 } from "@/common/schemas";
-import { defaultProfile, defaultTheme, formatError } from "@/common/util";
+import { defaultProfile, formatError } from "@/common/util";
 import { defaultStoreData } from "@/common/util/constants/store";
 import { cleanText } from "@/helper/chat";
 import Logger from "@/logger";
@@ -122,10 +121,6 @@ export class StoreManagerService extends Service {
   }, 500);
 
   private async _generatePhysicalDefaults(): Promise<void> {
-    const defaultThemePath = join(
-      this._pathManagerService.folders.themesFolder,
-      "default.json",
-    );
     const defaultProfilePath = join(
       this._pathManagerService.folders.profilesFolder,
       "default.json",
@@ -136,11 +131,6 @@ export class StoreManagerService extends Service {
         defaultProfilePath,
         ProfileSchema,
         defaultProfile,
-      ),
-      this._jsonManagerService.saveFile(
-        defaultThemePath,
-        ThemeSchema,
-        defaultTheme,
       ),
     ]);
   }
@@ -172,11 +162,6 @@ export class StoreManagerService extends Service {
     return this._storeData!.profiles;
   }
 
-  public getThemes(): EntityMetadata[] {
-    this._ensureInitialized();
-    return this._storeData!.themes;
-  }
-
   public async updateServerSettings(
     enabled: boolean,
     port: number,
@@ -205,17 +190,6 @@ export class StoreManagerService extends Service {
       ...this._storeData!.settings.activeFeatures,
       ...data,
     };
-    this._debouncedSave();
-  }
-
-  public updateAppearance(mode: "dark" | "light", activeThemeFile?: string) {
-    this._ensureInitialized();
-    this._storeData!.settings.theme_mode = mode;
-    if (activeThemeFile) {
-      this._storeData!.settings.activeTheme =
-        this._storeData?.themes.find((t) => t.file === activeThemeFile) ||
-        defaultStoreData.themes[0];
-    }
     this._debouncedSave();
   }
 
@@ -348,18 +322,6 @@ export class StoreManagerService extends Service {
     return await this.addProfile({ file: newFileName, name: newProfileName });
   }
 
-  // --- Start: Consolidated Imports & Exports ---
-
-  public async exportTheme(ref: string, path: string): Promise<boolean> {
-    return this._exportEntity(
-      ref,
-      path,
-      this._pathManagerService.folders.themesFolder,
-      ThemeSchema,
-      "theme",
-    );
-  }
-
   public async exportProfile(ref: string, path: string): Promise<boolean> {
     return this._exportEntity(
       ref,
@@ -379,18 +341,6 @@ export class StoreManagerService extends Service {
     );
     if (!result) return false;
     await this.addProfile(result);
-    return true;
-  }
-
-  public async importTheme(ref: string): Promise<boolean> {
-    const result = await this._importEntity(
-      ref,
-      this._pathManagerService.folders.themesFolder,
-      ThemeSchema,
-      "theme",
-    );
-    if (!result) return false;
-    await this.addTheme(result);
     return true;
   }
 
@@ -479,10 +429,6 @@ export class StoreManagerService extends Service {
     profile: EntityMetadata,
   ): Promise<EntityMetadata | null> {
     return this._addEntity(profile, this._storeData!.profiles);
-  }
-
-  public async addTheme(theme: EntityMetadata): Promise<EntityMetadata | null> {
-    return this._addEntity(theme, this._storeData!.themes);
   }
 
   public async updateProfileData(updates: Partial<Profile>): Promise<boolean> {

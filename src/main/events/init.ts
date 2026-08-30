@@ -1,4 +1,3 @@
-import { ThemeSchema } from "@/common/schemas";
 import { APP_EVENTS, APP_EVENTS_RESPONSE, TIKTOK_EVENTS } from "@/common/types";
 import { delay } from "@/common/util";
 import config from "@/config";
@@ -7,7 +6,6 @@ import { TikTokConnectorService } from "@/services/connector";
 import { StoreManagerService } from "@/services/store";
 import { TTSService } from "@/services/tts";
 import { CustomBrowserWindow } from "@/types";
-import { join } from "path";
 
 const events = createStack();
 
@@ -61,55 +59,6 @@ const registerConnectorEvents = (
   });
 };
 
-events.push(
-  APP_EVENTS.GET_THEME,
-  async (
-    {
-      storeManagerService,
-      jsonManagerService,
-      nativeTheme,
-      pathManagerService,
-    },
-    e,
-  ) => {
-    try {
-      const config = storeManagerService.getSettings();
-      let mode: "dark" | "light" = "dark";
-      if (config.theme_mode == "system") {
-        if (!nativeTheme.shouldUseDarkColors) {
-          mode = "light";
-        }
-      } else {
-        mode = config.theme_mode;
-      }
-      const file = config.activeTheme.file;
-      const theme = await jsonManagerService.loadFile(
-        join(pathManagerService.folders.themesFolder, file),
-        ThemeSchema,
-      );
-      if (!theme) throw new Error("Unable to load theme.");
-      e.reply(APP_EVENTS_RESPONSE.GET_THEME, {
-        success: true,
-        theme,
-        mode,
-      });
-    } catch {
-      e.reply(APP_EVENTS_RESPONSE.GET_THEME, { success: false });
-    }
-  },
-);
-
-events.push(
-  APP_EVENTS.SET_THEME_MODE,
-  async ({ storeManagerService }, _, { mode }) => {
-    try {
-      storeManagerService.updateAppearance(mode);
-    } catch {
-      // next
-    }
-  },
-);
-
 events.push(APP_EVENTS.GET_PROFILE, async ({ storeManagerService }, e) => {
   try {
     const profile = await storeManagerService.getProfileData();
@@ -138,7 +87,6 @@ events.push(
       serverService,
       urlManagerService,
       jsonManagerService,
-      nativeTheme,
       win,
     },
     e,
@@ -177,21 +125,6 @@ events.push(
         storeManagerService,
         ttsService,
       );
-      const settings = storeManagerService.getSettings();
-      let mode: "dark" | "light" = "dark";
-      if (settings.theme_mode == "system") {
-        if (!nativeTheme.shouldUseDarkColors) {
-          mode = "light";
-        }
-      } else {
-        mode = settings.theme_mode;
-      }
-      const file = settings.activeTheme.file;
-      const theme = await jsonManagerService.loadFile(
-        join(pathManagerService.folders.themesFolder, file),
-        ThemeSchema,
-      );
-      if (!theme) throw new Error("Unable to load theme.");
       await delay(3000); // NOTE: JUST TO SHOW THE SPLASH SCREEN lol
       win.setResizable(true);
       win.setSize(1200, 800);
@@ -199,12 +132,6 @@ events.push(
       win.center();
       e.reply(APP_EVENTS_RESPONSE.LOAD_APP, {
         success: true,
-        data: {
-          theme: {
-            data: theme,
-            mode,
-          },
-        },
       });
     } catch {
       e.reply(APP_EVENTS_RESPONSE.LOAD_APP, { success: false });

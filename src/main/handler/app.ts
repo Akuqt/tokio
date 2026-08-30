@@ -12,7 +12,6 @@ import { AppHandlerVariables, CustomBrowserWindow } from "@/types";
 import {
   type App,
   type IpcMain,
-  type NativeTheme,
   type session as Session,
   type Shell,
 } from "electron";
@@ -23,7 +22,6 @@ export class AppHandler implements AppHandlerVariables {
   public readonly musicWin: CustomBrowserWindow;
   public readonly ipcMain: IpcMain;
   public readonly shell: Shell;
-  public readonly nativeTheme: NativeTheme;
   public readonly session: typeof Session;
   public readonly connectorService: TikTokConnectorService;
   public readonly ttsService: TTSService;
@@ -41,7 +39,6 @@ export class AppHandler implements AppHandlerVariables {
     this.ipcMain = deps.ipcMain;
     this.shell = deps.shell;
     this.session = deps.session;
-    this.nativeTheme = deps.nativeTheme;
     this.connectorService = deps.connectorService;
     this.musicService = deps.musicService;
     this.ttsService = deps.ttsService;

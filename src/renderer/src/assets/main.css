@@ -1,14 +1,12 @@
 :root {
-  --background-primary: var(--background-color-primary-color);
-  --background-primary-hover: var(--background-color-primary-hover);
-  --background-secondary: var(--background-color-secondary-color);
-  --background-secondary-hover: var(--background-color-secondary-hover);
-  --accent-primary: var(--accent-color-primary-color);
-  --accent-primary-hover: var(--accent-color-primary-hover);
-  --accent-secondary: var(--accent-color-secondary-color);
-  --accent-secondary-hover: var(--accent-color-secondary-hover);
-  --font-primary: var(--font-color-primary);
-  --font-secondary: var(--font-color-secondary);
+  --background-primary: #121212;
+  --background-primary-hover: #27272a;
+  --background-secondary: #1e1e1e;
+  --background-secondary-hover: #3f3f46;
+  --accent-primary: #f43f5e;
+  --accent-primary-hover: #fb7185;
+  --font-primary: #f1f5f9;
+  --font-secondary: #a1a1aa;
 }
 
 *,

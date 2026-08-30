@@ -21,8 +21,6 @@ export const defaultStoreData: StoreSchema = {
       viewers: 0,
       views: 0,
     },
-    theme_mode: "system",
-    activeTheme: defaultEntity,
     activeProfile: defaultEntity,
     activeConnProvider: defaultProvider,
     activeTTSProvider: defaultProvider,
@@ -31,6 +29,5 @@ export const defaultStoreData: StoreSchema = {
       connector: [defaultProvider],
     },
   },
-  themes: [defaultEntity],
   profiles: [defaultEntity],
 };

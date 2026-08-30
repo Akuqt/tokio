@@ -20,7 +20,6 @@ export class PathManagerService {
       logsFolder: join(appFolder, "logs"),
       overlaysFolder: join(appFolder, "overlays"),
       profilesFolder: join(appFolder, "profiles"),
-      themesFolder: join(appFolder, "themes"),
     };
 
     this.files = {

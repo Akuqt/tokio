@@ -11,7 +11,6 @@ import {
   app,
   BrowserWindow,
   ipcMain,
-  nativeTheme,
   session,
   shell,
   WebContentsView,
@@ -124,7 +123,6 @@ function createWindows(): void {
     shell,
     ipcMain,
     session,
-    nativeTheme,
     ...services,
   }).init(events);
 

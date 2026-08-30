@@ -1,4 +1,4 @@
-import { Profile, StoreSchema, Theme } from "../../schemas";
+import { Profile, StoreSchema } from "../../schemas";
 import { VoiceData } from "../store";
 
 type WindowState = { state: "normal" | "maximized" };
@@ -14,9 +14,6 @@ export enum APP_EVENTS_RESPONSE {
   // WINDOW
   RESIZE_WINDOW = "app:window:res:resize",
   RESIZE_MUSIC_WINDOW = "app:music:window:res:resize",
-
-  // THEME
-  GET_THEME = "app:theme:res",
 
   // PROFILE
   GET_PROFILE = "app:profile:res",
@@ -42,7 +39,6 @@ export enum APP_EVENTS_RESPONSE {
   SET_PROVIDER = "app:settings:res:set:provider",
   SET_SERVER = "app:settings:res:set:server",
   REQ_FDQN = "app:settings:res:fqdn",
-  SET_THEME = "app:settings:res:set:theme",
 
   //HOME
   CONNECTED = "app:home:res:connect",
@@ -54,12 +50,6 @@ export interface AppEventsResponseMap {
   // INIT
   [APP_EVENTS_RESPONSE.LOAD_APP]: {
     success: boolean;
-    data?: {
-      theme: {
-        mode: "dark" | "light";
-        data: Theme;
-      };
-    };
   };
 
   // GLOBAL
@@ -77,13 +67,6 @@ export interface AppEventsResponseMap {
   [APP_EVENTS_RESPONSE.RESIZE_WINDOW]: WindowState;
 
   [APP_EVENTS_RESPONSE.RESIZE_MUSIC_WINDOW]: WindowState;
-
-  // THEME
-  [APP_EVENTS_RESPONSE.GET_THEME]: {
-    success: boolean;
-    theme?: Theme;
-    mode?: "dark" | "light";
-  };
 
   // PROFILE
   [APP_EVENTS_RESPONSE.GET_PROFILE]: {
@@ -130,12 +113,12 @@ export interface AppEventsResponseMap {
 
   [APP_EVENTS_RESPONSE.IMPORT_ENTITY]: {
     success: boolean;
-    type: "theme" | "profile";
+    type: "profile";
   };
 
   [APP_EVENTS_RESPONSE.EXPORT_ENTITY]: {
     success: boolean;
-    type: "theme" | "profile";
+    type: "profile";
   };
 
   [APP_EVENTS_RESPONSE.SET_PROVIDER]: {
@@ -148,10 +131,6 @@ export interface AppEventsResponseMap {
   };
 
   [APP_EVENTS_RESPONSE.REQ_FDQN]: {
-    success: boolean;
-  };
-
-  [APP_EVENTS_RESPONSE.SET_THEME]: {
     success: boolean;
   };
 

@@ -24,8 +24,6 @@ const AppSettingsSchema = z.object({
     views: z.number(),
     viewers: z.number(),
   }),
-  theme_mode: z.enum(["dark", "light", "system"]),
-  activeTheme: EntityMetadataSchema,
   activeProfile: EntityMetadataSchema,
   activeTTSProvider: ProviderSchema,
   activeConnProvider: ProviderSchema,
@@ -37,7 +35,6 @@ const AppSettingsSchema = z.object({
 
 export const StoreZodSchema = z.object({
   settings: AppSettingsSchema,
-  themes: z.array(EntityMetadataSchema),
   profiles: z.array(EntityMetadataSchema),
 });
 

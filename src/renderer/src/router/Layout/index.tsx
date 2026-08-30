@@ -2,18 +2,11 @@ import Logo from "@/assets/logo.png";
 import { EntityMetadata } from "@/common/schemas";
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
 import { ProfileDropdown } from "@/components";
-import { useAudio, useTheme } from "@/hooks";
+import { useAudio } from "@/hooks";
 import { Link, Outlet } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BsLightningCharge } from "react-icons/bs";
-import {
-  FiHome,
-  FiMoon,
-  FiMusic,
-  FiSettings,
-  FiSun,
-  FiVolume2,
-} from "react-icons/fi";
+import { FiHome, FiMusic, FiSettings, FiVolume2 } from "react-icons/fi";
 import { LuMonitorCog } from "react-icons/lu";
 import {
   VscChromeClose,
@@ -24,7 +17,6 @@ import {
 import styles from "./layout.module.css";
 
 export function Layout() {
-  const { theme_mode, toggleThemeMode } = useTheme();
   const { resumeContext } = useAudio();
 
   const [isMaximized, setIsMaximized] = useState(false);
@@ -73,14 +65,6 @@ export function Layout() {
           <img src={Logo} alt="都" />
         </div>
         <div className={styles.nav_top_items_container}>
-          <div
-            className={styles.theme_mode_toggle}
-            onClick={toggleThemeMode}
-            title="Toggle Theme"
-          >
-            {theme_mode === "dark" ? <FiSun size={16} /> : <FiMoon size={16} />}
-          </div>
-
           <ProfileDropdown
             profiles={profiles}
             active={activeProfile}
