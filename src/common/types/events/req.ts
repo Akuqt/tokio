@@ -10,6 +10,10 @@ export enum APP_EVENTS {
   MAXIMIZE_WINDOW = "app:window:req:maximize",
   CLOSE_WINDOW = "app:window:req:close",
 
+  MINIMIZE_MUSIC_WINDOW = "app:music:window:req:minimize",
+  MAXIMIZE_MUSIC_WINDOW = "app:music:window:req:maximize",
+  CLOSE_MUSIC_WINDOW = "app:music:window:req:close",
+
   // THEME
   GET_THEME = "app:theme:get",
   SET_THEME_MODE = "app:theme:set:mode",
@@ -26,6 +30,9 @@ export enum APP_EVENTS {
 
   // TTS PAGE TESTER
   GET_TTS_TEST = "app:tts:get:test",
+
+  //MUSIC PAGE
+  UPDATE_MUSIC_SETTINGS = "app:music:update:settings",
 
   // SETTINGS
   GET_SETTINGS = "app:settings:get",
@@ -54,6 +61,10 @@ export interface AppEventsMap {
   [APP_EVENTS.MAXIMIZE_WINDOW]: void;
   [APP_EVENTS.CLOSE_WINDOW]: void;
 
+  [APP_EVENTS.MINIMIZE_MUSIC_WINDOW]: void;
+  [APP_EVENTS.MAXIMIZE_MUSIC_WINDOW]: void;
+  [APP_EVENTS.CLOSE_MUSIC_WINDOW]: void;
+
   // THEME
   [APP_EVENTS.GET_THEME]: void;
   [APP_EVENTS.SET_THEME_MODE]: {
@@ -76,6 +87,11 @@ export interface AppEventsMap {
   [APP_EVENTS.GET_TTS_TEST]: {
     text: string;
     voice: VoiceData;
+  };
+
+  //MUSIC PAGE
+  [APP_EVENTS.UPDATE_MUSIC_SETTINGS]: {
+    settings: Profile["music"];
   };
 
   // SETTINGS

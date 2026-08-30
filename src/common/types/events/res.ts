@@ -13,6 +13,7 @@ export enum APP_EVENTS_RESPONSE {
 
   // WINDOW
   RESIZE_WINDOW = "app:window:res:resize",
+  RESIZE_MUSIC_WINDOW = "app:music:window:res:resize",
 
   // THEME
   GET_THEME = "app:theme:res",
@@ -28,6 +29,9 @@ export enum APP_EVENTS_RESPONSE {
 
   // TTS PAGE TESTER
   GET_TTS_TEST = "app:tts:res:test",
+
+  //MUSIC PAGE
+  UPDATE_MUSIC_SETTINGS = "app:music:res:update:settings",
 
   // SETTINGS
   GET_SETTINGS = "app:settings:res",
@@ -72,6 +76,8 @@ export interface AppEventsResponseMap {
   // WINDOW
   [APP_EVENTS_RESPONSE.RESIZE_WINDOW]: WindowState;
 
+  [APP_EVENTS_RESPONSE.RESIZE_MUSIC_WINDOW]: WindowState;
+
   // THEME
   [APP_EVENTS_RESPONSE.GET_THEME]: {
     success: boolean;
@@ -101,6 +107,11 @@ export interface AppEventsResponseMap {
   [APP_EVENTS_RESPONSE.GET_TTS_TEST]: {
     success: boolean;
     data?: Uint8Array<ArrayBufferLike>;
+  };
+
+  //MUSIC PAGE
+  [APP_EVENTS_RESPONSE.UPDATE_MUSIC_SETTINGS]: {
+    success: boolean;
   };
 
   // SETTINGS
