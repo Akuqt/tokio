@@ -23,8 +23,6 @@ export default function App() {
       APP_EVENTS_RESPONSE.RESIZE_MUSIC_WINDOW,
       (res) => {
         if (!res) return;
-        console.log(res);
-
         if (res.state === "normal") {
           setIsMaximized(false);
         } else {
