@@ -1,10 +1,29 @@
 import { z } from "zod";
 
+const Permissions = z.object({
+  all: z.boolean(),
+  followers: z.boolean(),
+  superfans: z.boolean(),
+  moderators: z.boolean(),
+  level: z.object({
+    enabled: z.boolean(),
+    value: z.number().min(0),
+  }),
+  list: z.object({
+    enabled: z.boolean(),
+    white: z.array(z.string()),
+    black: z.array(z.string()),
+  }),
+});
+
 // TODO: Finish Profile schema
 export const ProfileSchema = z.object({
   name: z.string().min(3),
   connector: z.object({
     username: z.string(),
+  }),
+  music: z.object({
+    permissions: Permissions,
   }),
   tts: z.object({
     voice: z.object({
@@ -16,21 +35,7 @@ export const ProfileSchema = z.object({
       pitch: z.number(),
       volume: z.number(),
     }),
-    permissions: z.object({
-      all: z.boolean(),
-      followers: z.boolean(),
-      superfans: z.boolean(),
-      moderators: z.boolean(),
-      level: z.object({
-        enabled: z.boolean(),
-        value: z.number().min(0),
-      }),
-      list: z.object({
-        enabled: z.boolean(),
-        white: z.array(z.string()),
-        black: z.array(z.string()),
-      }),
-    }),
+    permissions: Permissions,
     format: z.object({
       template: z.string(),
       trigger: z.object({

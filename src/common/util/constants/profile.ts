@@ -5,6 +5,23 @@ export const defaultProfile: Profile = {
   connector: {
     username: "",
   },
+  music: {
+    permissions: {
+      all: true,
+      followers: false,
+      superfans: false,
+      moderators: false,
+      level: {
+        enabled: false,
+        value: 0,
+      },
+      list: {
+        enabled: false,
+        white: [],
+        black: [],
+      },
+    },
+  },
   tts: {
     voice: {
       lang: "en",
