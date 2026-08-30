@@ -20,7 +20,7 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
 
     <ApplicationIcon>assets\icon.ico</ApplicationIcon>
-    <PublishDir>..\..\output\</PublishDir>
+    <PublishDir>..\..\installer-out\</PublishDir>
   </PropertyGroup>
 
   <ItemGroup>
