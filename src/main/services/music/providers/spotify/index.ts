@@ -1,8 +1,8 @@
 import { MUSIC_EVENTS, MusicEventMap } from "@/common/types";
 import crypto from "crypto";
-import { BrowserWindow, WebContentsView } from "electron";
+import { IpcMain, WebContentsView } from "electron";
 import { EventEmitter } from "node:events";
-import { ConnectionResponse, MusicProvider } from "../../common";
+import { ConnectionResponse, createWindow, MusicProvider } from "../../common";
 import { CSSScrollBar } from "./common";
 import config from "./config";
 
@@ -43,9 +43,9 @@ export class Spotify extends MusicProvider {
     this.emit(MUSIC_EVENTS.PROCCESS_ENDED);
   }
 
-  public connect(shellWindow: BrowserWindow): Promise<ConnectionResponse> {
+  public connect(ipcMain: IpcMain): Promise<ConnectionResponse> {
     return new Promise((res) => {
-      if (!this._isActive) {
+      if (this._isActive) {
         res({
           success: true,
         });
@@ -58,6 +58,8 @@ export class Spotify extends MusicProvider {
           partition: "persist:music-spotify",
         },
       });
+
+      const shellWindow = createWindow(ipcMain);
 
       shellWindow.contentView.addChildView(authView);
 
@@ -142,7 +144,7 @@ export class Spotify extends MusicProvider {
         cleanupView();
 
         if (!shellWindow.isDestroyed()) {
-          shellWindow.hide();
+          shellWindow.close();
         }
 
         if (error) {

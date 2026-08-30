@@ -1,8 +1,8 @@
 import { MUSIC_EVENTS, MusicEventMap } from "@/common/types";
 import { delay } from "@/common/util";
-import { type BrowserWindow, WebContentsView } from "electron";
+import { BrowserWindow, IpcMain, WebContentsView } from "electron";
 import { EventEmitter } from "node:events";
-import { ConnectionResponse, MusicProvider } from "../../common";
+import { ConnectionResponse, createWindow, MusicProvider } from "../../common";
 import {
   AfterSearchJSCode,
   ClickSelectorJSCode,
@@ -60,10 +60,10 @@ export class YouTubeMusic extends MusicProvider {
   }
 
   public connect(
-    window: BrowserWindow,
+    ipcMain: IpcMain,
     requireAuth: boolean = true,
   ): Promise<ConnectionResponse> {
-    this._shellWindow = window;
+    this._shellWindow = createWindow(ipcMain);
 
     this._ytView = new WebContentsView({
       webPreferences: {
@@ -129,7 +129,7 @@ export class YouTubeMusic extends MusicProvider {
     this._shellWindow!.show();
 
     return new Promise((res) => {
-      if (!this._isActive) {
+      if (this._isActive) {
         res({
           success: true,
         });
@@ -192,19 +192,29 @@ export class YouTubeMusic extends MusicProvider {
   }
 
   public play() {
-    return this.executeDOMClick('#play-pause-button[aria-label="Play"]');
+    return this.executeDOMClick(
+      '#play-pause-button #button[aria-label="Play"]',
+    );
   }
 
   public pause() {
-    return this.executeDOMClick('#play-pause-button[aria-label="Pause"]');
+    return this.executeDOMClick(
+      '#play-pause-button #button[aria-label="Pause"]',
+    );
   }
 
   public next() {
-    return this.executeDOMClick(".next-button");
+    return this.executeDOMClick('.next-button #button[aria-label="Next"]');
   }
 
-  public previous() {
-    return this.executeDOMClick(".previous-button");
+  public async previous() {
+    await this.executeDOMClick(
+      '.previous-button #button[aria-label="Previous"]',
+    );
+    await delay(500);
+    await this.executeDOMClick(
+      '.previous-button #button[aria-label="Previous"]',
+    );
   }
 
   public on<K extends MUSIC_EVENTS>(
