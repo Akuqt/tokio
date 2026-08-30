@@ -3,6 +3,7 @@ import { delay } from "@/common/util";
 import config from "@/config";
 import { createStack } from "@/helper/events";
 import { TikTokConnectorService } from "@/services/connector";
+import { MusicService } from "@/services/music";
 import { StoreManagerService } from "@/services/store";
 import { TTSService } from "@/services/tts";
 import { CustomBrowserWindow } from "@/types";
@@ -14,6 +15,7 @@ const registerConnectorEvents = (
   win: CustomBrowserWindow,
   store: StoreManagerService,
   tts: TTSService,
+  music: MusicService,
 ) => {
   conn.on(TIKTOK_EVENTS.ROOM_USER, (d) => {
     store.updateLiveStats({ viewers: d.viewers, views: d.views });
@@ -42,11 +44,10 @@ const registerConnectorEvents = (
   });
   conn.on(TIKTOK_EVENTS.CHAT, async (d) => {
     const settings = store.getSettings();
+    const profile = await store.getProfileData();
     if (settings.activeFeatures.tts) {
-      const profile = await store.getProfileData();
       if (!profile) return;
-      const ttsSettings = profile.tts;
-      tts.talk(d, ttsSettings, (res) => {
+      tts.talk(d, profile.tts, (res) => {
         win.webContents.send(APP_EVENTS_RESPONSE.TTS_AUDIO, {
           data: res.data!,
           filters: res.filters,
@@ -55,6 +56,12 @@ const registerConnectorEvents = (
       });
     } else {
       tts.clearTalk();
+    }
+    if (settings.activeFeatures.music && music.isActive()) {
+      if (!profile) return;
+      music.handle(d, profile.music);
+    } else {
+      music.clearHandler();
     }
   });
 };
@@ -84,6 +91,7 @@ events.push(
       pathManagerService,
       connectorService,
       ttsService,
+      musicService,
       serverService,
       urlManagerService,
       jsonManagerService,
@@ -124,6 +132,7 @@ events.push(
         win,
         storeManagerService,
         ttsService,
+        musicService,
       );
       await delay(3000); // NOTE: JUST TO SHOW THE SPLASH SCREEN lol
       win.setResizable(true);
