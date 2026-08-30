@@ -7,14 +7,7 @@ import { StoreManagerService } from "@/services/store";
 import { TTSService } from "@/services/tts";
 import { URLManagerService } from "@/services/url";
 import { electronApp, is, optimizer } from "@electron-toolkit/utils";
-import {
-  app,
-  BrowserWindow,
-  ipcMain,
-  session,
-  shell,
-  WebContentsView,
-} from "electron";
+import { app, BrowserWindow, ipcMain, session, shell } from "electron";
 import { join } from "path";
 import events from "./events";
 import Handler from "./handler";
@@ -44,7 +37,6 @@ const APP_ICON = join(__dirname, "../../resources/icon.png");
 const APP_PRELOAD = join(__dirname, "../preload/index.mjs");
 
 let win: BrowserWindow | null = null;
-let musicWin: BrowserWindow | null = null;
 
 function createWindows(): void {
   win = new BrowserWindow({
@@ -65,61 +57,9 @@ function createWindows(): void {
     },
   });
 
-  musicWin = new BrowserWindow({
-    width: 1280,
-    height: 840,
-    minHeight: 840,
-    minWidth: 1280,
-    show: false,
-    title: "Tokio",
-    center: true,
-    resizable: true,
-    titleBarStyle: "hidden",
-    autoHideMenuBar: true,
-    icon: APP_ICON,
-    webPreferences: {
-      sandbox: false,
-      contextIsolation: true,
-      backgroundThrottling: false,
-    },
-  });
-
-  const navView = new WebContentsView({
-    webPreferences: {
-      sandbox: false,
-      contextIsolation: false,
-      preload: APP_PRELOAD,
-    },
-  });
-
-  musicWin.contentView.addChildView(navView);
-
-  const updateNavBounds = () => {
-    const bounds = musicWin!.getContentBounds();
-    navView.setBounds({ x: 0, y: 0, width: bounds.width, height: 40 });
-  };
-
-  updateNavBounds();
-  musicWin.on("resize", updateNavBounds);
-
-  musicWin.on("close", async () => {
-    try {
-      musicWin!.contentView.removeChildView(navView);
-    } catch {
-      // Next
-    }
-  });
-
-  win.on("close", () => {
-    if (musicWin && !musicWin.isDestroyed()) {
-      musicWin.close();
-    }
-  });
-
   new Handler({
     app,
     win,
-    musicWin,
     shell,
     ipcMain,
     session,
@@ -128,10 +68,8 @@ function createWindows(): void {
 
   if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
     win.loadURL(process.env["ELECTRON_RENDERER_URL"]);
-    navView.webContents.loadURL("http://localhost:8989");
   } else {
     win.loadFile(join(__dirname, "../renderer/index.html"));
-    navView.webContents.loadFile(join(__dirname, "../../music/index.html"));
   }
 }
 
