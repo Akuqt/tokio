@@ -20,6 +20,7 @@ export function Layout() {
   const { resumeContext } = useAudio();
 
   const [isMaximized, setIsMaximized] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
   const [profiles, setProfiles] = useState<EntityMetadata[]>([]);
   const [activeProfile, setActiveProfile] = useState<EntityMetadata>({
     file: "",
@@ -50,10 +51,21 @@ export function Layout() {
         setActiveProfile(res.data!.settings.activeProfile);
       },
     );
+
+    const removeConnected = window.api.on(
+      APP_EVENTS_RESPONSE.CONNECTED,
+      (res) => {
+        if (res) {
+          setIsConnected(res.success); // TODO: Add new app connection state: connected, connecting, disconnected.
+        }
+      },
+    );
+
     window.api.emit(APP_EVENTS.GET_SETTINGS);
     resumeContext();
     return () => {
       removeGetSettings();
+      removeConnected();
       removeResize();
     };
   }, []);
@@ -66,6 +78,7 @@ export function Layout() {
         </div>
         <div className={styles.nav_top_items_container}>
           <ProfileDropdown
+            disabled={isConnected}
             profiles={profiles}
             active={activeProfile}
             onProfileSelected={(val) => {

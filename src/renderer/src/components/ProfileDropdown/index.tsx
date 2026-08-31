@@ -7,12 +7,14 @@ type Props = {
   onProfileSelected: (file: string) => void;
   active: EntityMetadata;
   profiles: EntityMetadata[];
+  disabled: boolean;
 };
 
 export function ProfileDropdown({
   profiles,
   onProfileSelected,
   active,
+  disabled,
 }: Props) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [activeProfile, setActiveProfile] = useState(active);
@@ -40,15 +42,18 @@ export function ProfileDropdown({
   return (
     <div className={styles.container} ref={dropdownRef}>
       <div
-        onClick={() => setIsProfileOpen((c) => !c)}
+        onClick={() => {
+          if (!disabled) setIsProfileOpen((c) => !c);
+        }}
         className={styles.toggle}
         style={{
           color: isProfileOpen
             ? "var(--font-primary)"
             : "var(--font-secondary)",
-          backgroundColor: isProfileOpen
-            ? "var(--background-secondary-hover)"
-            : "transparent",
+          backgroundColor:
+            isProfileOpen || disabled
+              ? "var(--background-secondary-hover)"
+              : "transparent",
         }}
       >
         <div className={styles.profile}>🌹</div>
