@@ -30,13 +30,16 @@
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "yarn typecheck:node && yarn typecheck:web",
     "start": "electron-vite preview",
-    "dev": "vite build --config src/music/vite.config.ts && electron-vite dev",
-    "build": "yarn typecheck && vite build --config src/music/vite.config.ts && electron-vite build",
+    "build:music:ui": "vite build --config src/music/vite.config.ts",
+    "dev": "yarn build:music:ui && electron-vite dev",
+    "build": "yarn typecheck && yarn build:music:ui && electron-vite build",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "yarn build && electron-builder --dir",
     "build:win": "yarn build && electron-builder --win",
     "build:installer:ui": "vite build --config src/installer/vite.config.ts",
     "build:installer:win": "dotnet publish src/installer/main.csproj -c Release",
+    "clean": "node ./scripts/clean/index.js",
+    "todos": "node ./scripts/todos/index.js",
     "prepare": "husky"
   },
   "dependencies": {
