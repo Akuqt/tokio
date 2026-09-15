@@ -12,6 +12,7 @@ import { ServerService } from "@/services/server";
 import { StoreManagerService } from "@/services/store";
 import { TTSService } from "@/services/tts";
 import { URLManagerService } from "@/services/url";
+import { YAMLManagerService } from "@/services/yaml";
 import {
   App,
   BrowserWindow,
@@ -33,12 +34,7 @@ export type CustomBrowserWindow = Omit<BrowserWindow, "webContents"> & {
   webContents: TypedWebContents;
 };
 
-export interface AppHandlerVariables {
-  readonly app: App;
-  readonly win: CustomBrowserWindow;
-  readonly ipcMain: IpcMain;
-  readonly shell: Shell;
-  readonly session: typeof Session;
+export interface AppServices {
   readonly connectorService: TikTokConnectorService;
   readonly ttsService: TTSService;
   readonly musicService: MusicService;
@@ -47,6 +43,15 @@ export interface AppHandlerVariables {
   readonly jsonManagerService: JSONManagerService;
   readonly storeManagerService: StoreManagerService;
   readonly pathManagerService: PathManagerService;
+  readonly yamlManagerService: YAMLManagerService;
+}
+
+export interface AppHandlerVariables extends AppServices {
+  readonly app: App;
+  readonly win: CustomBrowserWindow;
+  readonly ipcMain: IpcMain;
+  readonly shell: Shell;
+  readonly session: typeof Session;
 }
 
 export type EventCallback<K extends APP_EVENTS> = (
