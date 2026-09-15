@@ -1,53 +1,53 @@
-import {
-  OverlayApp,
-  TIKTOK_EVENTS,
-  TikTokEventMap,
-  WSRoom,
-} from "@/common/types";
+import { OverlayMetadata } from "@/common/schemas";
+import { OverlayApp, TIKTOK_EVENTS, TikTokEventMap } from "@/common/types";
 import { formatError } from "@/common/util";
 import Logger from "@/logger";
 import express, { Express, Router } from "express";
-import { Server as HttpServer } from "http";
 import { randomUUID } from "node:crypto";
+import { Server as HttpServer } from "node:http";
 import { TikTokConnectorService } from "../connector";
 import { Service } from "../shared";
-import { WSROOMS } from "./util";
-import { RoomWebSocketServer } from "./websocket";
+import { CustomWebSocketServer } from "./websocket";
+
+type BoundHandler = <K extends TIKTOK_EVENTS>(data: TikTokEventMap[K]) => void;
 
 export class ServerService extends Service {
-  private app: Express;
-  private server: HttpServer | null = null;
-  private wss: RoomWebSocketServer | null = null;
-  private dynamicRouter: Router;
+  private _app: Express;
+  private _server: HttpServer | null = null;
+  private _wss: CustomWebSocketServer | null = null;
+  private _dynamicRouter: Router;
   private _port: number;
-  public activeApps: OverlayApp[] = [];
+  private _activeOverlays: (OverlayMetadata & { id: string; path: string })[] =
+    [];
+  private _boundEvents: {
+    event: TIKTOK_EVENTS;
+    handler: BoundHandler;
+  }[] = [];
 
   constructor() {
     super();
-    this.app = express();
-    this.dynamicRouter = express.Router();
-    this._port = 6767;
+    this._app = express();
+    this._dynamicRouter = express.Router();
+    this._port = 37891;
 
-    this.app.use((req, res, next) => {
-      this.dynamicRouter(req, res, next);
+    this._app.use((req, res, next) => {
+      this._dynamicRouter(req, res, next);
     });
   }
 
   private rebuildRoutes() {
     const newRouter = express.Router();
-
-    this.activeApps.forEach((app) => {
-      newRouter.use(app.route, express.static(app.path));
+    this._activeOverlays.forEach((overlay) => {
+      const route = "/" + overlay.id;
+      newRouter.use(route, (req, res, next) => {
+        if (req.originalUrl === route) {
+          return res.redirect(route + "/");
+        }
+        next();
+      });
+      newRouter.use(route, express.static(overlay.path));
     });
-
-    this.dynamicRouter = newRouter;
-  }
-
-  private multiBroadcast<T>(rooms: WSRoom[], data: T) {
-    if (!this.wss) return;
-    for (const room of rooms) {
-      this.wss.broadcastToRoom(room, data);
-    }
+    this._dynamicRouter = newRouter;
   }
 
   public setLogFile(logFile: string) {
@@ -55,42 +55,47 @@ export class ServerService extends Service {
   }
 
   public start(): Promise<{ success: boolean; message: string }> {
-    if (this.server)
+    if (this._server)
       return Promise.resolve({
         success: false,
         message: "Server already running.",
       });
 
     return new Promise((resolve) => {
-      this.server = this.app.listen(this._port, "0.0.0.0", () => {
-        this.wss = new RoomWebSocketServer({ server: this.server! });
-        this.wss.on("connection", (ws, req) => {
-          const urlPath = (req.url?.split("/")[1] ?? "") as WSRoom;
-          if (!WSROOMS.includes(urlPath)) return;
-          this.wss?.joinRoom(urlPath, ws);
+      this._server = this._app.listen(this._port, "0.0.0.0", () => {
+        this._wss = new CustomWebSocketServer({ server: this._server! });
+        this._wss.on("connection", (client, req) => {
+          const url = new URL(req.url || "/", "http://localhost:37891");
+
+          const clientId = url.searchParams.get("id") || randomUUID();
+
+          this._wss?.addClient(clientId, client);
           Logger.info(
-            `<WebSocket> New client connected to ${urlPath} events.`,
+            `<WebSocket> New client connected: ${clientId}`,
             this._logFile,
           );
-          ws.send(
-            JSON.stringify({
-              success: true,
-              message: `Connected to ${urlPath} events.`,
-            }),
-          );
+
+          client.on("close", () => {
+            this._wss?.removeClient(clientId);
+            Logger.info(
+              `<WebSocket> Client disconnected: ${clientId}`,
+              this._logFile,
+            );
+          });
         });
         Logger.success(
           `<Server> Server running on port ${this._port}`,
           this._logFile,
         );
+        this.rebuildRoutes();
         resolve({
           success: true,
           message: `Server running on port ${this._port}`,
         });
       });
 
-      this.server.on("error", (err) => {
-        this.server = null;
+      this._server.on("error", (err) => {
+        this._server = null;
         Logger.error(
           `<Server> Unable to start server on port ${this._port} -- ${formatError(err)}`,
           this._logFile,
@@ -101,106 +106,69 @@ export class ServerService extends Service {
   }
 
   public stop(): void {
-    if (this.wss) {
-      this.wss.closeAll();
-      this.wss = null;
+    if (this._wss) {
+      this._wss.closeAll();
+      this._wss = null;
+      Logger.info(`<WebSocket> WebSocket server stopped.`, this._logFile);
     }
-    if (this.server) {
-      this.server.close();
-      this.server = null;
+    if (this._server) {
+      this._server.close();
+      this._server = null;
+      Logger.info(`<Server> Server stopped.`, this._logFile);
     }
   }
 
-  public updatePort(port: number, start: boolean) {
-    return new Promise<boolean>((res) => {
-      if (port === this._port) res(false);
-      this._port = port;
+  public async toggleServer(value: boolean): Promise<boolean> {
+    if (value) {
+      const result = await this.start();
+      return result.success;
+    } else {
       this.stop();
-      if (start) {
-        setTimeout(async () => {
-          const t = await this.start();
-          res(t.success);
-        }, 500);
-      }
-      res(true);
-    });
+      return true;
+    }
   }
 
-  public addOverlayApp(overlayApp: Omit<OverlayApp, "id">): OverlayApp[] {
-    const safeRoute = overlayApp.route.startsWith("/")
-      ? overlayApp.route
-      : `/${overlayApp.route}`;
-
-    const id = randomUUID();
-
-    this.activeApps.push({ ...overlayApp, route: safeRoute, id });
-
-    this.rebuildRoutes();
-
-    return this.activeApps;
+  public addOverlayApp(overlayApp: OverlayApp, rebuild: boolean = true): void {
+    this._activeOverlays.push(overlayApp);
+    if (rebuild) this.rebuildRoutes();
   }
 
-  public removeOverlayApp(id: string): OverlayApp[] {
-    this.activeApps = this.activeApps.filter((a) => a.id !== id);
+  public getOverlayApps(): OverlayApp[] {
+    return this._activeOverlays;
+  }
 
+  public removeOverlayApp(id: string) {
+    this._activeOverlays = this._activeOverlays.filter((a) => a.id !== id);
     this.rebuildRoutes();
-
-    return this.activeApps;
   }
 
   public initEvents(connectorService: TikTokConnectorService) {
     if (!connectorService) {
       throw new Error("Connector service not defined.");
     }
-    connectorService.on(TIKTOK_EVENTS.CHAT, (data) => {
-      this.broadcast(TIKTOK_EVENTS.CHAT, data);
-    });
-    connectorService.on(TIKTOK_EVENTS.LIKE, (data) => {
-      this.broadcast(TIKTOK_EVENTS.LIKE, data);
-    });
-    connectorService.on(TIKTOK_EVENTS.GIFT, (data) => {
-      this.broadcast(TIKTOK_EVENTS.GIFT, data);
-    });
-    connectorService.on(TIKTOK_EVENTS.FOLLOW, (data) => {
-      this.broadcast(TIKTOK_EVENTS.FOLLOW, data);
-    });
-    connectorService.on(TIKTOK_EVENTS.SHARE, (data) => {
-      this.broadcast(TIKTOK_EVENTS.SHARE, data);
-    });
-    connectorService.on(TIKTOK_EVENTS.ENVELOPE, (data) => {
-      this.broadcast(TIKTOK_EVENTS.ENVELOPE, data);
-    });
-    connectorService.on(TIKTOK_EVENTS.SUPER_FAN_BOX, (data) => {
-      this.broadcast(TIKTOK_EVENTS.SUPER_FAN_BOX, data);
-    });
-    connectorService.on(TIKTOK_EVENTS.SUPER_FAN, (data) => {
-      this.broadcast(TIKTOK_EVENTS.SUPER_FAN, data);
-    });
-    connectorService.on(TIKTOK_EVENTS.MEMBER_JOIN, (data) => {
-      this.broadcast(TIKTOK_EVENTS.MEMBER_JOIN, data);
-    });
-    connectorService.on(TIKTOK_EVENTS.SUPER_FAN_JOIN, (data) => {
-      this.broadcast(TIKTOK_EVENTS.SUPER_FAN_JOIN, data);
+    Object.values(TIKTOK_EVENTS).forEach((event) => {
+      const handler: BoundHandler = (data) => this.broadcast(event, data);
+      connectorService.on(event, handler);
+      this._boundEvents.push({ event, handler });
     });
   }
 
-  private broadcast<T extends TIKTOK_EVENTS>(type: T, data: TikTokEventMap[T]) {
-    const EVENT_ROOM_MAP: Partial<Record<TIKTOK_EVENTS, WSRoom>> = {
-      [TIKTOK_EVENTS.CHAT]: "CHAT",
-      [TIKTOK_EVENTS.LIKE]: "LIKE",
-      [TIKTOK_EVENTS.GIFT]: "GIFT",
-      [TIKTOK_EVENTS.FOLLOW]: "FOLLOW",
-      [TIKTOK_EVENTS.SHARE]: "SHARE",
-      [TIKTOK_EVENTS.ENVELOPE]: "ENVELOPE",
-      [TIKTOK_EVENTS.SUPER_FAN]: "SUPER_FAN",
-      [TIKTOK_EVENTS.SUPER_FAN_BOX]: "SUPER_FAN_BOX",
-      [TIKTOK_EVENTS.MEMBER_JOIN]: "MEMBER_JOIN",
-      [TIKTOK_EVENTS.SUPER_FAN_JOIN]: "SUPER_FAN_JOIN",
-    };
-    const room = EVENT_ROOM_MAP[type];
+  public cleanupEvents(connectorService: TikTokConnectorService) {
+    this._boundEvents.forEach(({ event, handler }) => {
+      connectorService.off(event, handler);
+    });
+    this._boundEvents = [];
+  }
 
-    if (room) {
-      this.multiBroadcast([room, "GLOBAL"], data);
+  public sendToClient(id: string, payload: any) {
+    if (this._wss) {
+      this._wss.sendToClient(id, payload);
+    }
+  }
+
+  private broadcast<T extends TIKTOK_EVENTS>(type: T, data: TikTokEventMap[T]) {
+    if (this._wss) {
+      this._wss.broadcast({ type, data });
     } else {
       Logger.warn(`<Server> Unknown Broadcast Event ${type}`, this._logFile);
     }

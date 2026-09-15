@@ -1,86 +1,43 @@
-import { WSRoom } from "@/common/types";
-import { ServerOptions, WebSocket, WebSocketServer } from "ws";
-import { WSROOMS } from "./util";
+import { WebSocket, WebSocketServer } from "ws";
 
-interface RoomWebSocket extends WebSocket {
-  rooms?: Set<WSRoom>;
-}
+export class CustomWebSocketServer extends WebSocketServer {
+  private _mappedClients = new Map<string, WebSocket>();
 
-export class RoomWebSocketServer extends WebSocketServer {
-  public rooms: Map<WSRoom, Set<RoomWebSocket>>;
-
-  constructor(options: ServerOptions) {
-    super(options);
-    this.rooms = new Map();
-    for (const r of WSROOMS) {
-      this.rooms.set(r, new Set());
-    }
+  public addClient(id: string, client: WebSocket) {
+    this._mappedClients.set(id, client);
   }
 
-  joinRoom(roomName: WSRoom, ws: RoomWebSocket) {
-    if (!WSROOMS.includes(roomName)) return;
-
-    if (roomName)
-      if (!this.rooms.has(roomName)) {
-        this.rooms.set(roomName, new Set());
-      }
-
-    this.rooms.get(roomName)!.add(ws);
-
-    if (!ws.rooms) {
-      ws.rooms = new Set();
-    }
-    ws.rooms.add(roomName);
+  public removeClient(id: string) {
+    this._mappedClients.delete(id);
   }
 
-  leaveRoom(roomName: WSRoom, ws: RoomWebSocket) {
-    if (!WSROOMS.includes(roomName)) return;
-    const room = this.rooms.get(roomName);
-    if (room) {
-      room.delete(ws);
-      if (room.size === 0) {
-        this.rooms.delete(roomName);
-      }
-    }
-    if (ws.rooms) {
-      ws.rooms.delete(roomName);
-    }
-  }
+  broadcast<T>(data: T) {
+    if (this._mappedClients.size === 0) return;
+    const payload = JSON.stringify(data);
 
-  leaveAllRooms(ws: RoomWebSocket) {
-    if (ws.rooms) {
-      for (const roomName of ws.rooms) {
-        this.leaveRoom(roomName, ws);
+    for (const client of this._mappedClients.values()) {
+      if (client.readyState === WebSocket.OPEN) {
+        if (client.bufferedAmount > 1024 * 1024) {
+          continue;
+        }
+        client.send(payload);
       }
     }
   }
 
-  broadcastToRoom<T>(
-    roomName: WSRoom,
-    data: T,
-    excludeWs: RoomWebSocket | null = null,
-  ) {
-    if (!WSROOMS.includes(roomName)) return;
-    const room = this.rooms.get(roomName);
-    if (!room) return;
+  sendToClient<T>(clientId: string, data: T) {
+    const client = this._mappedClients.get(clientId);
 
-    for (const client of room) {
-      if (client !== excludeWs && client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ data }));
+    if (client && client.readyState === WebSocket.OPEN) {
+      if (client.bufferedAmount > 1024 * 1024) {
+        return;
       }
-    }
-  }
-
-  broadcastGlobal<T>(data: T, excludeWs: RoomWebSocket | null = null) {
-    for (const client of this.clients) {
-      if (client !== excludeWs && client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ data }));
-      }
+      client.send(JSON.stringify(data));
     }
   }
 
   closeAll() {
-    for (const client of this.clients) {
+    for (const client of this._mappedClients.values()) {
       client.close();
     }
     this.close();
