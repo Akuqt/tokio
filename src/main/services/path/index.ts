@@ -20,6 +20,7 @@ export class PathManagerService {
       logsFolder: join(appFolder, "logs"),
       overlaysFolder: join(appFolder, "overlays"),
       profilesFolder: join(appFolder, "profiles"),
+      extraFolder: join(appFolder, "extra"),
     };
 
     this.files = {
@@ -29,6 +30,7 @@ export class PathManagerService {
         server: join(this.folders.logsFolder, "server.log"),
         tts: join(this.folders.logsFolder, "tts.log"),
       },
+      gifts: join(this.folders.extraFolder, "gifts.json"),
     };
 
     const folderPaths = Object.values(this.folders);
