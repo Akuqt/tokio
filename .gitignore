@@ -1,6 +1,7 @@
 node_modules
 dist
 out
+.trash
 .DS_Store
 .eslintcache
 *.log*
