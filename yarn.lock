@@ -1168,6 +1168,13 @@
     "@tanstack/store" "0.9.3"
     use-sync-external-store "^1.6.0"
 
+"@tanstack/react-virtual@^3.14.12":
+  version "3.14.12"
+  resolved "https://registry.yarnpkg.com/@tanstack/react-virtual/-/react-virtual-3.14.12.tgz#2e27d94218db8179b570bce25e3635ef25b6c52e"
+  integrity sha512-EOJkBss/FRqzFrCpX8M96lIh+ZMc0jPt0LILhxWQ3tOHQ3XdVvuE0jceS2yZXpDtayNfpjeg2EnuYPm90CxIlA==
+  dependencies:
+    "@tanstack/virtual-core" "3.17.10"
+
 "@tanstack/router-core@1.171.19":
   version "1.171.19"
   resolved "https://registry.yarnpkg.com/@tanstack/router-core/-/router-core-1.171.19.tgz#76b41818727e3d15aeeddb97b34374e24e232eda"
@@ -1182,6 +1189,11 @@
   version "0.9.3"
   resolved "https://registry.yarnpkg.com/@tanstack/store/-/store-0.9.3.tgz#0f9ebca34d194442fe559afce1e8a7327f6d3eb4"
   integrity sha512-8reSzl/qGWGGVKhBoxXPMWzATSbZLZFWhwBAFO9NAyp0TxzfBP0mIrGb8CP8KrQTmvzXlR/vFPPUrHTLBGyFyw==
+
+"@tanstack/virtual-core@3.17.10":
+  version "3.17.10"
+  resolved "https://registry.yarnpkg.com/@tanstack/virtual-core/-/virtual-core-3.17.10.tgz#0cef2e4fb0846087b5f0b794f846178257b664e5"
+  integrity sha512-eMorKWIi2nekElu+8DgSMJR4iR+sTDeh+W8VjKiMH79yUfEDJ3W9aL/96/wwbxNjyV6EfN39HKszSxjd90zAqQ==
 
 "@types/babel__core@^7.20.5":
   version "7.20.5"
@@ -2019,6 +2031,11 @@ cookie@^0.7.1:
   version "0.7.2"
   resolved "https://registry.yarnpkg.com/cookie/-/cookie-0.7.2.tgz#556369c472a2ba910f2979891b526b3436237ed7"
   integrity sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w==
+
+copy-to-clipboard@^4.0.2:
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/copy-to-clipboard/-/copy-to-clipboard-4.0.2.tgz#fbd05a471231962c25486c1dc5019adf0b4bdc71"
+  integrity sha512-gklSft7IuhriZKHKpuoA1fpJSLPNgvUMWMo5BlnzAJm0zNKnznoSv23IjtNqclx8eKi6ZcdvFFzYEER/+U1LoQ==
 
 core-util-is@~1.0.0:
   version "1.0.3"
@@ -3593,6 +3610,11 @@ raw-body@^3.0.2:
     http-errors "~2.0.1"
     iconv-lite "~0.7.0"
     unpipe "~1.0.0"
+
+react-colorful@^5.8.1:
+  version "5.8.1"
+  resolved "https://registry.yarnpkg.com/react-colorful/-/react-colorful-5.8.1.tgz#a6ef2a3946e6903883b142720dda80c72f24267f"
+  integrity sha512-oz68bhsnFWnpDf1ZR8daiQbYpXUnM2h2J6hl9Zg2rTpM/DU6vCqe1E+CpqmqLnJucMZetHZeifSAfJ+geN9lcA==
 
 react-dom@^19.2.1:
   version "19.2.7"
