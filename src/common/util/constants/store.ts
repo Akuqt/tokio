@@ -12,6 +12,7 @@ export const defaultStoreData: StoreSchema = {
     server: {
       enabled: false,
     },
+    overlays: [],
     activeFeatures: {
       tts: false,
       music: false,
