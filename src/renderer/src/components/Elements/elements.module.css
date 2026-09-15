@@ -1,0 +1,275 @@
+/* SELECT START */
+
+.select_container {
+  width: 100%;
+}
+
+.select_display {
+  border: 1px solid;
+  border-radius: 4px;
+  padding: 0 12px;
+  min-height: 40px;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.select_area {
+  position: fixed;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  border-radius: 4px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.6);
+  z-index: 10010;
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+}
+
+.select_icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.select_item {
+  padding: 10px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin: 2px 0px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+
+  label {
+    cursor: pointer;
+  }
+}
+
+.select_img {
+  height: 24px;
+  width: 24px;
+}
+
+.select_single_label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+
+  label {
+    cursor: pointer;
+  }
+}
+
+.multi_select_label_group {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  overflow: hidden;
+  flex-wrap: wrap;
+}
+
+.multi_select_label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+
+  label {
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  button {
+    background: transparent;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+  }
+}
+
+.search_container {
+  padding: 8px 0px 0px 0px;
+  position: sticky;
+  top: -4px;
+  margin-top: -4px;
+  z-index: 1;
+}
+
+.search_input {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: none;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+  border-bottom: 1px solid;
+}
+
+/* SELECT END */
+
+/* INPUT START */
+
+.input_container {
+  width: 100%;
+}
+
+.input_style {
+  border-radius: 4px;
+  padding: 0 12px;
+  height: 40px;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
+  background-color: transparent;
+  border: none;
+  border: 1px solid;
+}
+
+/* INPUT END */
+
+/* COLOR START */
+
+.color_container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: fit-content;
+}
+
+.color_swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  border: 1px solid;
+  cursor: pointer;
+  padding: 0;
+}
+
+.color_popover {
+  position: fixed;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 10010;
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.picker {
+  width: 160px !important;
+  height: 160px !important;
+}
+
+.picker :global(.react-colorful__pointer) {
+  width: 20px;
+  height: 20px;
+}
+
+.color_input {
+  field-sizing: content;
+  border-radius: 4px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  height: 24px;
+  text-align: center;
+  font-size: 14px;
+  outline: none;
+  border: none;
+  font-weight: 500;
+  border-bottom: 1px solid;
+  background-color: transparent;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* COLOR END */
+
+/* CHECK START */
+
+.check_container {
+  width: fit-content;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.check_style {
+  border: none;
+  outline: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-primary);
+}
+
+/* CHECK END */
+
+/* SLIDER START */
+
+.slider_container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  height: 40px;
+}
+
+.slider_style::-webkit-slider-runnable-track {
+  background: var(--dynamic-bg) !important;
+}
+
+.slider_value {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  top: -10px;
+  text-align: center;
+  font-weight: 400;
+  color: var(--font-primary);
+}
+
+/* SLIDER END */
+
+/* BTN START */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 16px;
+  height: 40px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid;
+  font-size: 14px;
+  font-weight: 500;
+  box-sizing: border-box;
+  outline: none;
+}
+
+/* BTN END */
