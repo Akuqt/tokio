@@ -22,6 +22,13 @@ export class TikTokConnectorService extends ProviderService<ConnectorProvider> {
     if (this._current?.provider) this._current.provider.on(event, listener);
   }
 
+  public off<T extends TIKTOK_EVENTS>(
+    event: T,
+    listener: (data: TikTokEventMap[T]) => void,
+  ): void {
+    if (this._current?.provider) this._current.provider.off(event, listener);
+  }
+
   public async connect(
     username: string,
     key?: string,
@@ -57,7 +64,11 @@ export class TikTokConnectorService extends ProviderService<ConnectorProvider> {
 
   public async fetchGifts(): Promise<GiftResponse> {
     if (!this._current?.provider)
-      return { data: [], warn: "No conector provider was defined." };
+      return {
+        success: false,
+        data: [],
+        warn: "No conector provider was defined.",
+      };
     const res = await this._current.provider.fetchGifts();
     return res;
   }

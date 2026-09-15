@@ -52,6 +52,13 @@ export class TikTokLiveConnector extends ConnectorProvider {
     this._events.on(event, listener);
   }
 
+  public off<K extends TIKTOK_EVENTS>(
+    event: K,
+    listener: (data: TikTokEventMap[K]) => void,
+  ): void {
+    this._events.off(event, listener);
+  }
+
   public async connect(
     username: string,
     sessionID?: string,
@@ -170,9 +177,18 @@ export class TikTokLiveConnector extends ConnectorProvider {
       const mapper = (g: any) => this.formatGift(g);
       const availableGifts: Gift[] = rawGifts.map(mapper);
 
-      return { data: availableGifts, warn: region.error?.message };
+      const uniqueData = [
+        ...new Map(availableGifts.map((item) => [item.id, item])).values(),
+      ];
+
+      return {
+        data: uniqueData,
+        warn: region.error?.message,
+        success: true,
+      };
     } catch (err) {
       return {
+        success: false,
         data: [],
         error: new Error("Failed to fetch Gifts", { cause: err }),
       };
