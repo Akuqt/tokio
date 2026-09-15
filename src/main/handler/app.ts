@@ -8,6 +8,7 @@ import { ServerService } from "@/services/server";
 import { StoreManagerService } from "@/services/store";
 import { TTSService } from "@/services/tts";
 import { URLManagerService } from "@/services/url";
+import { YAMLManagerService } from "@/services/yaml";
 import { AppHandlerVariables, CustomBrowserWindow } from "@/types";
 import {
   BrowserWindow,
@@ -29,23 +30,12 @@ export class AppHandler implements AppHandlerVariables {
   public readonly serverService: ServerService;
   public readonly urlManagerService: URLManagerService;
   public readonly jsonManagerService: JSONManagerService;
+  public readonly yamlManagerService: YAMLManagerService;
   public readonly storeManagerService: StoreManagerService;
   public readonly pathManagerService: PathManagerService;
 
   constructor(deps: AppHandlerVariables) {
-    this.app = deps.app;
-    this.win = deps.win;
-    this.ipcMain = deps.ipcMain;
-    this.shell = deps.shell;
-    this.session = deps.session;
-    this.connectorService = deps.connectorService;
-    this.musicService = deps.musicService;
-    this.ttsService = deps.ttsService;
-    this.serverService = deps.serverService;
-    this.urlManagerService = deps.urlManagerService;
-    this.jsonManagerService = deps.jsonManagerService;
-    this.storeManagerService = deps.storeManagerService;
-    this.pathManagerService = deps.pathManagerService;
+    Object.assign(this, deps);
   }
 
   public async initApp() {
@@ -100,6 +90,16 @@ export class AppHandler implements AppHandlerVariables {
 
   private initSession() {
     const csp = this.app.isPackaged ? config.CSP.prod : config.CSP.dev;
+    this.session.defaultSession.webRequest.onBeforeRequest(
+      config.URL_FILTER,
+      (details, callback) => {
+        if (details.resourceType === "webSocket") {
+          callback({ cancel: true });
+          return;
+        }
+        callback({ cancel: false });
+      },
+    );
 
     this.session.defaultSession.webRequest.onHeadersReceived(
       (details, callback) => {

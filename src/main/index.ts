@@ -7,10 +7,21 @@ import { StoreManagerService } from "@/services/store";
 import { TTSService } from "@/services/tts";
 import { URLManagerService } from "@/services/url";
 import { electronApp, is, optimizer } from "@electron-toolkit/utils";
-import { app, BrowserWindow, ipcMain, session, shell } from "electron";
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  net,
+  protocol,
+  session,
+  shell,
+} from "electron";
 import { join } from "path";
+import { pathToFileURL } from "url";
 import events from "./events";
 import Handler from "./handler";
+import { YAMLManagerService } from "./services/yaml";
+import { AppServices } from "./types";
 
 app.commandLine.appendSwitch(
   "webrtc-ip-handling-policy",
@@ -22,7 +33,7 @@ app.commandLine.appendSwitch("disable-backgrounding-occluded-windows", "true");
 app.commandLine.appendSwitch("disable-renderer-backgrounding");
 app.commandLine.appendSwitch("disable-background-timer-throttling");
 
-const services = {
+const services: AppServices = {
   ttsService: new TTSService(),
   musicService: new MusicService(),
   serverService: new ServerService(),
@@ -31,6 +42,7 @@ const services = {
   pathManagerService: new PathManagerService(),
   connectorService: new TikTokConnectorService(),
   storeManagerService: new StoreManagerService(),
+  yamlManagerService: new YAMLManagerService(),
 };
 
 const APP_ICON = join(__dirname, "../../resources/icon.png");
@@ -78,6 +90,18 @@ app.whenReady().then(async () => {
 
   app.on("browser-window-created", (_, window) => {
     optimizer.watchWindowShortcuts(window);
+  });
+
+  protocol.handle("local-resource", (request) => {
+    const requestUrl = new URL(request.url);
+
+    let decodedPath = decodeURIComponent(requestUrl.pathname);
+
+    if (process.platform === "win32" && decodedPath.match(/^\/[a-zA-Z]:\//)) {
+      decodedPath = decodedPath.slice(1);
+    }
+
+    return net.fetch(pathToFileURL(decodedPath).href);
   });
 
   createWindows();
