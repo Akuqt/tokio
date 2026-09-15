@@ -1,5 +1,4 @@
 import { APP_EVENTS, APP_EVENTS_RESPONSE, TIKTOK_EVENTS } from "@/common/types";
-import { delay } from "@/common/util";
 import config from "@/config";
 import { createStack } from "@/helper/events";
 import { TikTokConnectorService } from "@/services/connector";
@@ -7,6 +6,8 @@ import { MusicService } from "@/services/music";
 import { StoreManagerService } from "@/services/store";
 import { TTSService } from "@/services/tts";
 import { CustomBrowserWindow } from "@/types";
+import { join } from "path";
+import { processHTML, processOverlay } from "./helper";
 
 const events = createStack();
 
@@ -95,6 +96,7 @@ events.push(
       serverService,
       urlManagerService,
       jsonManagerService,
+      yamlManagerService,
       win,
     },
     e,
@@ -134,7 +136,61 @@ events.push(
         ttsService,
         musicService,
       );
-      await delay(3000); // NOTE: JUST TO SHOW THE SPLASH SCREEN lol
+
+      const settings = storeManagerService.getSettings();
+
+      const gifts = await connectorService.fetchGifts();
+
+      let gifts_data = !gifts.success
+        ? []
+        : gifts.data.map((g) => ({
+            value: g.id,
+            label: g.name,
+            img: g.image,
+            coins: g.coins,
+          }));
+
+      await jsonManagerService.saveArbitraryFile(
+        pathManagerService.files.gifts,
+        gifts_data,
+      );
+
+      for (const overlay of settings.overlays) {
+        const dir = join(pathManagerService.folders.overlaysFolder, overlay.id);
+        const res = await processOverlay(
+          dir,
+          yamlManagerService,
+          overlay.external!,
+        );
+
+        if (!res.success) {
+          await storeManagerService.removeOverlayInfo(overlay.id);
+        } else {
+          const html = await processHTML(
+            overlay.id,
+            res.data!.htmlContent,
+            dir,
+            "value",
+            res.data!.config,
+            gifts_data,
+          );
+
+          if (!html.success) {
+            await storeManagerService.removeOverlayInfo(overlay.id);
+          }
+          serverService.addOverlayApp(
+            { ...res.data!.info, id: overlay.id, path: dir },
+            false,
+          );
+        }
+      }
+
+      const serverRes = await serverService.toggleServer(
+        settings.server.enabled,
+      );
+
+      if (!serverRes) throw new Error("Unable to start server");
+
       win.setResizable(true);
       win.setSize(1200, 800);
       win.setMinimumSize(1200, 800);
