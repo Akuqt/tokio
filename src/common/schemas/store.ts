@@ -11,11 +11,21 @@ const EntityMetadataSchema = z.object({
   name: z.string(),
 });
 
+const OverlayMeta = {
+  name: z.string(),
+  category: z.string(),
+  version: z.string(),
+  external: z.boolean().optional(),
+  config: z.boolean(),
+};
+
+export const OverlayMetaSchema = z.object(OverlayMeta);
+
 const AppSettingsSchema = z.object({
   server: z.object({
     enabled: z.boolean(),
-    port: z.number().min(1024).max(65535),
   }),
+  overlays: z.array(z.object({ ...OverlayMeta, id: z.string() })),
   activeFeatures: z.object({
     tts: z.boolean(),
     music: z.boolean(),
@@ -41,5 +51,6 @@ export const StoreZodSchema = z.object({
 
 export type AppProvider = z.infer<typeof ProviderSchema>;
 export type EntityMetadata = z.infer<typeof EntityMetadataSchema>;
+export type OverlayMetadata = z.infer<typeof OverlayMetaSchema>;
 export type AppSettings = z.infer<typeof AppSettingsSchema>;
 export type StoreSchema = z.infer<typeof StoreZodSchema>;

@@ -162,12 +162,9 @@ export class StoreManagerService extends Service {
     return this._storeData!.profiles;
   }
 
-  public async updateServerSettings(
-    enabled: boolean,
-    port: number,
-  ): Promise<void> {
+  public async updateServerSettings(enabled: boolean): Promise<void> {
     this._ensureInitialized();
-    this._storeData!.settings.server = { enabled, port };
+    this._storeData!.settings.server = { enabled };
     await this._queueSave();
   }
 

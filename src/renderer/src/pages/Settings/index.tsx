@@ -68,6 +68,11 @@ export function Settings() {
     );
     const removeFQDN = window.api.on(APP_EVENTS_RESPONSE.REQ_FDQN, (res) => {
       dispatch({ type: "setServerEnabled", payload: res?.success || false });
+      if (res?.success) {
+        window.api.emit(APP_EVENTS.SET_SERVER, {
+          enabled: true,
+        });
+      }
     });
 
     if (isInitialMount.current) {

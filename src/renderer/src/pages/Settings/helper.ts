@@ -42,7 +42,6 @@ export const defaultState: SettingsState = {
 export type SettingsAction =
   | { type: "initSettings"; payload: StoreSchema }
   | { type: "setActiveProfile"; payload: string }
-  | { type: "setServerPort"; payload: number }
   | { type: "setServerEnabled"; payload: boolean }
   | { type: "setNewTTSProviderName"; payload: string }
   | { type: "setNewTTSProviderKey"; payload: string }
@@ -81,9 +80,6 @@ const actionHandlers: ActionHandlers = {
     draft.store.settings.activeProfile =
       draft.store.profiles.find((p) => p.file === action.payload) ||
       defaultEntity;
-  },
-  setServerPort: (draft, action) => {
-    draft.store.settings.server.port = action.payload;
   },
   setServerEnabled: (draft, action) => {
     draft.store.settings.server.enabled = action.payload;

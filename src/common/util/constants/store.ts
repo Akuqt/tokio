@@ -11,7 +11,6 @@ export const defaultStoreData: StoreSchema = {
   settings: {
     server: {
       enabled: false,
-      port: 6767,
     },
     activeFeatures: {
       tts: false,

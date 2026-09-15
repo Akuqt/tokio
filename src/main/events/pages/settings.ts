@@ -224,10 +224,10 @@ events.push(
 
 events.push(
   APP_EVENTS.SET_SERVER,
-  async ({ storeManagerService, serverService }, e, { enabled, port }) => {
+  async ({ storeManagerService, serverService }, e, { enabled }) => {
     try {
-      await storeManagerService.updateServerSettings(enabled, port);
-      const res = await serverService.updatePort(port, enabled);
+      await storeManagerService.updateServerSettings(enabled);
+      const res = await serverService.toggleServer(enabled);
       if (!res) throw new Error("Unable to start server");
       const settings = storeManagerService.getSettings();
       const profiles = storeManagerService.getProfiles();

@@ -1,6 +1,6 @@
 import { APP_EVENTS } from "@/common/types";
 import React from "react";
-import { FiMonitor, FiSave } from "react-icons/fi";
+import { FiMonitor } from "react-icons/fi";
 import { SettingsAction, SettingsState } from "../helper";
 import styles from "../settings.module.css";
 
@@ -33,46 +33,14 @@ export function ServerSection({ store, dispatch }: Props) {
                 dispatch({ type: "setServerModal", payload: true });
               } else {
                 dispatch({ type: "setServerEnabled", payload: false });
+                window.api.emit(APP_EVENTS.SET_SERVER, {
+                  enabled: false,
+                });
               }
             }}
           />
           Enable Server
         </label>
-
-        <div className={styles.port_container}>
-          <div className={styles.label_port}>
-            <label className={styles.port_label}>Port</label>
-            <input
-              type="number"
-              className={styles.input_style}
-              style={{
-                width: "100px",
-                justifySelf: "start",
-                opacity: store.settings.server.enabled ? 1 : 0.5,
-                pointerEvents: store.settings.server.enabled ? "auto" : "none",
-              }}
-              value={store.settings.server.port}
-              onChange={(e) => {
-                dispatch({
-                  type: "setServerPort",
-                  payload: parseInt(e.target.value) || 6767,
-                });
-              }}
-              disabled={!store.settings.server.enabled}
-            />
-          </div>
-          <button
-            onClick={() => {
-              window.api.emit(APP_EVENTS.SET_SERVER, {
-                enabled: store.settings.server.enabled,
-                port: store.settings.server.port,
-              });
-            }}
-            className={styles.action_btn}
-          >
-            <FiSave /> Save
-          </button>
-        </div>
       </div>
     </div>
   );
