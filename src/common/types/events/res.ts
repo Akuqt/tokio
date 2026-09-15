@@ -1,4 +1,6 @@
-import { Profile, StoreSchema } from "../../schemas";
+import { CustomGift, OverlayConfigRedux, TokioPayload } from "..";
+import { OverlayConfig, Profile, StoreSchema } from "../../schemas";
+import { OverlayApp } from "../server";
 import { VoiceData } from "../store";
 
 type WindowState = { state: "normal" | "maximized" };
@@ -45,6 +47,14 @@ export enum APP_EVENTS_RESPONSE {
   CONNECTED = "app:home:res:connect",
   VIEWS = "app:home:res:views",
   LIKES = "app:home:res:likes",
+
+  // OVERLAYS
+  IMPORT_OVERLAY = "app:overlays:res:add",
+  GET_OVERLAYS = "app:overlays:res:get",
+  GET_OVERLAY_CONFIG = "app:overlays:res:get:config",
+  SAVE_OVERLAY_CONFIG = "app:overlays:res:save:config",
+  GET_GIFTS = "app:overlays:res:get:gifts",
+  TEST_OVERLAY = "app:overlays:res:test",
 }
 
 export interface AppEventsResponseMap {
@@ -157,5 +167,30 @@ export interface AppEventsResponseMap {
   };
   [APP_EVENTS_RESPONSE.LIKES]: {
     likes: number;
+  };
+
+  // OVERLAYS
+  [APP_EVENTS_RESPONSE.IMPORT_OVERLAY]: {
+    success: boolean;
+  };
+  [APP_EVENTS_RESPONSE.GET_OVERLAYS]: {
+    success: boolean;
+    data?: OverlayApp[];
+  };
+  [APP_EVENTS_RESPONSE.GET_OVERLAY_CONFIG]: {
+    success: boolean;
+    data?: OverlayConfig;
+  };
+  [APP_EVENTS_RESPONSE.GET_GIFTS]: {
+    data: CustomGift[];
+  };
+  [APP_EVENTS_RESPONSE.SAVE_OVERLAY_CONFIG]: {
+    success: boolean;
+    data?: OverlayConfigRedux;
+    id?: string;
+  };
+  [APP_EVENTS_RESPONSE.TEST_OVERLAY]: {
+    payloads: TokioPayload[];
+    id: string;
   };
 }

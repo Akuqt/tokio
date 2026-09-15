@@ -1,3 +1,5 @@
+import { OverlayConfigRedux } from ".";
+
 export interface UserData {
   username: string;
   handle: string;
@@ -65,7 +67,7 @@ export interface LikeEvent {
 }
 
 export interface Gift {
-  id: string;
+  id: number;
   name: string;
   coins: number;
   image: string;
@@ -101,4 +103,26 @@ export interface TikTokEventMap {
   [TIKTOK_EVENTS.MEMBER_JOIN]: MemberEvent;
   [TIKTOK_EVENTS.SUPER_FAN_JOIN]: SuperFanJoinEvent;
   [TIKTOK_EVENTS.ROOM_USER]: RoomUserEvent;
+}
+
+export type AppEvents = Exclude<
+  TIKTOK_EVENTS,
+  TIKTOK_EVENTS.CONNECTED | TIKTOK_EVENTS.DISCONNECTED
+>;
+
+export type TokioPayload =
+  | {
+      [K in AppEvents]: {
+        type: K;
+        data: TikTokEventMap[K];
+      };
+    }[AppEvents]
+  | {
+      type: "tokio:config";
+      data: OverlayConfigRedux;
+    };
+
+export interface TokioPreviewMessage {
+  action: "TOKIO_PREVIEW";
+  payload: TokioPayload;
 }

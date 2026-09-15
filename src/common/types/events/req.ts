@@ -1,4 +1,5 @@
-import { Profile } from "../../schemas";
+import { CustomGift, TokioPayload } from "..";
+import { OverlayConfig, Profile } from "../../schemas";
 import { VoiceData } from "../store";
 
 export enum APP_EVENTS {
@@ -48,6 +49,15 @@ export enum APP_EVENTS {
   DISCONNECT = "app:home:disconnect",
   IS_CONNECTED = "app:home:isconnected",
   ACTIVE_FEATURES = "app:home:activefeatures",
+
+  // OVERLAYS
+  IMPORT_OVERLAY = "app:overlays:add",
+  GET_OVERLAYS = "app:overlays:get",
+  GET_OVERLAY_CONFIG = "app:overlays:get:config",
+  SAVE_OVERLAY_CONFIG = "app:overlays:save:config",
+  GET_GIFTS = "app:overlays:get:gifts",
+  SEND_OVERLAY_DATA = "app:overlays:send:data",
+  TEST_OVERLAY = "app:overlays:test",
 }
 
 export interface AppEventsMap {
@@ -123,7 +133,6 @@ export interface AppEventsMap {
 
   [APP_EVENTS.SET_SERVER]: {
     enabled: boolean;
-    port: number;
   };
 
   [APP_EVENTS.REQ_FDQN]: void;
@@ -137,5 +146,25 @@ export interface AppEventsMap {
   [APP_EVENTS.ACTIVE_FEATURES]: {
     tts?: boolean;
     music?: boolean;
+  };
+
+  // OVERLAYS
+  [APP_EVENTS.IMPORT_OVERLAY]: {
+    gifts: CustomGift[];
+  };
+  [APP_EVENTS.GET_OVERLAYS]: void;
+  [APP_EVENTS.GET_OVERLAY_CONFIG]: { id: string };
+  [APP_EVENTS.GET_GIFTS]: void;
+  [APP_EVENTS.SAVE_OVERLAY_CONFIG]: {
+    id: string;
+    config: OverlayConfig;
+    gifts: CustomGift[];
+  };
+  [APP_EVENTS.SEND_OVERLAY_DATA]: {
+    id: string;
+    payload: TokioPayload;
+  };
+  [APP_EVENTS.TEST_OVERLAY]: {
+    id: string;
   };
 }

@@ -11,6 +11,7 @@ export interface Folders {
   logsFolder: string;
   overlaysFolder: string;
   profilesFolder: string;
+  extraFolder: string;
 }
 
 export interface Files {
@@ -20,4 +21,5 @@ export interface Files {
     system: string;
     server: string;
   };
+  gifts: string;
 }
