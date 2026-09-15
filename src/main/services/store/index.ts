@@ -2,6 +2,7 @@ import {
   AppProvider,
   AppSettings,
   EntityMetadata,
+  OverlayMetadata,
   Profile,
   ProfileSchema,
   StoreSchema,
@@ -165,6 +166,20 @@ export class StoreManagerService extends Service {
   public async updateServerSettings(enabled: boolean): Promise<void> {
     this._ensureInitialized();
     this._storeData!.settings.server = { enabled };
+    await this._queueSave();
+  }
+
+  public async addOverlayInfo(
+    info: OverlayMetadata & { id: string },
+  ): Promise<void> {
+    this._ensureInitialized();
+    this._storeData!.settings.overlays.push(info);
+    await this._queueSave();
+  }
+  public async removeOverlayInfo(id: string): Promise<void> {
+    this._ensureInitialized();
+    this._storeData!.settings.overlays =
+      this._storeData!.settings.overlays.filter((o) => o.id !== id);
     await this._queueSave();
   }
 
