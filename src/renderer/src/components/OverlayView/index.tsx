@@ -10,7 +10,7 @@ import styles from "./overlayview.module.css";
 const getUrl = (id: string) => `http://tokio-app.local:37891/${id}`;
 
 interface Props {
-  onTest: (id: string, category: string) => void;
+  onTest: (id: string) => void;
   onCustomize: (id: string) => void;
   overlay: OverlayApp;
   width: string;
@@ -67,7 +67,7 @@ export function OverlayView({
         <div className={styles.button_group}>
           <button
             className={styles.action_btn}
-            onClick={() => onTest(overlay.id, overlay.category)}
+            onClick={() => onTest(overlay.id)}
           >
             <PiShootingStarThin size={20} />
             Test

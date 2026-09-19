@@ -13,7 +13,6 @@ const EntityMetadataSchema = z.object({
 
 const OverlayMeta = {
   name: z.string(),
-  category: z.string(),
   version: z.string(),
   external: z.boolean().optional(),
   config: z.boolean(),
