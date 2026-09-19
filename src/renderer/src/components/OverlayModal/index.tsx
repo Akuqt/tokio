@@ -3,7 +3,7 @@ import { CustomGift } from "@/common/types";
 import { memo, useEffect, useState } from "react";
 import { VscClose } from "react-icons/vsc";
 import { MoonLoader } from "react-spinners";
-import { Btn, Check, Color, Input, Select, Slider } from "../Elements";
+import { Btn, Check, Color, Input, Select, Slider, Toggle } from "../Elements";
 import styles from "./overlaymodal.module.css";
 
 interface Props {
@@ -118,6 +118,17 @@ export const OverlayModal = memo(
         case "check":
           return (
             <Check
+              checked={field.attributes.value}
+              onChange={(e) => {
+                handleValueChange(field.id, e.target.checked);
+              }}
+            />
+          );
+
+        case "toggle":
+          return (
+            <Toggle
+              bgColor="var(--background-primary)"
               checked={field.attributes.value}
               onChange={(e) => {
                 handleValueChange(field.id, e.target.checked);

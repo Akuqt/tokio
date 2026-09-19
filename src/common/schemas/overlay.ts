@@ -74,6 +74,15 @@ const CheckSetting = z.object({
   }),
 });
 
+const ToggleSetting = z.object({
+  ...BaseSetting,
+  type: z.literal("toggle"),
+  attributes: z.object({
+    value: z.boolean(),
+    default: z.boolean(),
+  }),
+});
+
 const GiftsSetting = z.object({
   ...BaseSetting,
   type: z.literal("gifts"),
@@ -100,6 +109,7 @@ const FieldsSchema = z.discriminatedUnion("type", [
   DropdownSetting,
   ColorSetting,
   CheckSetting,
+  ToggleSetting,
   GiftsSetting,
   SliderSetting,
 ]);

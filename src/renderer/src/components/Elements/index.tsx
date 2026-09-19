@@ -4,3 +4,4 @@ export * from "./Color";
 export * from "./Input";
 export * from "./Select";
 export * from "./Slider";
+export * from "./Toggle";

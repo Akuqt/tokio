@@ -273,3 +273,55 @@
 }
 
 /* BTN END */
+
+/* TOGGLE START */
+
+.toggle_container {
+  display: inline-block;
+  position: relative;
+  width: 40px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.toggle_style {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle_slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--toggle-bg);
+  border-radius: 20px;
+  -webkit-transition: 0.4s;
+  transition: 0.4s;
+}
+
+.toggle_slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: var(--font-primary);
+  border-radius: 50%;
+  -webkit-transition: 0.4s;
+  transition: 0.4s;
+}
+
+.toggle_style:checked + .toggle_slider {
+  background-color: var(--accent-primary);
+}
+
+.toggle_style:checked + .toggle_slider:before {
+  -webkit-transform: translateX(20px);
+  -ms-transform: translateX(20px);
+  transform: translateX(20px);
+}
+/* TOGGLE END */
