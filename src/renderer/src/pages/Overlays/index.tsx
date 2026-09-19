@@ -9,7 +9,7 @@ import {
 import { OverlayModal, OverlayView } from "@/components";
 import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./overlays.module.css";
-import { GeneralSection } from "./sections/GeneralSection";
+import { HeaderSection } from "./sections/HeaderSection";
 
 export function Overlays() {
   const [overlayApps, setOverlayApps] = useState<OverlayApp[]>([]);
@@ -17,6 +17,7 @@ export function Overlays() {
     null,
   );
   const [configID, setConfigID] = useState("");
+  const [search, setSearch] = useState("");
   const [gifts, setGifts] = useState<CustomGift[]>([]);
   const [showModal, setShowModal] = useState<boolean>(false);
   const isInitialMount = useRef(true);
@@ -67,6 +68,15 @@ export function Overlays() {
       },
     );
 
+    const removeImportOverlay = window.api.on(
+      APP_EVENTS_RESPONSE.IMPORT_OVERLAY,
+      (res) => {
+        if (res?.success) {
+          window.api.emit(APP_EVENTS.GET_OVERLAYS);
+        }
+      },
+    );
+
     const removeTestOverlay = window.api.on(
       APP_EVENTS_RESPONSE.TEST_OVERLAY,
       (res) => {
@@ -86,6 +96,7 @@ export function Overlays() {
       removeGetGifts();
       removeSaveOverlayConfig();
       removeTestOverlay();
+      removeImportOverlay();
     };
   }, []);
 
@@ -111,6 +122,10 @@ export function Overlays() {
     }
   }, []);
 
+  const overlays = overlayApps.filter((o) =>
+    o.name.toLowerCase().includes(search.toLowerCase()),
+  );
+
   return (
     <>
       {showModal && (
@@ -134,32 +149,45 @@ export function Overlays() {
         />
       )}
       <div className={styles.container}>
-        <GeneralSection
-          onClick={() => {
+        <HeaderSection
+          addOverlay={() => {
             window.api.emit(APP_EVENTS.IMPORT_OVERLAY, {
               gifts,
             });
           }}
+          search={search}
+          onSearchChange={setSearch}
         />
 
         <span className={styles.section_delimiter} />
 
-        {overlayApps.map((overlay, index) => (
-          <OverlayView
-            key={index}
-            width="800px"
-            height="500px"
-            overlay={overlay}
-            onTest={(id) => {
-              window.api.emit(APP_EVENTS.TEST_OVERLAY, { id });
-            }}
-            onCustomize={(id) => {
-              window.api.emit(APP_EVENTS.GET_OVERLAY_CONFIG, { id });
-              setShowModal(true);
-              setConfigID(id);
-            }}
-          />
-        ))}
+        {overlays.length > 0 ? (
+          overlays
+            .filter((o) => o.name.toLowerCase().includes(search.toLowerCase()))
+            .map((overlay, index) => (
+              <OverlayView
+                key={index}
+                width="768px"
+                height="432px"
+                overlay={overlay}
+                onTest={(id) => {
+                  window.api.emit(APP_EVENTS.TEST_OVERLAY, { id });
+                }}
+                onCustomize={(id) => {
+                  window.api.emit(APP_EVENTS.GET_OVERLAY_CONFIG, { id });
+                  setShowModal(true);
+                  setConfigID(id);
+                }}
+              />
+            ))
+        ) : (
+          <div className={styles.not_found}>
+            <div className={styles.not_found_info}>
+              <h2>404</h2>
+              <h2>No Overlays Found.</h2>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
