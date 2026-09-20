@@ -196,7 +196,11 @@ export class StoreManagerService extends Service {
     this._debouncedSave();
   }
 
-  public updateActiveFeatures(data: { tts?: boolean; music?: boolean }) {
+  public updateActiveFeatures(data: {
+    tts?: boolean;
+    music?: boolean;
+    alerts?: boolean;
+  }) {
     this._ensureInitialized();
     this._storeData!.settings.activeFeatures = {
       ...this._storeData!.settings.activeFeatures,
