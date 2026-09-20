@@ -146,6 +146,7 @@ export interface AppEventsMap {
   [APP_EVENTS.ACTIVE_FEATURES]: {
     tts?: boolean;
     music?: boolean;
+    alerts?: boolean;
   };
 
   // OVERLAYS
