@@ -93,7 +93,6 @@ export function Home() {
 
   return (
     <div className={styles.container}>
-      {/* --- 1. HERO CONNECTION SECTION --- */}
       <div className={styles.section}>
         <div className={styles.headerRow}>
           <div>
@@ -103,7 +102,6 @@ export function Home() {
             </p>
           </div>
 
-          {/* Integrated Status Badge */}
           <div className={styles.statusBadge}>
             <div
               className={`${styles.dot} ${connected ? styles.dotOnline : styles.dotOffline}`}
@@ -162,7 +160,6 @@ export function Home() {
         </div>
       </div>
 
-      {/* --- 2. ACTIVE FEATURES SECTION --- */}
       <div className={styles.section}>
         <div>
           <h2 className={styles.title} style={{ fontSize: "16px" }}>
@@ -173,7 +170,6 @@ export function Home() {
           </p>
         </div>
 
-        {/* Features laid out horizontally in a subtle container */}
         <div className={styles.checkboxGroup}>
           <label className={styles.checkboxLabel}>
             <input
@@ -206,10 +202,26 @@ export function Home() {
             />
             Music
           </label>
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              className={styles.checkboxInput}
+              checked={settings.activeFeatures.alerts}
+              onChange={(e) => {
+                window.api.emit(APP_EVENTS.ACTIVE_FEATURES, {
+                  alerts: e.target.checked,
+                });
+                dispatch({
+                  type: "setAlertsFeature",
+                  payload: e.target.checked,
+                });
+              }}
+            />
+            Alerts
+          </label>
         </div>
       </div>
 
-      {/* --- 3. LIVE STATS SECTION --- */}
       <div className={styles.section} style={{ borderBottom: "none" }}>
         <div>
           <h2
