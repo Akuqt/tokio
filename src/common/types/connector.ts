@@ -99,7 +99,6 @@ export enum TOKIO_EVENTS {
 export type MusicInfo = {
   title: string;
   thumbnail: string;
-  duration: number;
   playing: boolean;
   played: boolean;
 };

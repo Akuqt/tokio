@@ -34,7 +34,6 @@ const musicFactory = (): MusicInfo[] => {
   return Array.from({ length: 5 }, (_, i) => ({
     playing: i === 2,
     played: 2 > i,
-    duration: randomInt(60, 120) * 1000,
     title: `${pickRandom(ADJECTIVES)} - ${pickRandom(NOUNS)}`,
     thumbnail: `https://picsum.photos/seed/${i}_large/400/400`,
   }));

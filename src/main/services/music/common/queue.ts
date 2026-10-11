@@ -195,7 +195,6 @@ export class MusicQueue {
     return this._queue.map((m, i) => ({
       title: m.song.title,
       thumbnail: m.song.thumbnail,
-      duration: m.song.duration,
       playing: this._currentIndex === i,
       played: this._currentIndex > i,
     }));
