@@ -37,6 +37,7 @@ export const ProfileSchema = z.object({
       play: MusicControl,
       next: MusicControl,
       last: MusicControl,
+      revoke: MusicControl,
     }),
     provider: z.object({
       name: z.enum(["YouTube", "Spotify"]),

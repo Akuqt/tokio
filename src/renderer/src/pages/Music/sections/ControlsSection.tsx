@@ -121,6 +121,41 @@ export function ControlsSection({ controls, dispatch }: Props) {
             }
           />
         </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <label className={styles.check_label} style={{ width: "90px" }}>
+            <input
+              type="checkbox"
+              className={styles.check_input}
+              checked={controls.revoke.enabled}
+              onChange={(e) =>
+                dispatch({
+                  type: "setRevokeControlEnabled",
+                  payload: e.target.checked,
+                })
+              }
+            />
+            Revoke
+          </label>
+          <input
+            type="text"
+            className={styles.input_style}
+            value={controls.revoke.command || "!revoke"}
+            style={{
+              width: "200px",
+              color: controls.revoke.enabled
+                ? "var(--font-primary)"
+                : "var(--font-secondary)",
+            }}
+            disabled={!controls.revoke.enabled}
+            onChange={(e) =>
+              dispatch({
+                type: "setRevokeControlCommand",
+                payload: e.target.value,
+              })
+            }
+          />
+        </div>
       </div>
     </div>
   );

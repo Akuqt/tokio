@@ -38,6 +38,10 @@ export const defaultProfile: Profile = {
         enabled: true,
         command: "!last",
       },
+      revoke: {
+        enabled: true,
+        command: "!revoke",
+      },
     },
     provider: {
       name: "YouTube",

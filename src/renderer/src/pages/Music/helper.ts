@@ -40,9 +40,11 @@ export type MusicAction =
   | { type: "setPlayControlEnabled"; payload: boolean }
   | { type: "setNextControlEnabled"; payload: boolean }
   | { type: "setLastControlEnabled"; payload: boolean }
+  | { type: "setRevokeControlEnabled"; payload: boolean }
   | { type: "setPlayControlCommand"; payload: string }
   | { type: "setNextControlCommand"; payload: string }
   | { type: "setLastControlCommand"; payload: string }
+  | { type: "setRevokeControlCommand"; payload: string }
   | { type: "setConnected"; payload: boolean }
   | { type: "toggleConnected" }
   | { type: "setLoading"; payload: boolean }
@@ -121,6 +123,9 @@ const actionHandlers: ActionHandlers = {
   setLastControlEnabled: (draft, action) => {
     draft.settings.constrols.last.enabled = action.payload;
   },
+  setRevokeControlEnabled: (draft, action) => {
+    draft.settings.constrols.revoke.enabled = action.payload;
+  },
   setPlayControlCommand: (draft, action) => {
     draft.settings.constrols.play.command = action.payload;
   },
@@ -129,6 +134,9 @@ const actionHandlers: ActionHandlers = {
   },
   setLastControlCommand: (draft, action) => {
     draft.settings.constrols.last.command = action.payload;
+  },
+  setRevokeControlCommand: (draft, action) => {
+    draft.settings.constrols.revoke.command = action.payload;
   },
   setConnected: (draft, action) => {
     draft.connected = action.payload;
