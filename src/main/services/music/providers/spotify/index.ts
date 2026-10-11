@@ -210,13 +210,12 @@ export class Spotify extends MusicProvider {
 
   public async playerStatus(): Promise<CurrentSongInfo | null> {
     const searchRes = await this.fetchApi(`/me/player`);
-    const track = searchRes?.tracks?.items?.[0];
-    const song = this._parseSong(track);
+    const song = this._parseSong(searchRes?.item);
     if (!song) return null;
     return {
       ...song,
-      playing: track.is_playing,
-      time: track.progress_ms,
+      playing: searchRes.is_playing ?? false,
+      time: searchRes.progress_ms ?? 0,
     };
   }
 
