@@ -6,6 +6,7 @@ import express, { Express, Router } from "express";
 import { randomUUID } from "node:crypto";
 import { Server as HttpServer } from "node:http";
 import { TikTokConnectorService } from "../connector";
+import { MusicService } from "../music";
 import { Service } from "../shared";
 import { CustomWebSocketServer } from "./websocket";
 
@@ -142,13 +143,17 @@ export class ServerService extends Service {
     this.rebuildRoutes();
   }
 
-  public initEvents(connectorService: TikTokConnectorService) {
+  public initEvents(
+    connectorService: TikTokConnectorService,
+    musicService: MusicService,
+  ) {
     if (!connectorService) {
       throw new Error("Connector service not defined.");
     }
     Object.values(TOKIO_EVENTS).forEach((event) => {
       const handler: BoundHandler = (data) => this.broadcast(event, data);
       connectorService.on(event, handler);
+      musicService.on(event, handler);
       this._boundEvents.push({ event, handler });
     });
   }

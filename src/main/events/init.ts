@@ -123,7 +123,7 @@ events.push(
         jsonManagerService,
         pathManagerService,
       );
-      serverService.initEvents(connectorService);
+      serverService.initEvents(connectorService, musicService);
       storeManagerService.updateLiveStats({
         likes: 0,
         viewers: 0,

@@ -49,6 +49,7 @@ export class MusicService extends ProviderService<MusicProvider> {
   ): void {
     if (!this._current?.provider) return;
     this._current.provider.on(event, listener);
+    this._music_queue.on(event, listener);
   }
 
   public clearHandler() {
