@@ -34,6 +34,8 @@ const registerConnectorEvents = (
     });
   });
   conn.on(TOKIO_EVENTS.DISCONNECTED, () => {
+    music.clearHandler();
+    tts.clearTalk();
     win.webContents.send(APP_EVENTS_RESPONSE.CONNECTED, {
       success: false,
       stats: {
