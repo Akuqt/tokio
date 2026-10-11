@@ -1,24 +1,24 @@
 import {
   APP_EVENTS,
   APP_EVENTS_RESPONSE,
+  CurrentSongInfo,
   MUSIC_EVENTS,
   MusicEventMap,
+  SongInfo,
 } from "@/common/types";
 import { BrowserWindow, WebContentsView, type IpcMain } from "electron";
 import { join } from "node:path";
 
+export { MusicQueue } from "./queue";
 export type ConnectionResponse = { success: boolean; error?: Error };
 
 export abstract class MusicProvider {
   public abstract setKey(key: string): void;
   public abstract connect(ipcMain: IpcMain): Promise<ConnectionResponse>;
   public abstract disconnect(): void;
-  public abstract play(contextUri?: string): Promise<void>;
-  public abstract pause(): Promise<void>;
-  public abstract next(): Promise<void>;
-  public abstract previous(): Promise<void>;
-  public abstract searchAndQueue(query: string): Promise<void>;
-  public abstract stopPolling(): void;
+  public abstract play(track: SongInfo): Promise<void>;
+  public abstract searchSong(query: string): Promise<SongInfo | null>;
+  public abstract playerStatus(): Promise<CurrentSongInfo | null>;
   public abstract isActive(): boolean;
   public abstract on<K extends MUSIC_EVENTS>(
     event: K,

@@ -1,4 +1,9 @@
-import { MUSIC_EVENTS, MusicEventMap } from "@/common/types";
+import {
+  CurrentSongInfo,
+  MUSIC_EVENTS,
+  MusicEventMap,
+  SongInfo,
+} from "@/common/types";
 import crypto from "crypto";
 import { IpcMain, WebContentsView } from "electron";
 import { EventEmitter } from "node:events";
@@ -14,7 +19,6 @@ export class Spotify extends MusicProvider {
   private _refreshToken: string | null = null;
   private _cachedDeviceId: string | null = null;
   private _isActive: boolean = false;
-  private _pollingInterval: NodeJS.Timeout | null = null;
   private _refreshTimeout: NodeJS.Timeout | null = null;
   private _events: EventEmitter;
 
@@ -32,15 +36,6 @@ export class Spotify extends MusicProvider {
 
   public isActive(): boolean {
     return this._isActive;
-  }
-
-  public disconnect(): void {
-    if (!this._isActive) return;
-    this.stopPolling();
-    this._accessToken = null;
-    this._refreshToken = null;
-    this._isActive = false;
-    this.emit(MUSIC_EVENTS.PROCCESS_ENDED);
   }
 
   public connect(ipcMain: IpcMain): Promise<ConnectionResponse> {
@@ -186,55 +181,24 @@ export class Spotify extends MusicProvider {
     });
   }
 
-  public async play(contextUri?: string): Promise<void> {
+  public disconnect(): void {
+    if (!this._isActive) return;
+    this._accessToken = null;
+    this._refreshToken = null;
+    this._isActive = false;
+    this.emit(MUSIC_EVENTS.PROCCESS_ENDED);
+  }
+
+  public async play(info: SongInfo): Promise<void> {
     if (!this._isActive) return;
     const deviceId = await this.getTargetDevice();
-    const body = contextUri ? { context_uri: contextUri } : undefined;
+    const body = {
+      context_uri: info.album,
+      offset: {
+        uri: info.track,
+      },
+    };
     await this.fetchApi(`/me/player/play?device_id=${deviceId}`, "PUT", body);
-  }
-
-  public async pause(): Promise<void> {
-    if (!this._isActive) return;
-    const deviceId = await this.getTargetDevice();
-    await this.fetchApi(`/me/player/pause?device_id=${deviceId}`, "PUT");
-  }
-
-  public async next(): Promise<void> {
-    if (!this._isActive) return;
-    const deviceId = await this.getTargetDevice();
-    await this.fetchApi(`/me/player/next?device_id=${deviceId}`, "POST");
-  }
-
-  public async previous(): Promise<void> {
-    if (!this._isActive) return;
-    const deviceId = await this.getTargetDevice();
-    await this.fetchApi(`/me/player/previous?device_id=${deviceId}`, "POST");
-  }
-
-  public async searchAndQueue(query: string): Promise<void> {
-    if (!this._isActive) return;
-    const searchRes = await this.fetchApi(
-      `/search?q=${encodeURIComponent(query)}&type=track&limit=1`,
-    );
-    const track = searchRes?.tracks?.items?.[0];
-    if (track) {
-      const deviceId = await this.getTargetDevice();
-      await this.fetchApi(
-        `/me/player/queue?uri=${encodeURIComponent(track.uri)}&device_id=${deviceId}`,
-        "POST",
-      );
-    }
-  }
-
-  public stopPolling() {
-    if (this._pollingInterval) {
-      clearInterval(this._pollingInterval);
-      this._pollingInterval = null;
-    }
-    if (this._refreshTimeout) {
-      clearTimeout(this._refreshTimeout);
-      this._refreshTimeout = null;
-    }
   }
 
   public on<K extends MUSIC_EVENTS>(
@@ -242,6 +206,48 @@ export class Spotify extends MusicProvider {
     listener: (data: MusicEventMap[K]) => void,
   ): void {
     this._events.on(event, listener);
+  }
+
+  public async playerStatus(): Promise<CurrentSongInfo | null> {
+    const searchRes = await this.fetchApi(`/me/player`);
+    const track = searchRes?.tracks?.items?.[0];
+    const song = this._parseSong(track);
+    if (!song) return null;
+    return {
+      ...song,
+      playing: track.is_playing,
+      time: track.progress_ms,
+    };
+  }
+
+  public async searchSong(query: string): Promise<SongInfo | null> {
+    if (!this._isActive || !query.trim()) return null;
+
+    const params = new URLSearchParams({
+      q: query.trim(),
+      type: "track",
+      limit: "1",
+    });
+
+    const searchRes = await this.fetchApi(`/search?${params.toString()}`);
+    const track = searchRes?.tracks?.items?.[0];
+
+    return this._parseSong(track);
+  }
+
+  private _parseSong(track: any): SongInfo | null {
+    if (!track) return null;
+
+    const artistNames =
+      track.artists?.map((a: any) => a.name).join(", ") ?? "Unknown Artist";
+
+    return {
+      album: track.album?.uri ?? "Unknown",
+      track: track.uri ?? "Unknown",
+      title: `${track.name ?? "Unknown Track"} - ${artistNames}`,
+      thumbnail: track.album?.images?.[0]?.url ?? "",
+      duration: track.duration_ms ?? 0,
+    };
   }
 
   private async exchangeCodeForToken(
@@ -268,7 +274,6 @@ export class Spotify extends MusicProvider {
       this._refreshToken = data.refresh_token;
 
       this.scheduleTokenRefresh(data.expires_in);
-      this.startPolling();
     } else {
       throw new Error("Failed to retrieve access token.");
     }
@@ -381,46 +386,6 @@ export class Spotify extends MusicProvider {
     const activeDevice = devices.find((d: any) => d.is_active) || devices[0];
     this._cachedDeviceId = activeDevice.id;
     return this._cachedDeviceId!;
-  }
-
-  private startPolling(intervalMs: number = 3000) {
-    this.stopPolling();
-
-    this._pollingInterval = setInterval(async () => {
-      try {
-        const response = await fetch(config.PLAYER_URL, {
-          headers: { Authorization: `Bearer ${this._accessToken}` },
-        });
-
-        if (response.status === 401 && this._refreshToken) {
-          await this.refreshAccessToken();
-          return;
-        }
-
-        if (response.status === 204) {
-          this.emit(MUSIC_EVENTS.TRACK_CHANGE, null);
-          return;
-        }
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data && data.item) {
-            this.emit(MUSIC_EVENTS.TRACK_CHANGE, {
-              title: data.item.name,
-              artist:
-                data.item.artists?.map((a: any) => a.name).join(", ") ||
-                "Unknown",
-              albumArt: data.item.album?.images?.[0]?.url || "",
-              isPlaying: data.is_playing,
-            });
-          } else {
-            this.emit(MUSIC_EVENTS.TRACK_CHANGE, null);
-          }
-        }
-      } catch {
-        // Silently ignore network drops during polling
-      }
-    }, intervalMs);
   }
 
   private emit<K extends MUSIC_EVENTS>(

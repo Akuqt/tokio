@@ -1,13 +1,18 @@
-import { MUSIC_EVENTS, MusicEventMap } from "@/common/types";
+import {
+  CurrentSongInfo,
+  MUSIC_EVENTS,
+  MusicEventMap,
+  SongInfo,
+} from "@/common/types";
 import { delay } from "@/common/util";
 import { BrowserWindow, IpcMain, WebContentsView } from "electron";
 import { EventEmitter } from "node:events";
 import { ConnectionResponse, createWindow, MusicProvider } from "../../common";
 import {
   AfterSearchJSCode,
-  ClickSelectorJSCode,
   LoginJSCode,
-  PollingJSCode,
+  parseSongRenderer,
+  PlayerStateJSCode,
   SearchJSCode,
 } from "./common";
 import config from "./config";
@@ -15,9 +20,7 @@ import config from "./config";
 export class YouTubeMusic extends MusicProvider {
   private _ytView: WebContentsView | null = null;
   private _shellWindow: BrowserWindow | null = null;
-  private _pollingInterval: NodeJS.Timeout | null = null;
   private _events: EventEmitter;
-  private _isFirstPlay: boolean = true;
   private _isActive: boolean = false;
 
   constructor() {
@@ -31,32 +34,6 @@ export class YouTubeMusic extends MusicProvider {
 
   public isActive(): boolean {
     return this._isActive;
-  }
-
-  public disconnect() {
-    if (
-      !this._isActive ||
-      !this._ytView ||
-      this._ytView.webContents.isDestroyed() ||
-      !this._shellWindow ||
-      this._shellWindow.isDestroyed()
-    ) {
-      return;
-    }
-    this.stopPolling();
-    this._ytView.webContents.setAudioMuted(true);
-    this._ytView.webContents.loadURL("about:blank");
-    try {
-      this._shellWindow?.contentView.removeChildView(this._ytView);
-    } catch {
-      // View already removed
-    }
-    this._isActive = false;
-    this._ytView.webContents.close();
-    this._shellWindow.close();
-    this.emit(MUSIC_EVENTS.PROCCESS_ENDED);
-    this._ytView = null;
-    this._shellWindow = null;
   }
 
   public connect(
@@ -109,7 +86,6 @@ export class YouTubeMusic extends MusicProvider {
     });
 
     this._shellWindow.on("close", () => {
-      this.stopPolling();
       if (this._ytView && !this._ytView.webContents.isDestroyed()) {
         this._ytView.webContents.setAudioMuted(true);
         this._ytView.webContents.loadURL("about:blank");
@@ -159,7 +135,6 @@ export class YouTubeMusic extends MusicProvider {
           if (loggedIn || !requireAuth) {
             if (isInitializing) {
               isInitializing = false;
-              this.startPolling();
               this._shellWindow!.off("close", handleAuthAbort);
               this._isActive = true;
               res({ success: true });
@@ -191,43 +166,35 @@ export class YouTubeMusic extends MusicProvider {
     });
   }
 
-  public play() {
-    return this.executeDOMClick(
-      '#play-pause-button #button[aria-label="Play"]',
-    );
+  public disconnect() {
+    if (
+      !this._isActive ||
+      !this._ytView ||
+      this._ytView.webContents.isDestroyed() ||
+      !this._shellWindow ||
+      this._shellWindow.isDestroyed()
+    ) {
+      return;
+    }
+    this._ytView.webContents.setAudioMuted(true);
+    this._ytView.webContents.loadURL("about:blank");
+    try {
+      this._shellWindow?.contentView.removeChildView(this._ytView);
+    } catch {
+      // View already removed
+    }
+    this._isActive = false;
+    this._ytView.webContents.close();
+    this._shellWindow.close();
+    this.emit(MUSIC_EVENTS.PROCCESS_ENDED);
+    this._ytView = null;
+    this._shellWindow = null;
   }
 
-  public pause() {
-    return this.executeDOMClick(
-      '#play-pause-button #button[aria-label="Pause"]',
-    );
-  }
-
-  public next() {
-    return this.executeDOMClick('.next-button #button[aria-label="Next"]');
-  }
-
-  public async previous() {
-    await this.executeDOMClick(
-      '.previous-button #button[aria-label="Previous"]',
-    );
-    await delay(500);
-    await this.executeDOMClick(
-      '.previous-button #button[aria-label="Previous"]',
-    );
-  }
-
-  public on<K extends MUSIC_EVENTS>(
-    event: K,
-    listener: (data: MusicEventMap[K]) => void,
-  ): void {
-    this._events.on(event, listener);
-  }
-
-  public async searchAndQueue(query: string): Promise<void> {
+  public async play(info: SongInfo) {
     if (!this._ytView) return;
 
-    await this._ytView.webContents.executeJavaScript(SearchJSCode(query));
+    await this._ytView.webContents.executeJavaScript(SearchJSCode(info.track));
 
     await delay(250);
 
@@ -241,19 +208,81 @@ export class YouTubeMusic extends MusicProvider {
       keyCode: "Enter",
     });
 
-    const result = await this._ytView.webContents.executeJavaScript(
-      AfterSearchJSCode(query, this._isFirstPlay),
-    );
+    await this._ytView.webContents.executeJavaScript(AfterSearchJSCode);
+  }
 
-    if (result && result.action === "played") {
-      this._isFirstPlay = false;
+  public on<K extends MUSIC_EVENTS>(
+    event: K,
+    listener: (data: MusicEventMap[K]) => void,
+  ): void {
+    this._events.on(event, listener);
+  }
+
+  public async playerStatus(): Promise<CurrentSongInfo | null> {
+    if (!this._ytView) return null;
+    try {
+      const status =
+        await this._ytView.webContents.executeJavaScript(PlayerStateJSCode);
+      return status;
+    } catch {
+      return null;
     }
   }
 
-  public stopPolling() {
-    if (this._pollingInterval) {
-      clearInterval(this._pollingInterval);
-      this._pollingInterval = null;
+  public async searchSong(query: string): Promise<SongInfo | null> {
+    if (!query || typeof query !== "string") {
+      return null;
+    }
+
+    const payload = {
+      context: {
+        client: {
+          clientName: config.CLIENT_NAME,
+          clientVersion: config.CLIENT_VERSION,
+        },
+      },
+      query,
+      params: config.SONG_FILTER_PARAMS,
+    };
+
+    try {
+      const response = await fetch(config.SEARCH_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: config.YTM_URL,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `InnerTube API request failed with status: ${response.status}`,
+        );
+      }
+
+      const data = await response.json();
+
+      const sections =
+        data.contents?.tabbedSearchResultsRenderer?.tabs?.[0]?.tabRenderer
+          ?.content?.sectionListRenderer?.contents ?? [];
+
+      const musicShelf = sections.find(
+        (section: any) => section.musicShelfRenderer,
+      )?.musicShelfRenderer;
+
+      if (!musicShelf || !musicShelf.contents?.length) {
+        return null;
+      }
+
+      const firstItemRenderer =
+        musicShelf.contents[0]?.musicResponsiveListItemRenderer;
+
+      const result = parseSongRenderer(firstItemRenderer);
+
+      return result;
+    } catch {
+      return null;
     }
   }
 
@@ -270,42 +299,10 @@ export class YouTubeMusic extends MusicProvider {
     }
   }
 
-  private startPolling(intervalMs: number = 3000) {
-    this.stopPolling();
-
-    this._pollingInterval = setInterval(async () => {
-      if (!this._ytView) return;
-
-      const currentUrl = this._ytView.webContents.getURL();
-      if (currentUrl.includes("accounts.google.com")) return;
-
-      try {
-        const trackData =
-          await this._ytView.webContents.executeJavaScript(PollingJSCode);
-
-        if (trackData) {
-          this.emit(MUSIC_EVENTS.TRACK_CHANGE, trackData);
-        } else {
-          this.emit(MUSIC_EVENTS.TRACK_CHANGE, null);
-        }
-      } catch {
-        // Silently ignore execution errors
-      }
-    }, intervalMs);
-  }
-
   private emit<K extends MUSIC_EVENTS>(
     event: K,
     data?: MusicEventMap[K],
   ): void {
     this._events.emit(event, data);
-  }
-
-  private async executeDOMClick(selector: string) {
-    if (!this._ytView) return;
-
-    await this._ytView.webContents.executeJavaScript(
-      ClickSelectorJSCode(selector),
-    );
   }
 }

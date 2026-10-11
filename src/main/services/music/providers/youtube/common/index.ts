@@ -1,29 +1,42 @@
-export const PollingJSCode = `
+import { SongInfo } from "@/common/types";
+
+export const PlayerStateJSCode = `
 (() => {
+  const video = document.querySelector("video");
+  if (!video) return null;
+
+  const playing = !video.paused && !video.ended && video.readyState > 2;
+  const time = video.currentTime * 1000;
+  const duration = video.duration * 1000;
+
   const playerBar = document.querySelector("ytmusic-player-bar");
-  if (!playerBar) return null;
 
-  const title = playerBar.querySelector(".title")?.textContent;
-  if (!title) return null;
+  let name = "";
+  let artist = "";
+  let thumbnail = "";
 
-  const bylineElements = playerBar.querySelectorAll(
-    ".byline yt-formatted-string a",
-  );
-  const artist = Array.from(bylineElements)
-    .map((el) => el.textContent)
-    .join(", ");
+  if (playerBar) {
+    const titleNode = playerBar.querySelector(".title");
+    const artistNode = playerBar.querySelector(".subtitle a");
+    const imageNode = playerBar.querySelector(".thumbnail-image-wrapper img.image");
 
-  const albumArt = playerBar.querySelector("img")?.src;
-  const playButton = playerBar.querySelector("#play-pause-button");
-  const isPlaying = playButton
-    ? playButton.getAttribute("aria-label") === "Pause"
-    : false;
+    name = titleNode?.textContent?.trim() ?? "";
+    artist = artistNode?.textContent?.trim() ?? "";
+
+    const rawImageSrc = imageNode?.src?.trim() ?? "";
+    thumbnail = rawImageSrc.replace(/=w\\d+-h\\d+.*$/, "=w480-h480-l90-rj");
+  }
+
+  const title = name && artist ? \`\${name} - \${artist}\` : name || artist;
 
   return {
+    album: "Unknown",
+    track: "Unknown",
     title,
-    artist: artist || "Unknown Artist",
-    albumArt: albumArt || "",
-    isPlaying,
+    thumbnail,
+    time,
+    duration,
+    playing,
   };
 })();
 `;
@@ -43,7 +56,7 @@ export const SearchJSCode = (query: string) => `
 })();
 `;
 
-export const AfterSearchJSCode = (query: string, firtPlay: boolean) => `
+export const AfterSearchJSCode = `
 (async () => {
   let firstResult = null;
   await new Promise(r => setTimeout(r, 500));
@@ -57,43 +70,13 @@ export const AfterSearchJSCode = (query: string, firtPlay: boolean) => `
 
   if (!firstResult) return null;
 
-  const isFirstPlay = ${firtPlay};
-
-  if (isFirstPlay) {
-    const playBtn = firstResult.querySelector('ytmusic-play-button-renderer, .play-button-container');
-    if (playBtn) {
-      playBtn.click();
-      await new Promise(r => setTimeout(r, 500));
-      return { name: "${query}", action: "played" };
-    }
-    return null;
-  } else {
-    const menuBtn = firstResult.querySelector('ytmusic-menu-renderer #button-shape > button');
-    if (!menuBtn) return null;
-
-    menuBtn.click();
-    await new Promise(r => setTimeout(r, 2000));
-
-    let targetBtn = document.querySelector('ytmusic-popup-container #items > ytmusic-menu-service-item-renderer:nth-child(3)');
-
-    if (!targetBtn || (!targetBtn.textContent.toLowerCase().includes('queue') && !targetBtn.textContent.toLowerCase().includes('cola'))) {
-      const allItems = document.querySelectorAll('ytmusic-popup-container #items > ytmusic-menu-service-item-renderer');
-      for (const item of allItems) {
-        const text = item.textContent.toLowerCase();
-        if (text.includes('queue') || text.includes('cola')) {
-          targetBtn = item;
-          break;
-        }
-      }
-    }
-
-    if (targetBtn) {
-      targetBtn.click();
-      await new Promise(r => setTimeout(r, 500));
-      return { name: "${query}", action: "queued" };
-    }
-    return null;
+  const playBtn = firstResult.querySelector('ytmusic-play-button-renderer, .play-button-container');
+  if (playBtn) {
+    playBtn.click();
+    await new Promise(r => setTimeout(r, 500));
+    return true;
   }
+  return null;
 })();
 `;
 
@@ -104,9 +87,74 @@ export const LoginJSCode = `
 })();
 `;
 
-export const ClickSelectorJSCode = (selector: string) => `
-(() => {
-  const btn = document.querySelector('${selector}');
-  if (btn) btn.click();
-})();
-`;
+export const YT_MUSIC_CONFIG = {
+  ENDPOINT: "https://music.youtube.com/youtubei/v1/search?prettyPrint=false",
+  SONG_FILTER_PARAMS: "EgWKAQIIAWoKEAkQBRAKEAMQBA==",
+  CLIENT_NAME: "WEB_REMIX",
+  CLIENT_VERSION: "1.20260928.13.00",
+  THUMBNAIL_SPEC: "=w480-h480-l90-rj",
+};
+
+export const TIME_REGEX = /^(\d+:)*\d+$/;
+
+export function parseDurationToSeconds(
+  durationStr: string | undefined,
+): number {
+  if (!durationStr || typeof durationStr !== "string") return 0;
+
+  const trimmed = durationStr.trim();
+  if (!TIME_REGEX.test(trimmed)) return 0;
+
+  const parts = trimmed.split(":").map(Number);
+  const multipliers = [1, 60, 3600];
+
+  return parts.reduceRight((totalSeconds, val, index) => {
+    const multiplierIndex = parts.length - 1 - index;
+    const unitValue = multipliers[multiplierIndex] ?? 0;
+    return totalSeconds + val * unitValue;
+  }, 0);
+}
+
+export function getHighResThumbnailUrl(url: string | undefined): string {
+  if (!url) return "";
+  return url.replace(/=w\d+-h\d+.*$/, YT_MUSIC_CONFIG.THUMBNAIL_SPEC);
+}
+
+export function parseSongRenderer(itemRenderer: any): SongInfo | null {
+  if (!itemRenderer) return null;
+
+  const playButton =
+    itemRenderer.overlay?.musicItemThumbnailOverlayRenderer?.content
+      ?.musicPlayButtonRenderer;
+  const track: string =
+    playButton?.playNavigationEndpoint?.watchEndpoint?.videoId ?? "";
+
+  if (!track) return null;
+
+  const titleRuns = (idx: number): string =>
+    itemRenderer.flexColumns?.[idx]?.musicResponsiveListItemFlexColumnRenderer
+      ?.text?.runs?.[0]?.text ?? "Unknown";
+
+  const title = `${titleRuns(0)} - ${titleRuns(1)}`;
+
+  const metaRuns =
+    itemRenderer.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer
+      ?.text?.runs ?? [];
+  const durationRun = metaRuns.find((run: any) =>
+    TIME_REGEX.test(run.text?.trim()),
+  );
+  const duration = parseDurationToSeconds(durationRun?.text) * 1000;
+
+  const rawThumbnailUrl =
+    itemRenderer.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.[0]
+      ?.url;
+  const thumbnail = getHighResThumbnailUrl(rawThumbnailUrl);
+
+  return {
+    album: "Unknown",
+    track,
+    title,
+    thumbnail,
+    duration,
+  };
+}
