@@ -169,8 +169,6 @@ export class ServerService extends Service {
   private broadcast<T extends TIKTOK_EVENTS>(type: T, data: TikTokEventMap[T]) {
     if (this._wss) {
       this._wss.broadcast({ type, data });
-    } else {
-      Logger.warn(`<Server> Unknown Broadcast Event ${type}`, this._logFile);
     }
   }
 }
