@@ -66,6 +66,8 @@ export class MusicService extends ProviderService<MusicProvider> {
       maxQueueLength: settings.protection.queue_length,
     });
 
+    this._music_queue.setMaxSize(settings.protection.queue_length);
+
     if (parsed.command === settings.constrols.play.command) {
       this._queue.enqueue(async () => {
         this.play(parsed.args);
