@@ -1,4 +1,4 @@
-import { APP_EVENTS, APP_EVENTS_RESPONSE, MUSIC_EVENTS } from "@/common/types";
+import { APP_EVENTS, APP_EVENTS_RESPONSE, TOKIO_EVENTS } from "@/common/types";
 import { createStack } from "@/helper/events";
 
 const events = createStack();
@@ -25,7 +25,7 @@ events.push(
   APP_EVENTS.CONNECT_MUSIC,
   async ({ musicService, ipcMain }, e, { name, key }) => {
     try {
-      musicService.on(MUSIC_EVENTS.PROCCESS_ENDED, () => {
+      musicService.on(TOKIO_EVENTS.MUSIC_PROCCESS_ENDED, () => {
         e.reply(APP_EVENTS_RESPONSE.MUSIC_CONNECTED, {
           success: false,
         });

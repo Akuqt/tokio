@@ -4,10 +4,11 @@ import {
   Emotes,
   GiftEvent,
   LikeEvent,
+  MusicInfo,
   RoomUserEvent,
   ShareEvent,
-  TIKTOK_EVENTS,
-  TikTokEventMap,
+  TOKIO_EVENTS,
+  TokioEventMap,
   TokioPayload,
   UserData,
 } from "@/common/types";
@@ -27,6 +28,16 @@ const emoteFactory = (contentLength: number): Emotes => {
     index: randomInt(0, contentLength),
     images: [`https://picsum.photos/seed/${emoteID}_large/64/64`],
   };
+};
+
+const musicFactory = (): MusicInfo[] => {
+  return Array.from({ length: 5 }, (_, i) => ({
+    playing: i === 2,
+    played: 2 > i,
+    duration: randomInt(60, 120) * 1000,
+    title: `${pickRandom(ADJECTIVES)} - ${pickRandom(NOUNS)}`,
+    thumbnail: `https://picsum.photos/seed/${i}_large/400/400`,
+  }));
 };
 
 const userFactory = (): UserData => {
@@ -129,19 +140,20 @@ const giftEventFactory = (): GiftEvent => {
 };
 
 const TIKTOK_EVENT_SAMPLES: {
-  [K in AppEvents]: () => TikTokEventMap[K];
+  [K in AppEvents]: () => TokioEventMap[K];
 } = {
-  [TIKTOK_EVENTS.CHAT]: chatEventFactory,
-  [TIKTOK_EVENTS.LIKE]: likeEventFactory,
-  [TIKTOK_EVENTS.SHARE]: shareEventFactory,
-  [TIKTOK_EVENTS.FOLLOW]: singleUserFactory,
-  [TIKTOK_EVENTS.SUPER_FAN]: singleUserFactory,
-  [TIKTOK_EVENTS.MEMBER_JOIN]: singleUserFactory,
-  [TIKTOK_EVENTS.SUPER_FAN_JOIN]: singleUserFactory,
-  [TIKTOK_EVENTS.ROOM_USER]: roomUserEventFactory,
-  [TIKTOK_EVENTS.ENVELOPE]: () => {},
-  [TIKTOK_EVENTS.SUPER_FAN_BOX]: () => {},
-  [TIKTOK_EVENTS.GIFT]: giftEventFactory,
+  [TOKIO_EVENTS.CHAT]: chatEventFactory,
+  [TOKIO_EVENTS.LIKE]: likeEventFactory,
+  [TOKIO_EVENTS.SHARE]: shareEventFactory,
+  [TOKIO_EVENTS.FOLLOW]: singleUserFactory,
+  [TOKIO_EVENTS.SUPER_FAN]: singleUserFactory,
+  [TOKIO_EVENTS.MEMBER_JOIN]: singleUserFactory,
+  [TOKIO_EVENTS.SUPER_FAN_JOIN]: singleUserFactory,
+  [TOKIO_EVENTS.ROOM_USER]: roomUserEventFactory,
+  [TOKIO_EVENTS.ENVELOPE]: () => {},
+  [TOKIO_EVENTS.SUPER_FAN_BOX]: () => {},
+  [TOKIO_EVENTS.GIFT]: giftEventFactory,
+  [TOKIO_EVENTS.MUSIC_CHANGE]: musicFactory,
 };
 
 export const generateTikTokEventSample = <K extends AppEvents>(

@@ -1,5 +1,5 @@
 import { Profile } from "@/common/schemas";
-import { ChatEvent, MUSIC_EVENTS, MusicEventMap } from "@/common/types";
+import { ChatEvent, TOKIO_EVENTS, TokioEventMap } from "@/common/types";
 import { TaskQueue } from "@/common/util";
 import { ProviderService } from "@/services/shared";
 import { IpcMain } from "electron";
@@ -43,9 +43,9 @@ export class MusicService extends ProviderService<MusicProvider> {
     return this._current.provider.isActive();
   }
 
-  public on<K extends MUSIC_EVENTS>(
+  public on<K extends TOKIO_EVENTS>(
     event: K,
-    listener: (data: MusicEventMap[K]) => void,
+    listener: (data: TokioEventMap[K]) => void,
   ): void {
     if (!this._current?.provider) return;
     this._current.provider.on(event, listener);

@@ -1,4 +1,4 @@
-import { APP_EVENTS, APP_EVENTS_RESPONSE, TIKTOK_EVENTS } from "@/common/types";
+import { APP_EVENTS, APP_EVENTS_RESPONSE, TOKIO_EVENTS } from "@/common/types";
 import { createStack } from "@/helper/events";
 
 const events = createStack();
@@ -13,7 +13,7 @@ events.push(
         },
       });
       const stats = storeManagerService.getSettings().liveStats;
-      connectorService.on(TIKTOK_EVENTS.CONNECTED, (d) => {
+      connectorService.on(TOKIO_EVENTS.CONNECTED, (d) => {
         e.reply(APP_EVENTS_RESPONSE.CONNECTED, {
           success: d.success,
           stats,

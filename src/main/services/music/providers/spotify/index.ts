@@ -1,8 +1,8 @@
 import {
   CurrentSongInfo,
-  MUSIC_EVENTS,
-  MusicEventMap,
   SongInfo,
+  TOKIO_EVENTS,
+  TokioEventMap,
 } from "@/common/types";
 import crypto from "crypto";
 import { IpcMain, WebContentsView } from "electron";
@@ -186,7 +186,7 @@ export class Spotify extends MusicProvider {
     this._accessToken = null;
     this._refreshToken = null;
     this._isActive = false;
-    this.emit(MUSIC_EVENTS.PROCCESS_ENDED);
+    this.emit(TOKIO_EVENTS.MUSIC_PROCCESS_ENDED);
   }
 
   public async play(info: SongInfo): Promise<void> {
@@ -201,9 +201,9 @@ export class Spotify extends MusicProvider {
     await this.fetchApi(`/me/player/play?device_id=${deviceId}`, "PUT", body);
   }
 
-  public on<K extends MUSIC_EVENTS>(
+  public on<K extends TOKIO_EVENTS>(
     event: K,
-    listener: (data: MusicEventMap[K]) => void,
+    listener: (data: TokioEventMap[K]) => void,
   ): void {
     this._events.on(event, listener);
   }
@@ -388,9 +388,9 @@ export class Spotify extends MusicProvider {
     return this._cachedDeviceId!;
   }
 
-  private emit<K extends MUSIC_EVENTS>(
+  private emit<K extends TOKIO_EVENTS>(
     event: K,
-    data?: MusicEventMap[K],
+    data?: TokioEventMap[K],
   ): void {
     this._events.emit(event, data);
   }

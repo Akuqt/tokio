@@ -1,5 +1,5 @@
 import { OverlayMetadata } from "@/common/schemas";
-import { OverlayApp, TIKTOK_EVENTS, TikTokEventMap } from "@/common/types";
+import { OverlayApp, TOKIO_EVENTS, TokioEventMap } from "@/common/types";
 import { formatError } from "@/common/util";
 import Logger from "@/logger";
 import express, { Express, Router } from "express";
@@ -9,7 +9,7 @@ import { TikTokConnectorService } from "../connector";
 import { Service } from "../shared";
 import { CustomWebSocketServer } from "./websocket";
 
-type BoundHandler = <K extends TIKTOK_EVENTS>(data: TikTokEventMap[K]) => void;
+type BoundHandler = <K extends TOKIO_EVENTS>(data: TokioEventMap[K]) => void;
 
 export class ServerService extends Service {
   private _app: Express;
@@ -20,7 +20,7 @@ export class ServerService extends Service {
   private _activeOverlays: (OverlayMetadata & { id: string; path: string })[] =
     [];
   private _boundEvents: {
-    event: TIKTOK_EVENTS;
+    event: TOKIO_EVENTS;
     handler: BoundHandler;
   }[] = [];
 
@@ -146,7 +146,7 @@ export class ServerService extends Service {
     if (!connectorService) {
       throw new Error("Connector service not defined.");
     }
-    Object.values(TIKTOK_EVENTS).forEach((event) => {
+    Object.values(TOKIO_EVENTS).forEach((event) => {
       const handler: BoundHandler = (data) => this.broadcast(event, data);
       connectorService.on(event, handler);
       this._boundEvents.push({ event, handler });
@@ -166,7 +166,7 @@ export class ServerService extends Service {
     }
   }
 
-  private broadcast<T extends TIKTOK_EVENTS>(type: T, data: TikTokEventMap[T]) {
+  private broadcast<T extends TOKIO_EVENTS>(type: T, data: TokioEventMap[T]) {
     if (this._wss) {
       this._wss.broadcast({ type, data });
     }

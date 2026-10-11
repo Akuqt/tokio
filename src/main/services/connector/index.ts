@@ -1,4 +1,4 @@
-import { TIKTOK_EVENTS, TikTokEventMap } from "@/common/types";
+import { TOKIO_EVENTS, TokioEventMap } from "@/common/types";
 import { formatError } from "@/common/util";
 import Logger from "@/logger";
 import { ProviderService } from "../shared";
@@ -15,16 +15,16 @@ export class TikTokConnectorService extends ProviderService<ConnectorProvider> {
     return provider instanceof ConnectorProvider;
   }
 
-  public on<T extends TIKTOK_EVENTS>(
+  public on<T extends TOKIO_EVENTS>(
     event: T,
-    listener: (data: TikTokEventMap[T]) => void,
+    listener: (data: TokioEventMap[T]) => void,
   ): void {
     if (this._current?.provider) this._current.provider.on(event, listener);
   }
 
-  public off<T extends TIKTOK_EVENTS>(
+  public off<T extends TOKIO_EVENTS>(
     event: T,
-    listener: (data: TikTokEventMap[T]) => void,
+    listener: (data: TokioEventMap[T]) => void,
   ): void {
     if (this._current?.provider) this._current.provider.off(event, listener);
   }

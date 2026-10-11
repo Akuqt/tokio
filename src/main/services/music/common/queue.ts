@@ -1,4 +1,9 @@
-import { MUSIC_EVENTS, MusicEventMap, SongInfo } from "@/common/types";
+import {
+  MusicInfo,
+  SongInfo,
+  TOKIO_EVENTS,
+  TokioEventMap,
+} from "@/common/types";
 import EventEmitter from "node:events";
 
 type PlayAction = () => void | Promise<void>;
@@ -58,16 +63,16 @@ export class MusicQueue {
     return this._maxSize;
   }
 
-  public on<K extends MUSIC_EVENTS>(
+  public on<K extends TOKIO_EVENTS>(
     event: K,
-    listener: (data: MusicEventMap[K]) => void,
+    listener: (data: TokioEventMap[K]) => void,
   ): void {
     this._events.on(event, listener);
   }
 
-  private emit<K extends MUSIC_EVENTS>(
+  private emit<K extends TOKIO_EVENTS>(
     event: K,
-    data?: MusicEventMap[K],
+    data?: TokioEventMap[K],
   ): void {
     this._events.emit(event, data);
   }
@@ -127,18 +132,18 @@ export class MusicQueue {
 
   public revoke(id: string) {
     const index = this._queue.findIndex((item) => item.id === id);
-    if (index === -1) return;
+
+    if (index === -1 || index === this._currentIndex) {
+      return;
+    }
 
     this._queue.splice(index, 1);
 
     if (index < this._currentIndex) {
       this._currentIndex--;
-    } else if (index === this._currentIndex) {
-      this.pause();
-      if (this._queue.length > 0) {
-        this.play();
-      }
     }
+
+    this.emit(TOKIO_EVENTS.MUSIC_CHANGE, this.getSongs());
   }
 
   public async triggerNext() {
@@ -180,12 +185,19 @@ export class MusicQueue {
 
   public getQueueState() {
     return {
-      queue: [...this._queue],
-      currentIndex: this._currentIndex,
-      currentSong: this._queue[this._currentIndex]?.song,
       isPlaying: this._isPlaying,
       maxSize: this._maxSize,
     };
+  }
+
+  public getSongs(): MusicInfo[] {
+    return this._queue.map((m, i) => ({
+      title: m.song.title,
+      thumbnail: m.song.thumbnail,
+      duration: m.song.duration,
+      playing: this._currentIndex === i,
+      played: this._currentIndex > i,
+    }));
   }
 
   private async processQueue() {
@@ -195,7 +207,7 @@ export class MusicQueue {
     while (this._currentIndex < this._queue.length && this._isPlaying) {
       const item = this._queue[this._currentIndex];
 
-      this.emit(MUSIC_EVENTS.TRACK_CHANGE, item.song);
+      this.emit(TOKIO_EVENTS.MUSIC_CHANGE, this.getSongs());
 
       try {
         await item.action();

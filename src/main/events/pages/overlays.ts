@@ -3,7 +3,7 @@ import {
   APP_EVENTS,
   APP_EVENTS_RESPONSE,
   CustomGift,
-  TIKTOK_EVENTS,
+  TOKIO_EVENTS,
   TokioPayload,
 } from "@/common/types";
 import { generateTikTokEventSample } from "@/common/util";
@@ -214,8 +214,12 @@ events.push(
 
 events.push(APP_EVENTS.TEST_OVERLAY, async (_, e, { id }) => {
   const payloads: TokioPayload[] = [];
-  for (const key of Object.values(TIKTOK_EVENTS)) {
-    if (key === TIKTOK_EVENTS.CONNECTED || key === TIKTOK_EVENTS.DISCONNECTED) {
+  for (const key of Object.values(TOKIO_EVENTS)) {
+    if (
+      key === TOKIO_EVENTS.CONNECTED ||
+      key === TOKIO_EVENTS.DISCONNECTED ||
+      key === TOKIO_EVENTS.MUSIC_PROCCESS_ENDED
+    ) {
       continue;
     }
     payloads.push(generateTikTokEventSample(key));

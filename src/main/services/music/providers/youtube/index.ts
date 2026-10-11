@@ -1,8 +1,8 @@
 import {
   CurrentSongInfo,
-  MUSIC_EVENTS,
-  MusicEventMap,
   SongInfo,
+  TOKIO_EVENTS,
+  TokioEventMap,
 } from "@/common/types";
 import { delay } from "@/common/util";
 import { BrowserWindow, IpcMain, WebContentsView } from "electron";
@@ -97,7 +97,7 @@ export class YouTubeMusic extends MusicProvider {
         }
         this._isActive = false;
         this._ytView.webContents.close();
-        this.emit(MUSIC_EVENTS.PROCCESS_ENDED);
+        this.emit(TOKIO_EVENTS.MUSIC_PROCCESS_ENDED);
       }
       this._ytView = null;
     });
@@ -186,7 +186,7 @@ export class YouTubeMusic extends MusicProvider {
     this._isActive = false;
     this._ytView.webContents.close();
     this._shellWindow.close();
-    this.emit(MUSIC_EVENTS.PROCCESS_ENDED);
+    this.emit(TOKIO_EVENTS.MUSIC_PROCCESS_ENDED);
     this._ytView = null;
     this._shellWindow = null;
   }
@@ -211,9 +211,9 @@ export class YouTubeMusic extends MusicProvider {
     await this._ytView.webContents.executeJavaScript(AfterSearchJSCode);
   }
 
-  public on<K extends MUSIC_EVENTS>(
+  public on<K extends TOKIO_EVENTS>(
     event: K,
-    listener: (data: MusicEventMap[K]) => void,
+    listener: (data: TokioEventMap[K]) => void,
   ): void {
     this._events.on(event, listener);
   }
@@ -299,9 +299,9 @@ export class YouTubeMusic extends MusicProvider {
     }
   }
 
-  private emit<K extends MUSIC_EVENTS>(
+  private emit<K extends TOKIO_EVENTS>(
     event: K,
-    data?: MusicEventMap[K],
+    data?: TokioEventMap[K],
   ): void {
     this._events.emit(event, data);
   }

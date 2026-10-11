@@ -6,8 +6,8 @@ import {
   LikeEvent,
   RoomUserEvent,
   ShareEvent,
-  TIKTOK_EVENTS,
-  TikTokEventMap,
+  TOKIO_EVENTS,
+  TokioEventMap,
   UserData,
 } from "@/common/types";
 import { delay } from "@/common/util";
@@ -45,16 +45,16 @@ export class TikTokLiveConnector extends ConnectorProvider {
     this._sessionID = sessionID;
   }
 
-  public on<K extends TIKTOK_EVENTS>(
+  public on<K extends TOKIO_EVENTS>(
     event: K,
-    listener: (data: TikTokEventMap[K]) => void,
+    listener: (data: TokioEventMap[K]) => void,
   ): void {
     this._events.on(event, listener);
   }
 
-  public off<K extends TIKTOK_EVENTS>(
+  public off<K extends TOKIO_EVENTS>(
     event: K,
-    listener: (data: TikTokEventMap[K]) => void,
+    listener: (data: TokioEventMap[K]) => void,
   ): void {
     this._events.off(event, listener);
   }
@@ -71,7 +71,7 @@ export class TikTokLiveConnector extends ConnectorProvider {
     this._username = username.replace("@", "") || "";
     this._sessionID = sessionID || "";
     if (!this._username) {
-      this.emit(TIKTOK_EVENTS.CONNECTED, {
+      this.emit(TOKIO_EVENTS.CONNECTED, {
         success: false,
         error: new Error("No username was defined."),
       });
@@ -95,20 +95,20 @@ export class TikTokLiveConnector extends ConnectorProvider {
     try {
       const state = await this._connector.connect();
       if (state.isConnected) {
-        this.emit(TIKTOK_EVENTS.CONNECTED, {
+        this.emit(TOKIO_EVENTS.CONNECTED, {
           success: true,
         });
         await delay(1000);
         this.registerEvents();
         this._connector.on(WebcastEvent.STREAM_END, async () => {
           await this.disconnect();
-          this.emit(TIKTOK_EVENTS.DISCONNECTED);
+          this.emit(TOKIO_EVENTS.DISCONNECTED);
         });
         return {
           success: true,
         };
       }
-      this.emit(TIKTOK_EVENTS.CONNECTED, {
+      this.emit(TOKIO_EVENTS.CONNECTED, {
         success: false,
         error: new Error("Unable to connect with unknown reason."),
       });
@@ -117,7 +117,7 @@ export class TikTokLiveConnector extends ConnectorProvider {
         error: new Error("Unable to connect with unknown reason."),
       };
     } catch (err) {
-      this.emit(TIKTOK_EVENTS.CONNECTED, {
+      this.emit(TOKIO_EVENTS.CONNECTED, {
         success: false,
         error: err as Error,
       });
@@ -135,7 +135,7 @@ export class TikTokLiveConnector extends ConnectorProvider {
       } catch {
         // Next
       }
-      this.emit(TIKTOK_EVENTS.DISCONNECTED);
+      this.emit(TOKIO_EVENTS.DISCONNECTED);
     }
   }
 
@@ -197,9 +197,9 @@ export class TikTokLiveConnector extends ConnectorProvider {
 
   // -- Private API --
 
-  private emit<K extends TIKTOK_EVENTS>(
+  private emit<K extends TOKIO_EVENTS>(
     event: K,
-    data?: TikTokEventMap[K],
+    data?: TokioEventMap[K],
   ): void {
     this._events.emit(event, data);
   }
@@ -216,7 +216,7 @@ export class TikTokLiveConnector extends ConnectorProvider {
         shareCount,
         user,
       };
-      this.emit(TIKTOK_EVENTS.SHARE, data);
+      this.emit(TOKIO_EVENTS.SHARE, data);
     });
 
     this._connector.on(WebcastEvent.FOLLOW, (tdata) => {
@@ -226,7 +226,7 @@ export class TikTokLiveConnector extends ConnectorProvider {
       const data: FollowEvent = {
         user,
       };
-      this.emit(TIKTOK_EVENTS.FOLLOW, data);
+      this.emit(TOKIO_EVENTS.FOLLOW, data);
     });
 
     this._connector.on(WebcastEvent.CHAT, (tdata) => {
@@ -257,7 +257,7 @@ export class TikTokLiveConnector extends ConnectorProvider {
         user,
         comment,
       };
-      this.emit(TIKTOK_EVENTS.CHAT, data);
+      this.emit(TOKIO_EVENTS.CHAT, data);
     });
 
     this._connector.on(WebcastEvent.GIFT, (tdata) => {
@@ -276,7 +276,7 @@ export class TikTokLiveConnector extends ConnectorProvider {
         user,
         gift,
       };
-      this.emit(TIKTOK_EVENTS.GIFT, data);
+      this.emit(TOKIO_EVENTS.GIFT, data);
     });
 
     this._connector.on(WebcastEvent.LIKE, (tdata) => {
@@ -288,32 +288,32 @@ export class TikTokLiveConnector extends ConnectorProvider {
         likeCount: tdata.count ?? 0,
         totalLikes: Number(tdata.total ?? "0"),
       };
-      this.emit(TIKTOK_EVENTS.LIKE, data);
+      this.emit(TOKIO_EVENTS.LIKE, data);
     });
 
     this._connector.on(WebcastEvent.ENVELOPE, () => {
-      this.emit(TIKTOK_EVENTS.ENVELOPE);
+      this.emit(TOKIO_EVENTS.ENVELOPE);
     });
 
     this._connector.on(WebcastEvent.SUPER_FAN_BOX, () => {
-      this.emit(TIKTOK_EVENTS.SUPER_FAN_BOX);
+      this.emit(TOKIO_EVENTS.SUPER_FAN_BOX);
     });
 
     this._connector.on(WebcastEvent.SUPER_FAN, (tdata) => {
       const user = this.getUserData({ user: tdata.user });
-      this.emit(TIKTOK_EVENTS.SUPER_FAN, {
+      this.emit(TOKIO_EVENTS.SUPER_FAN, {
         user,
       });
     });
 
     this._connector.on(WebcastEvent.MEMBER, (tdata) => {
       const user = this.getUserData({ user: tdata.user });
-      this.emit(TIKTOK_EVENTS.MEMBER_JOIN, { user });
+      this.emit(TOKIO_EVENTS.MEMBER_JOIN, { user });
     });
 
     this._connector.on(WebcastEvent.SUPER_FAN_JOIN, (tdata) => {
       const user = this.getUserData({ user: tdata.user });
-      this.emit(TIKTOK_EVENTS.SUPER_FAN_JOIN, { user });
+      this.emit(TOKIO_EVENTS.SUPER_FAN_JOIN, { user });
     });
 
     this._connector.on(WebcastEvent.ROOM_USER, (tdata) => {
@@ -330,7 +330,7 @@ export class TikTokLiveConnector extends ConnectorProvider {
       }
       const viewers = this.withDefault(Number(tdata.total), 0);
       const views = this.withDefault(Number(tdata.totalUser), 0);
-      this.emit(TIKTOK_EVENTS.ROOM_USER, { ranks, viewers, views });
+      this.emit(TOKIO_EVENTS.ROOM_USER, { ranks, viewers, views });
     });
   }
 

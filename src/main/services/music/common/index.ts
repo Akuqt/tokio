@@ -2,9 +2,9 @@ import {
   APP_EVENTS,
   APP_EVENTS_RESPONSE,
   CurrentSongInfo,
-  MUSIC_EVENTS,
-  MusicEventMap,
   SongInfo,
+  TOKIO_EVENTS,
+  TokioEventMap,
 } from "@/common/types";
 import { BrowserWindow, WebContentsView, type IpcMain } from "electron";
 import { join } from "node:path";
@@ -20,9 +20,9 @@ export abstract class MusicProvider {
   public abstract searchSong(query: string): Promise<SongInfo | null>;
   public abstract playerStatus(): Promise<CurrentSongInfo | null>;
   public abstract isActive(): boolean;
-  public abstract on<K extends MUSIC_EVENTS>(
+  public abstract on<K extends TOKIO_EVENTS>(
     event: K,
-    listener: (data: MusicEventMap[K]) => void,
+    listener: (data: TokioEventMap[K]) => void,
   ): void;
 }
 

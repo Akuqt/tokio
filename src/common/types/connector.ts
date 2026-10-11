@@ -73,48 +73,72 @@ export interface Gift {
   image: string;
 }
 
-export enum TIKTOK_EVENTS {
-  CONNECTED = "tiktok:connected",
-  DISCONNECTED = "tiktok:disconnected",
-  CHAT = "tiktok:chat",
-  SHARE = "tiktok:share",
-  FOLLOW = "tiktok:follow",
-  GIFT = "tiktok:gift",
-  LIKE = "tiktok:like",
-  ENVELOPE = "tiktok:envelope",
-  SUPER_FAN = "tiktok:superfan",
-  SUPER_FAN_BOX = "tiktok:superfanbox",
-  SUPER_FAN_JOIN = "tiktok:superfanjoin",
-  MEMBER_JOIN = "tiktok:memberjoin",
-  ROOM_USER = "tiktok:roomuser",
+export enum TOKIO_EVENTS {
+  // INTERNAL
+  CONNECTED = "tokio:event:connected",
+  DISCONNECTED = "tokio:event:disconnected",
+  MUSIC_PROCCESS_ENDED = "tokio:event:music:ended",
+
+  // EXTERNAL - TIKTOK
+  CHAT = "tokio:event:chat",
+  SHARE = "tokio:event:share",
+  FOLLOW = "tokio:event:follow",
+  GIFT = "tokio:event:gift",
+  LIKE = "tokio:event:like",
+  ENVELOPE = "tokio:event:envelope",
+  SUPER_FAN = "tokio:event:superfan",
+  SUPER_FAN_BOX = "tokio:event:superfanbox",
+  SUPER_FAN_JOIN = "tokio:event:superfanjoin",
+  MEMBER_JOIN = "tokio:event:memberjoin",
+  ROOM_USER = "tokio:event:roomuser",
+
+  // EXTERNAL - MUSIC
+  MUSIC_CHANGE = "tokio:event:music:change",
 }
 
-export interface TikTokEventMap {
-  [TIKTOK_EVENTS.CONNECTED]: { success: boolean; error?: Error };
-  [TIKTOK_EVENTS.DISCONNECTED]: void;
-  [TIKTOK_EVENTS.CHAT]: ChatEvent;
-  [TIKTOK_EVENTS.SHARE]: ShareEvent;
-  [TIKTOK_EVENTS.FOLLOW]: FollowEvent;
-  [TIKTOK_EVENTS.GIFT]: GiftEvent;
-  [TIKTOK_EVENTS.LIKE]: LikeEvent;
-  [TIKTOK_EVENTS.ENVELOPE]: void;
-  [TIKTOK_EVENTS.SUPER_FAN_BOX]: void;
-  [TIKTOK_EVENTS.SUPER_FAN]: SuperFanEvent;
-  [TIKTOK_EVENTS.MEMBER_JOIN]: MemberEvent;
-  [TIKTOK_EVENTS.SUPER_FAN_JOIN]: SuperFanJoinEvent;
-  [TIKTOK_EVENTS.ROOM_USER]: RoomUserEvent;
+export type MusicInfo = {
+  title: string;
+  thumbnail: string;
+  duration: number;
+  playing: boolean;
+  played: boolean;
+};
+
+export interface TokioEventMap {
+  // INTERNAL
+  [TOKIO_EVENTS.CONNECTED]: { success: boolean; error?: Error };
+  [TOKIO_EVENTS.DISCONNECTED]: void;
+  [TOKIO_EVENTS.MUSIC_PROCCESS_ENDED]: void;
+
+  // EXTERNAL - TIKTOK
+  [TOKIO_EVENTS.CHAT]: ChatEvent;
+  [TOKIO_EVENTS.SHARE]: ShareEvent;
+  [TOKIO_EVENTS.FOLLOW]: FollowEvent;
+  [TOKIO_EVENTS.GIFT]: GiftEvent;
+  [TOKIO_EVENTS.LIKE]: LikeEvent;
+  [TOKIO_EVENTS.ENVELOPE]: void;
+  [TOKIO_EVENTS.SUPER_FAN_BOX]: void;
+  [TOKIO_EVENTS.SUPER_FAN]: SuperFanEvent;
+  [TOKIO_EVENTS.MEMBER_JOIN]: MemberEvent;
+  [TOKIO_EVENTS.SUPER_FAN_JOIN]: SuperFanJoinEvent;
+  [TOKIO_EVENTS.ROOM_USER]: RoomUserEvent;
+
+  // EXTERNAL - MUSIC
+  [TOKIO_EVENTS.MUSIC_CHANGE]: MusicInfo[];
 }
 
 export type AppEvents = Exclude<
-  TIKTOK_EVENTS,
-  TIKTOK_EVENTS.CONNECTED | TIKTOK_EVENTS.DISCONNECTED
+  TOKIO_EVENTS,
+  | TOKIO_EVENTS.CONNECTED
+  | TOKIO_EVENTS.DISCONNECTED
+  | TOKIO_EVENTS.MUSIC_PROCCESS_ENDED
 >;
 
 export type TokioPayload =
   | {
       [K in AppEvents]: {
         type: K;
-        data: TikTokEventMap[K];
+        data: TokioEventMap[K];
       };
     }[AppEvents]
   | {

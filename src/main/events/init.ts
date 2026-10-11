@@ -1,4 +1,4 @@
-import { APP_EVENTS, APP_EVENTS_RESPONSE, TIKTOK_EVENTS } from "@/common/types";
+import { APP_EVENTS, APP_EVENTS_RESPONSE, TOKIO_EVENTS } from "@/common/types";
 import config from "@/config";
 import { createStack } from "@/helper/events";
 import { TikTokConnectorService } from "@/services/connector";
@@ -18,7 +18,7 @@ const registerConnectorEvents = (
   tts: TTSService,
   music: MusicService,
 ) => {
-  conn.on(TIKTOK_EVENTS.ROOM_USER, (d) => {
+  conn.on(TOKIO_EVENTS.ROOM_USER, (d) => {
     store.updateLiveStats({ viewers: d.viewers, views: d.views });
     win.webContents.send(APP_EVENTS_RESPONSE.VIEWS, {
       data: {
@@ -27,13 +27,13 @@ const registerConnectorEvents = (
       },
     });
   });
-  conn.on(TIKTOK_EVENTS.LIKE, (d) => {
+  conn.on(TOKIO_EVENTS.LIKE, (d) => {
     store.updateLiveStats({ likes: d.totalLikes });
     win.webContents.send(APP_EVENTS_RESPONSE.LIKES, {
       likes: d.totalLikes,
     });
   });
-  conn.on(TIKTOK_EVENTS.DISCONNECTED, () => {
+  conn.on(TOKIO_EVENTS.DISCONNECTED, () => {
     win.webContents.send(APP_EVENTS_RESPONSE.CONNECTED, {
       success: false,
       stats: {
@@ -43,7 +43,7 @@ const registerConnectorEvents = (
       },
     });
   });
-  conn.on(TIKTOK_EVENTS.CHAT, async (d) => {
+  conn.on(TOKIO_EVENTS.CHAT, async (d) => {
     const settings = store.getSettings();
     const profile = await store.getProfileData();
     if (settings.activeFeatures.tts) {

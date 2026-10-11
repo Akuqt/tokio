@@ -1,4 +1,4 @@
-import { Gift, TIKTOK_EVENTS, TikTokEventMap } from "@/common/types";
+import { Gift, TOKIO_EVENTS, TokioEventMap } from "@/common/types";
 
 export type ConnectorResponse = { success: boolean; error?: Error };
 export type GiftResponse = {
@@ -10,13 +10,13 @@ export type GiftResponse = {
 
 export abstract class ConnectorProvider {
   public abstract setKey(key: string): void;
-  public abstract on<T extends TIKTOK_EVENTS>(
+  public abstract on<T extends TOKIO_EVENTS>(
     event: T,
-    listener: (data: TikTokEventMap[T]) => void,
+    listener: (data: TokioEventMap[T]) => void,
   ): void;
-  public abstract off<T extends TIKTOK_EVENTS>(
+  public abstract off<T extends TOKIO_EVENTS>(
     event: T,
-    listener: (data: TikTokEventMap[T]) => void,
+    listener: (data: TokioEventMap[T]) => void,
   ): void;
   public abstract connect(
     username: string,
