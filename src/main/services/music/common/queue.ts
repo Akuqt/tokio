@@ -117,6 +117,7 @@ export class MusicQueue {
     if (!this._isPlaying && this._currentIndex < this._queue.length) {
       this.processQueue();
     }
+    this.emit(TOKIO_EVENTS.MUSIC_CHANGE, this.getSongs());
   }
 
   public pause() {
