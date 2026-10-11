@@ -3,14 +3,16 @@ import { ChatEvent, MUSIC_EVENTS, MusicEventMap } from "@/common/types";
 import { TaskQueue } from "@/common/util";
 import { ProviderService } from "@/services/shared";
 import { IpcMain } from "electron";
-import { ConnectionResponse, MusicProvider } from "./common";
+import { ConnectionResponse, MusicProvider, MusicQueue } from "./common";
 import { Spotify, YouTubeMusic } from "./providers";
 
 export class MusicService extends ProviderService<MusicProvider> {
   private _queue: TaskQueue;
+  private _music_queue: MusicQueue;
   constructor() {
     super();
     this._queue = new TaskQueue();
+    this._music_queue = new MusicQueue();
     this.addProvider("YouTube", new YouTubeMusic(), true);
     this.addProvider("Spotify", new Spotify());
   }
@@ -41,32 +43,86 @@ export class MusicService extends ProviderService<MusicProvider> {
     return this._current.provider.isActive();
   }
 
-  public async play(query: string) {
-    if (!this._current?.provider) return;
-    await this._current?.provider.searchAndQueue(query);
-  }
-
-  public async next() {
-    if (!this._current?.provider) return;
-    await this._current.provider.next();
-  }
-
-  public async previous() {
-    if (!this._current?.provider) return;
-    await this._current.provider.previous();
-  }
-
-  public stopPolling() {
-    if (!this._current?.provider) return;
-    this._current.provider.stopPolling();
-  }
-
   public on<K extends MUSIC_EVENTS>(
     event: K,
     listener: (data: MusicEventMap[K]) => void,
   ): void {
     if (!this._current?.provider) return;
     this._current.provider.on(event, listener);
+  }
+
+  public clearHandler() {
+    this._queue.stop();
+    this._music_queue.clear();
+  }
+
+  public handle(chat: ChatEvent, settings: Profile["music"]) {
+    if (!this._valid(settings, chat)) return;
+    const parsed = this._parseText(settings, chat);
+
+    this._queue.setQueueOptions({
+      gapTime: settings.protection.cooldown,
+      maxQueueLength: settings.protection.queue_length,
+    });
+
+    if (parsed.command === settings.constrols.play.command) {
+      this._queue.enqueue(async () => {
+        this.play(parsed.args);
+      });
+    }
+    if (parsed.command === settings.constrols.next.command) {
+      this._queue.enqueue(async () => {
+        this.next();
+      });
+    }
+    if (parsed.command === settings.constrols.last.command) {
+      this._queue.enqueue(async () => {
+        this.previous();
+      });
+    }
+    if (parsed.command === settings.constrols.revoke.command) {
+      this._queue.enqueue(async () => {
+        this.revoke(parsed.args);
+      });
+    }
+  }
+
+  private async play(query: string) {
+    if (!this._current?.provider) return;
+
+    if (!this._music_queue.getQueueState().isPlaying) {
+      const current = await this._current.provider.playerStatus();
+      if (current && current.playing) {
+        this._music_queue.addCurrentlyPlaying(
+          current.title,
+          current,
+          current.time,
+        );
+      }
+    }
+
+    const info = await this._current?.provider.searchSong(query);
+
+    if (info === null) return;
+
+    this._music_queue.enqueue(query, info, () => {
+      this._current?.provider?.play(info);
+    });
+  }
+
+  private async next() {
+    if (!this._current?.provider) return;
+    await this._music_queue.triggerNext();
+  }
+
+  private async previous() {
+    if (!this._current?.provider) return;
+    await this._music_queue.triggerPrevious();
+  }
+
+  private async revoke(query: string) {
+    if (!this._current?.provider) return;
+    this._music_queue.revoke(query);
   }
 
   private _parseText(settings: Profile["music"], chat: ChatEvent) {
@@ -129,35 +185,5 @@ export class MusicService extends ProviderService<MusicProvider> {
     }
 
     return true;
-  }
-
-  public clearHandler() {
-    this._queue.stop();
-  }
-
-  public handle(chat: ChatEvent, settings: Profile["music"]) {
-    if (!this._valid(settings, chat)) return;
-    const parsed = this._parseText(settings, chat);
-
-    this._queue.setQueueOptions({
-      gapTime: settings.protection.cooldown,
-      maxQueueLength: settings.protection.queue_length,
-    });
-
-    if (parsed.command === settings.constrols.play.command) {
-      this._queue.enqueue(async () => {
-        this.play(parsed.args);
-      });
-    }
-    if (parsed.command === settings.constrols.next.command) {
-      this._queue.enqueue(async () => {
-        this.next();
-      });
-    }
-    if (parsed.command === settings.constrols.last.command) {
-      this._queue.enqueue(async () => {
-        this.previous();
-      });
-    }
   }
 }
