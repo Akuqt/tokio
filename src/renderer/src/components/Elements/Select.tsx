@@ -18,7 +18,7 @@ interface Props<T extends boolean | undefined> {
     passive: string;
   };
   searchable?: boolean;
-
+  placeholder?: string;
   multiple?: T;
 
   value: T extends true
@@ -137,7 +137,7 @@ export function Select<T extends boolean | undefined = undefined>(
               </span>
             ))
           ) : (
-            <span>Select options...</span>
+            <span>{props.placeholder ?? "Select an option..."}</span>
           )}
         </div>
       );
@@ -155,7 +155,7 @@ export function Select<T extends boolean | undefined = undefined>(
               <label>{selectedLabel.label}</label>
             </>
           ) : (
-            "Select an option..."
+            <>{props.placeholder ?? "Select an option..."}</>
           )}
         </div>
       );
