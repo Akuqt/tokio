@@ -196,9 +196,21 @@ events.push(
 
 events.push(
   APP_EVENTS.SET_PROVIDER,
-  async ({ storeManagerService }, e, { name, key, type }) => {
+  async ({ storeManagerService, ttsService }, e, { name, key, type }) => {
     try {
+      const switched =
+        type === "tts" && ttsService.getActiveProvider()?.name !== name;
       await storeManagerService.updateProvider(type, name, key);
+      if (switched) {
+        // Voices are provider specific, reset the profile to the new provider's default.
+        const voice = await ttsService.getDefaultVoice();
+        const profile = await storeManagerService.getProfileData();
+        if (voice && profile) {
+          await storeManagerService.updateProfileData({
+            tts: { ...profile.tts, voice },
+          });
+        }
+      }
       const settings = storeManagerService.getSettings();
       const profiles = storeManagerService.getProfiles();
 

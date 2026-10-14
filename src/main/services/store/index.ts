@@ -142,10 +142,16 @@ export class StoreManagerService extends Service {
     const clonedSettings = structuredClone(this._storeData!.settings);
 
     clonedSettings.providers = {
-      connector: clonedSettings.providers.connector.map((p) =>
-        this._decryptProviderKey(p),
+      connector: this._withRegisteredProviders(
+        clonedSettings.providers.connector.map((p) =>
+          this._decryptProviderKey(p),
+        ),
+        this._providers.connector,
       ),
-      tts: clonedSettings.providers.tts.map((p) => this._decryptProviderKey(p)),
+      tts: this._withRegisteredProviders(
+        clonedSettings.providers.tts.map((p) => this._decryptProviderKey(p)),
+        this._providers.tts,
+      ),
     };
 
     clonedSettings.activeConnProvider = this._decryptProviderKey(
@@ -156,6 +162,18 @@ export class StoreManagerService extends Service {
     );
 
     return clonedSettings;
+  }
+
+  // Registered providers that were never saved still need to be selectable.
+  private _withRegisteredProviders(
+    saved: AppProvider[],
+    service: { getProviders(): { name: string }[] },
+  ): AppProvider[] {
+    const missing = service
+      .getProviders()
+      .filter(({ name }) => !saved.some((p) => p.name === name))
+      .map(({ name }) => ({ name, key: "", active: false }));
+    return [...saved, ...missing];
   }
 
   public getProfiles(): EntityMetadata[] {

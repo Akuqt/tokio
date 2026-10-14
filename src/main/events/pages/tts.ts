@@ -5,7 +5,7 @@ const events = createStack();
 
 events.push(APP_EVENTS.GET_VOICES, async ({ ttsService }, e) => {
   try {
-    const voices = ttsService.getVoices();
+    const voices = await ttsService.getVoices();
     e.reply(APP_EVENTS_RESPONSE.GET_VOICES, {
       voices,
       success: true,

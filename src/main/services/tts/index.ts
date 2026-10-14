@@ -4,7 +4,7 @@ import { formatError, TaskQueue } from "@/common/util";
 import Logger from "@/logger";
 import { ProviderService } from "../shared";
 import { GenerationResponse, TTSProvider, VoiceData } from "./common";
-import { TikTokTTS } from "./providers";
+import { TikTokTTS, WindowsTTS } from "./providers";
 
 export class TTSService extends ProviderService<TTSProvider> {
   private _queue: TaskQueue;
@@ -13,15 +13,45 @@ export class TTSService extends ProviderService<TTSProvider> {
     super();
     this._queue = new TaskQueue();
     this.addProvider("Default", new TikTokTTS(), true); // NOTE: DO NOT CHANGE, Add your providers below.
+    if (process.platform === "win32") {
+      this.addProvider("Windows", new WindowsTTS());
+    }
   }
 
   protected override _validProvider(provider: TTSProvider): boolean {
     return provider instanceof TTSProvider;
   }
 
-  public getVoices(): VoiceData[] {
+  public async getVoices(): Promise<VoiceData[]> {
     if (!this._current?.provider) return [];
-    return this._current.provider.getVoices();
+    try {
+      return await this._current.provider.getVoices();
+    } catch (e) {
+      Logger.error(
+        `<tts> Unable to get voices - ${formatError(e)}`,
+        this._logFile,
+      );
+      return [];
+    }
+  }
+
+  public async getDefaultVoice(): Promise<VoiceData | null> {
+    if (!this._current?.provider) return null;
+    try {
+      return await this._current.provider.getDefaultVoice();
+    } catch (e) {
+      Logger.error(
+        `<tts> Unable to get default voice - ${formatError(e)}`,
+        this._logFile,
+      );
+      return null;
+    }
+  }
+
+  public dispose() {
+    for (const provider of this._providerPool?.values() ?? []) {
+      provider.dispose();
+    }
   }
 
   public async generateBuffer(

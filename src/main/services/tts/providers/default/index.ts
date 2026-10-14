@@ -1,3 +1,4 @@
+import { defaultProfile } from "@/common/util";
 import axios, { isAxiosError } from "axios";
 import { Buffer } from "node:buffer";
 import { GenerationResponse, TTSProvider, VoiceData } from "../../common";
@@ -107,5 +108,9 @@ export class TikTokTTS extends TTSProvider {
 
   public getVoices(): VoiceData[] {
     return Voices;
+  }
+
+  public getDefaultVoice(): VoiceData {
+    return defaultProfile.tts.voice;
   }
 }
