@@ -1,9 +1,12 @@
+export type SapiEngine = "sapi" | "onecore";
+
 export type SapiRequest =
   | { type: "voices" }
   | {
       type: "speak";
       text: string;
       voice?: string;
+      engine?: SapiEngine;
       rate: number;
       volume: number;
     };
@@ -27,4 +30,5 @@ export type SapiVoice = {
   age: string;
   vendor: string;
   default: boolean;
+  engine: SapiEngine;
 };

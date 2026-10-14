@@ -34,11 +34,12 @@ export class WindowsTTS extends TTSProvider {
     try {
       const voices = this._voices ?? (await this._fetchVoices());
       // Unknown voices (e.g. a TikTok voice name from the profile) fall back to the system default.
-      const installed = voices.some((v) => v.name === voice);
+      const installed = voices.find((v) => v.name === voice);
       const base64Audio = await this._host.request({
         type: "speak",
         text,
-        voice: installed ? voice : undefined,
+        voice: installed?.name,
+        engine: installed?.engine,
         rate: config.DEFAULT_RATE,
         volume: config.DEFAULT_VOLUME,
       });
