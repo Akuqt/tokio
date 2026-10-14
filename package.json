@@ -5,7 +5,7 @@
   "main": "./out/main/index.js",
   "type": "module",
   "author": "Akuqt",
-  "license": "MIT",
+  "license": "MIT AND LGPL-3.0-only",
   "private": false,
   "repository": {
     "type": "git",
@@ -40,6 +40,7 @@
     "build:installer:win": "dotnet publish src/installer/main.csproj -c Release",
     "clean": "node ./scripts/clean/index.js",
     "todos": "node ./scripts/todos/index.js",
+    "tts:edge:check": "tsx ./scripts/edge-tts/index.ts",
     "prepare": "husky"
   },
   "dependencies": {
@@ -86,6 +87,7 @@
     "oxlint": "^1.74.0",
     "oxlint-tsgolint": "^0.25.0",
     "prettier": "^3.7.4",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vite": "^7.2.6",
     "vite-plugin-singlefile": "^2.3.3"
