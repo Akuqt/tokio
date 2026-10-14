@@ -1,6 +1,33 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "electron-vite";
 import { resolve } from "path";
+import type { Plugin } from "vite";
+
+// NOTE: The bundler drops file header comments, keep this notice in sync with THIRD_PARTY_NOTICES.md.
+const MAIN_LICENSE_BANNER = `/*!
+ * Tokio - source code under the MIT License, see resources/licenses/LICENSE.
+ * Includes src/main/services/tts/providers/edge/common/drm-v2.ts, derived from
+ * edge-tts (https://github.com/rany2/edge-tts) and licensed LGPL-3.0-only.
+ * Uses tiktok-live-connector and tiktok-live-proto (AGPL-3.0-only), so the
+ * application as distributed is licensed AGPL-3.0-only.
+ * Source: https://github.com/Akuqt/tokio
+ * See resources/licenses/THIRD_PARTY_NOTICES.md and resources/licenses/LICENSES.
+ */`;
+
+// Prepends the banner after every other transform, so nothing can strip it.
+function licenseBanner(banner: string): Plugin {
+  return {
+    name: "tokio:license-banner",
+    enforce: "post",
+    generateBundle(_, bundle) {
+      for (const chunk of Object.values(bundle)) {
+        if (chunk.type === "chunk" && chunk.isEntry) {
+          chunk.code = `${banner}\n${chunk.code}`;
+        }
+      }
+    },
+  };
+}
 
 export default defineConfig({
   main: {
@@ -10,6 +37,7 @@ export default defineConfig({
         "@": resolve("src/main"),
       },
     },
+    plugins: [licenseBanner(MAIN_LICENSE_BANNER)],
   },
   preload: {},
   renderer: {
