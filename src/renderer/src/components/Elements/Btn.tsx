@@ -7,10 +7,11 @@ type Props = {
     secondary: string;
   };
   textColor: string;
+  width?: string;
 } & PropsWithChildren &
   ButtonHTMLAttributes<HTMLButtonElement>;
 
-export function Btn({ children, bgColor, textColor, ...rest }: Props) {
+export function Btn({ children, bgColor, textColor, width, ...rest }: Props) {
   return (
     <button
       className={styles.btn}
@@ -19,6 +20,7 @@ export function Btn({ children, bgColor, textColor, ...rest }: Props) {
         backgroundColor: bgColor.primary,
         color: textColor,
         borderColor: bgColor.secondary,
+        width,
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.backgroundColor = bgColor.secondary;
