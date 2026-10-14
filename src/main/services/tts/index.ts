@@ -4,7 +4,7 @@ import { formatError, TaskQueue } from "@/common/util";
 import Logger from "@/logger";
 import { ProviderService } from "../shared";
 import { GenerationResponse, TTSProvider, VoiceData } from "./common";
-import { TikTokTTS, WindowsTTS } from "./providers";
+import { EdgeTTS, TikTokTTS, WindowsTTS } from "./providers";
 
 export class TTSService extends ProviderService<TTSProvider> {
   private _queue: TaskQueue;
@@ -16,6 +16,7 @@ export class TTSService extends ProviderService<TTSProvider> {
     if (process.platform === "win32") {
       this.addProvider("Windows", new WindowsTTS());
     }
+    this.addProvider("Edge", new EdgeTTS());
   }
 
   protected override _validProvider(provider: TTSProvider): boolean {
