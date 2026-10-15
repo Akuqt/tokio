@@ -68,8 +68,9 @@ export class ServerService extends Service {
       });
 
     return new Promise((resolve) => {
+      // Without a host Node listens on :: for IPv4 and IPv6, or 0.0.0.0 without IPv6.
       // Express 5 calls this with the error too, the "error" handler reports it.
-      this._server = this._app.listen(this._port, "0.0.0.0", (error) => {
+      this._server = this._app.listen(this._port, (error) => {
         if (error) return;
         // Port 0 picks a free port.
         const address = this._server!.address();

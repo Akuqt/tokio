@@ -1,7 +1,7 @@
 import { TOKIO_EVENTS, TokioEventMap } from "@/common/types";
 import { EventEmitter } from "node:events";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { networkInterfaces, tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WebSocket } from "ws";
@@ -56,6 +56,10 @@ const follow = {
   user: { username: "Viewer", handle: "viewer", profilePictures: [] },
 };
 
+const hasIPv6Loopback = Object.values(networkInterfaces())
+  .flat()
+  .some((iface) => iface?.address === "::1");
+
 describe("ServerService", () => {
   let server: ServerService;
   let dir: string;
@@ -104,6 +108,14 @@ describe("ServerService", () => {
 
     expect(await server.toggleServer(false)).toBe(true);
     expect(await server.toggleServer(true)).toBe(true);
+  });
+
+  it.skipIf(!hasIPv6Loopback)("accepts IPv6 connections too", async () => {
+    await server.start();
+
+    const res = await fetch(`http://[::1]:${server.getPort()}/`);
+
+    expect(res.status).toBe(404);
   });
 
   it("fails to start on a port in use", async () => {

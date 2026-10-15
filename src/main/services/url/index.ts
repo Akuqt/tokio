@@ -24,9 +24,9 @@ export class URLManagerService extends Service {
   }
 
   private async _installAppFQDN() {
-    if (process.platform !== "win32") {
+    if (!["win32", "darwin", "linux"].includes(process.platform)) {
       Logger.error(
-        `<System> Adding ${config.CMD.FQDN} to the hosts file is only supported on Windows.`,
+        `<System> Adding ${config.CMD.FQDN} to the hosts file is not supported on ${process.platform}.`,
         this._logFile,
       );
       return false;
@@ -48,15 +48,7 @@ export class URLManagerService extends Service {
 
     if (this._hasAppFQDN(hostsContent)) return true;
 
-    const TEMPLATE = [
-      "## Tokio App Hostname - Start ##",
-      `${config.CMD.IP} ${config.CMD.FQDN}`,
-      "## Tokio App Hostname - End ##",
-    ];
-    const command = [
-      `echo.>> ${hostsFilePath}`,
-      ...TEMPLATE.map((line) => `echo ${line}>> ${hostsFilePath}`),
-    ].join("\n");
+    const command = this._appendCommand(hostsFilePath);
 
     Logger.info(
       `<System> Prompting for admin rights to add ${config.CMD.FQDN} to the hosts file.`,
@@ -98,7 +90,35 @@ export class URLManagerService extends Service {
     return false;
   }
 
-  // Commented lines, other IPs and look-alike names don't count.
+  // Windows runs this as a batch file. Linux runs it inside bash -c "..." and
+  // macOS as a bash script, so it must not contain $, backticks or double quotes.
+  private _appendCommand(hostsFilePath: string) {
+    const lines = [
+      "",
+      "## Tokio App Hostname - Start ##",
+      `${config.CMD.IP} ${config.CMD.FQDN}`,
+      // Without it macOS can wait on a Bonjour lookup before reading the hosts file.
+      `${config.CMD.IP6} ${config.CMD.FQDN}`,
+      "## Tokio App Hostname - End ##",
+    ];
+
+    if (process.platform === "win32") {
+      return lines
+        .map((line) => `echo${line ? ` ${line}` : "."}>> ${hostsFilePath}`)
+        .join("\n");
+    }
+
+    const append = lines
+      .map((line) => `echo${line ? ` '${line}'` : ""} >> ${hostsFilePath}`)
+      .join(" && ");
+    // macOS caches lookups, flush it so the new name resolves right away.
+    return process.platform === "darwin"
+      ? `${append} && (dscacheutil -flushcache; killall -HUP mDNSResponder; true)`
+      : append;
+  }
+
+  // Only the IPv4 line is required, so hosts files from older versions still count.
+  // Commented lines, other IPs and look-alike names don't.
   private _hasAppFQDN(hostsContent: string) {
     const fqdn = config.CMD.FQDN.toLowerCase();
     return hostsContent.split(/\r?\n/).some((line) => {

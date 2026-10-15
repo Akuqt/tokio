@@ -25,6 +25,7 @@ vi.mock("@/config", async (importOriginal) => {
 vi.mock("@vscode/sudo-prompt", () => ({ exec: vi.fn() }));
 
 const ENTRY = "127.0.0.1 tokio-app.local";
+const ENTRY6 = "::1 tokio-app.local";
 
 // Runs the admin prompt; `write` stands in for the elevated echo commands.
 const elevated = (error?: Error, write = true) =>
@@ -71,6 +72,7 @@ describe("URLManagerService", () => {
 
     it.each([
       ["a commented-out entry", `# ${ENTRY}`],
+      ["only the IPv6 entry", ENTRY6],
       ["another IP", "0.0.0.0 tokio-app.local"],
       ["a look-alike name", "127.0.0.1 tokio-app.localhost"],
     ])("adds the hostname over %s", async (_, line) => {
@@ -93,6 +95,7 @@ describe("URLManagerService", () => {
           `echo.>> ${hosts.path}`,
           `echo ## Tokio App Hostname - Start ##>> ${hosts.path}`,
           `echo ${ENTRY}>> ${hosts.path}`,
+          `echo ${ENTRY6}>> ${hosts.path}`,
           `echo ## Tokio App Hostname - End ##>> ${hosts.path}`,
         ].join("\n"),
         { name: "Tokio" },
@@ -143,8 +146,55 @@ describe("URLManagerService", () => {
       expect(exec).not.toHaveBeenCalled();
     });
 
-    it("fails without prompting outside Windows", async () => {
-      vi.spyOn(process, "platform", "get").mockReturnValue("linux");
+    describe("on Linux and macOS", () => {
+      const append = () =>
+        [
+          `echo >> ${hosts.path}`,
+          `echo '## Tokio App Hostname - Start ##' >> ${hosts.path}`,
+          `echo '${ENTRY}' >> ${hosts.path}`,
+          `echo '${ENTRY6}' >> ${hosts.path}`,
+          `echo '## Tokio App Hostname - End ##' >> ${hosts.path}`,
+        ].join(" && ");
+
+      it("appends the block with a shell command on Linux", async () => {
+        vi.spyOn(process, "platform", "get").mockReturnValue("linux");
+        await writeFile(hosts.path, "127.0.0.1 localhost\n");
+        elevated();
+
+        expect(await service.installAppFQDN()).toBe(true);
+        expect(exec).toHaveBeenCalledWith(
+          append(),
+          { name: "Tokio" },
+          expect.any(Function),
+        );
+      });
+
+      it("also flushes the DNS cache on macOS", async () => {
+        vi.spyOn(process, "platform", "get").mockReturnValue("darwin");
+        await writeFile(hosts.path, "127.0.0.1 localhost\n");
+        elevated();
+
+        expect(await service.installAppFQDN()).toBe(true);
+        expect(exec).toHaveBeenCalledWith(
+          `${append()} && (dscacheutil -flushcache; killall -HUP mDNSResponder; true)`,
+          { name: "Tokio" },
+          expect.any(Function),
+        );
+      });
+
+      it("keeps the command safe inside bash -c double quotes", async () => {
+        vi.spyOn(process, "platform", "get").mockReturnValue("linux");
+        await writeFile(hosts.path, "");
+        elevated();
+
+        await service.installAppFQDN();
+
+        expect(vi.mocked(exec).mock.calls[0][0]).not.toMatch(/[$`"\n]/);
+      });
+    });
+
+    it("fails without prompting on other platforms", async () => {
+      vi.spyOn(process, "platform", "get").mockReturnValue("freebsd");
       await writeFile(hosts.path, "");
 
       expect(await service.installAppFQDN()).toBe(false);
