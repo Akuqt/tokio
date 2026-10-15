@@ -17,6 +17,7 @@ export class SapiHost {
   private _pending: Map<number, Pending> = new Map();
   private _nextId = 1;
   private _stderr = "";
+  private _idleTimer: NodeJS.Timeout | null = null;
 
   private _resolvePowerShell() {
     return (
@@ -75,6 +76,7 @@ export class SapiHost {
     if (!pending) return;
     this._pending.delete(res.id);
     clearTimeout(pending.timer);
+    this._armIdle();
     if (res.ok) {
       pending.resolve(res.data);
     } else {
@@ -85,6 +87,7 @@ export class SapiHost {
   private _onExit(child: ChildProcessWithoutNullStreams, error: Error) {
     if (this._child !== child) return;
     this._child = null;
+    this._clearIdle();
     for (const pending of this._pending.values()) {
       clearTimeout(pending.timer);
       pending.reject(error);
@@ -97,10 +100,12 @@ export class SapiHost {
   ): Promise<SapiResponseMap[K]> {
     const child = this._child ?? this._spawn();
     const id = this._nextId++;
+    this._clearIdle();
 
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this._pending.delete(id);
+        this._armIdle();
         reject(new Error(`SAPI request "${req.type}" timed out`));
         child.kill(); // Stuck host, the next request respawns it.
       }, config.REQUEST_TIMEOUT_MS);
@@ -108,6 +113,19 @@ export class SapiHost {
       this._pending.set(id, { resolve, reject, timer });
       child.stdin.write(`${JSON.stringify({ ...req, id })}\n`, "utf8");
     });
+  }
+
+  // A host with nothing to do holds memory, so it exits after a while.
+  private _armIdle() {
+    if (this._pending.size > 0 || !this._child) return;
+    this._clearIdle();
+    this._idleTimer = setTimeout(() => this.dispose(), config.IDLE_TIMEOUT_MS);
+    this._idleTimer.unref();
+  }
+
+  private _clearIdle() {
+    if (this._idleTimer) clearTimeout(this._idleTimer);
+    this._idleTimer = null;
   }
 
   public dispose() {

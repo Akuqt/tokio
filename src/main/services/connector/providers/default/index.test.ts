@@ -290,7 +290,7 @@ describe("TikTokLiveConnector", () => {
     };
 
     const stubFetch = (geoOk = true) => {
-      const fetchMock = vi.fn(async (url: string) =>
+      const fetchMock = vi.fn(async (url: string, _init?: RequestInit) =>
         url.includes("ipapi")
           ? Response.json(geo, { status: geoOk ? 200 : 503 })
           : Response.json(gifts),
@@ -323,6 +323,16 @@ describe("TikTokLiveConnector", () => {
       expect([...url.searchParams.values()]).toEqual(
         expect.arrayContaining(["US", "en-US"]),
       );
+    });
+
+    it("gives up on requests that take too long", async () => {
+      const fetchMock = stubFetch();
+
+      await connector.fetchGifts();
+
+      for (const [, init] of fetchMock.mock.calls) {
+        expect(init?.signal).toBeInstanceOf(AbortSignal);
+      }
     });
 
     it("asks for the gifts in the viewer's region and language", async () => {

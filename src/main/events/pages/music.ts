@@ -3,6 +3,9 @@ import { createStack } from "@/helper/events";
 
 const events = createStack();
 
+// The listener of the last connect, replaced on every connect.
+let onMusicEnded: (() => void) | null = null;
+
 events.push(
   APP_EVENTS.UPDATE_MUSIC_SETTINGS,
   async ({ storeManagerService }, e, { settings }) => {
@@ -25,11 +28,15 @@ events.push(
   APP_EVENTS.CONNECT_MUSIC,
   async ({ musicService, ipcMain }, e, { name, key }) => {
     try {
-      musicService.on(TOKIO_EVENTS.MUSIC_PROCCESS_ENDED, () => {
+      if (onMusicEnded) {
+        musicService.off(TOKIO_EVENTS.MUSIC_PROCCESS_ENDED, onMusicEnded);
+      }
+      onMusicEnded = () => {
         e.reply(APP_EVENTS_RESPONSE.MUSIC_CONNECTED, {
           success: false,
         });
-      });
+      };
+      musicService.on(TOKIO_EVENTS.MUSIC_PROCCESS_ENDED, onMusicEnded);
 
       if (musicService.isActive()) {
         musicService.disconnect();

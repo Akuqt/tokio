@@ -214,6 +214,39 @@ describe("StoreManagerService", () => {
     });
   });
 
+  describe("live state", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("reads the active features without a copy", async () => {
+      const store = await init();
+
+      store.updateActiveFeatures({ tts: true });
+
+      expect(store.getActiveFeatures()).toEqual({
+        tts: true,
+        music: false,
+        alerts: false,
+      });
+    });
+
+    it("keeps live stats in memory only", async () => {
+      const store = await init();
+      vi.useFakeTimers();
+
+      store.updateLiveStats({ likes: 5, viewers: 2 });
+      await vi.advanceTimersByTimeAsync(1000);
+
+      expect(store.getSettings().liveStats).toEqual({
+        likes: 5,
+        viewers: 2,
+        views: 0,
+      });
+      expect((await readJSON(storeFile)).settings.liveStats.likes).toBe(0);
+    });
+  });
+
   describe("profiles", () => {
     it("creates a profile once", async () => {
       const store = await init();

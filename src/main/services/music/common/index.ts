@@ -24,6 +24,10 @@ export abstract class MusicProvider {
     event: K,
     listener: (data: TokioEventMap[K]) => void,
   ): void;
+  public abstract off<K extends TOKIO_EVENTS>(
+    event: K,
+    listener: (data: TokioEventMap[K]) => void,
+  ): void;
 }
 
 export function createWindow(ipcMain: IpcMain) {

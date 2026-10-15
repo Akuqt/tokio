@@ -98,6 +98,14 @@ export class AudioQueue {
       if (typeof input === "string") {
         const response = await fetch(input);
         audioData = await response.arrayBuffer();
+      } else if (
+        input instanceof Uint8Array &&
+        input.byteOffset === 0 &&
+        input.byteLength === input.buffer.byteLength &&
+        input.buffer instanceof ArrayBuffer
+      ) {
+        // IPC hands over a view of its own buffer, so it's decoded without a copy.
+        audioData = input.buffer;
       } else if (input instanceof Uint8Array) {
         audioData = input.buffer.slice(
           input.byteOffset,

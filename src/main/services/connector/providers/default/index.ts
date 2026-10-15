@@ -12,11 +12,10 @@ import {
 } from "@/common/types";
 import { delay } from "@/common/util";
 import { EventEmitter } from "events";
-import {
+import type {
   TikTokLiveConnection,
   User,
   UserIdentity,
-  WebcastEvent,
 } from "tiktok-live-connector";
 import {
   ConnectorProvider,
@@ -25,7 +24,11 @@ import {
 } from "../../common";
 import config from "./config";
 
+type TikTokLive = typeof import("tiktok-live-connector");
+
 export class TikTokLiveConnector extends ConnectorProvider {
+  // Loaded on the first connect, startup doesn't need the library.
+  private _lib: TikTokLive | null = null;
   private _connector: TikTokLiveConnection | null;
   private _sessionID: string;
   private _username: string;
@@ -80,6 +83,7 @@ export class TikTokLiveConnector extends ConnectorProvider {
         error: new Error("No username was defined."),
       };
     }
+    const { TikTokLiveConnection, WebcastEvent } = await this._loadLib();
     this._connector = new TikTokLiveConnection(this._username, {
       processInitialData: false,
       session: {
@@ -167,6 +171,7 @@ export class TikTokLiveConnector extends ConnectorProvider {
       const response = await fetch(url, {
         method: "GET",
         headers: config.HEADERS,
+        signal: AbortSignal.timeout(config.REQUEST_TIMEOUT_MS),
       });
 
       if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
@@ -197,6 +202,11 @@ export class TikTokLiveConnector extends ConnectorProvider {
 
   // -- Private API --
 
+  private async _loadLib(): Promise<TikTokLive> {
+    this._lib ??= await import("tiktok-live-connector");
+    return this._lib;
+  }
+
   private emit<K extends TOKIO_EVENTS>(
     event: K,
     data?: TokioEventMap[K],
@@ -205,7 +215,8 @@ export class TikTokLiveConnector extends ConnectorProvider {
   }
 
   private registerEvents(): void {
-    if (!this._connector) return;
+    if (!this._connector || !this._lib) return;
+    const { WebcastEvent } = this._lib;
 
     this._connector.on(WebcastEvent.SHARE, (tdata) => {
       const user = this.getUserData({
@@ -386,6 +397,7 @@ export class TikTokLiveConnector extends ConnectorProvider {
     try {
       const response = await fetch(config.GEO_API_URL, {
         headers: config.HEADERS,
+        signal: AbortSignal.timeout(config.REQUEST_TIMEOUT_MS),
       });
 
       if (!response.ok) {

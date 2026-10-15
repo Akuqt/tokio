@@ -17,7 +17,12 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AlertAudio, AlertsService } from "./index";
+import {
+  AlertAudio,
+  AlertsService,
+  CACHE_MAX_BYTES,
+  CACHE_MAX_FILE_BYTES,
+} from "./index";
 
 const FIXTURE = resolve("test/fixtures/myinstants-search.html");
 
@@ -164,23 +169,41 @@ describe("AlertsService", () => {
       expect(res.success).toBe(false);
     });
 
-    it("keeps the 30 most recently used sounds in memory", async () => {
-      const names = Array.from({ length: 31 }, (_, i) => `s${i}.mp3`);
+    it("keeps the most recently used sounds that fit in memory", async () => {
+      // The largest cached files, so one more than fit pushes one out.
+      const fit = CACHE_MAX_BYTES / CACHE_MAX_FILE_BYTES;
+      const names = Array.from({ length: fit + 1 }, (_, i) => `s${i}.mp3`);
       await Promise.all(
-        names.map((name, i) => writeFile(join(sounds, name), bytes(i))),
+        names.map((name, i) => {
+          const data = new Uint8Array(CACHE_MAX_FILE_BYTES);
+          data[0] = i;
+          return writeFile(join(sounds, name), data);
+        }),
       );
 
-      await service.readSound("s0.mp3");
-      for (const name of names.slice(1, 30)) await service.readSound(name);
+      for (const name of names.slice(0, fit)) await service.readSound(name);
       // Using s0 again makes s1 the oldest.
       await service.readSound("s0.mp3");
-      await service.readSound("s30.mp3");
+      await service.readSound(names[fit]);
 
       await unlink(join(sounds, "s0.mp3"));
       await unlink(join(sounds, "s1.mp3"));
 
-      expect((await service.readSound("s0.mp3")).data).toEqual(bytes(0));
+      expect((await service.readSound("s0.mp3")).data?.[0]).toBe(0);
       expect((await service.readSound("s1.mp3", false)).success).toBe(false);
+    });
+
+    it("reads sounds too big to cache from disk every time", async () => {
+      const name = "long.mp3";
+      await writeFile(
+        join(sounds, name),
+        new Uint8Array(CACHE_MAX_FILE_BYTES + 1),
+      );
+
+      expect((await service.readSound(name)).success).toBe(true);
+      await unlink(join(sounds, name));
+
+      expect((await service.readSound(name, false)).success).toBe(false);
     });
 
     it("deleteSound removes the file and the cached copy", async () => {

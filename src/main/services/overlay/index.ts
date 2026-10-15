@@ -1,6 +1,7 @@
 import {
   OverlayConfig,
   OverlayConfigSchema,
+  OverlayMetadata,
   TestOverlay,
 } from "@/common/schemas";
 import {
@@ -93,20 +94,9 @@ export class OverlayService extends Service {
     await this._json.saveArbitraryFile(this._giftsFile, gifts);
 
     for (const overlay of this._store.getSettings().overlays) {
-      const dir = this._dir(overlay.id);
-      const res = await processOverlay(dir, this._yaml, overlay.external!);
-      const html =
-        res.success &&
-        (await processHTML(
-          overlay.id,
-          res.data!.htmlContent,
-          dir,
-          "value",
-          res.data!.config,
-          gifts,
-        ));
+      const info = await this._writeHTML(overlay.id, overlay.external!, gifts);
 
-      if (!html || !html.success) {
+      if (!info) {
         Logger.warn(
           `<Overlays> Unable to load overlay ${overlay.id}, it has been removed.`,
           this._logFile,
@@ -115,7 +105,31 @@ export class OverlayService extends Service {
         continue;
       }
 
-      this._register({ ...res.data!.info, id: overlay.id, path: dir }, false);
+      this._register(
+        { ...info, id: overlay.id, path: this._dir(overlay.id) },
+        false,
+      );
+    }
+  }
+
+  /**
+   * Saves gifts fetched after `load` and writes them into the loaded overlays.
+   * Does nothing when they match the saved ones.
+   */
+  public async refreshGifts(gifts: CustomGift[]): Promise<void> {
+    if (JSON.stringify(gifts) === JSON.stringify(await this.getGifts())) return;
+
+    await this._json.saveArbitraryFile(this._giftsFile, gifts);
+
+    const loaded = new Set(this._overlays.map((o) => o.id));
+    for (const overlay of this._store.getSettings().overlays) {
+      if (!loaded.has(overlay.id)) continue;
+      if (!(await this._writeHTML(overlay.id, overlay.external!, gifts))) {
+        Logger.warn(
+          `<Overlays> Unable to update the gifts of overlay ${overlay.id}.`,
+          this._logFile,
+        );
+      }
     }
   }
 
@@ -277,6 +291,27 @@ export class OverlayService extends Service {
       );
     }
     return { success: sent };
+  }
+
+  // Writes the overlay's saved config and the gifts into its HTML.
+  private async _writeHTML(
+    id: string,
+    external: boolean,
+    gifts: CustomGift[],
+  ): Promise<OverlayMetadata | null> {
+    const dir = this._dir(id);
+    const res = await processOverlay(dir, this._yaml, external);
+    if (!res.success) return null;
+
+    const html = await processHTML(
+      id,
+      res.data!.htmlContent,
+      dir,
+      "value",
+      res.data!.config,
+      gifts,
+    );
+    return html.success ? res.data!.info : null;
   }
 
   private _register(overlay: OverlayApp, rebuild: boolean): void {

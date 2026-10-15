@@ -46,6 +46,18 @@ describe("MusicQueue", () => {
     expect(queue.getQueueState().isPlaying).toBe(false);
   });
 
+  it("stops calling a listener removed with off", async () => {
+    const queue = new MusicQueue();
+    const listener = vi.fn();
+    queue.on(TOKIO_EVENTS.MUSIC_CHANGE, listener);
+    queue.off(TOKIO_EVENTS.MUSIC_CHANGE, listener);
+
+    queue.enqueue("a", song("a"), () => {});
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(listener).not.toHaveBeenCalled();
+  });
+
   it("emits MUSIC_CHANGE with playing and played flags", async () => {
     const queue = new MusicQueue();
     const listener = vi.fn();

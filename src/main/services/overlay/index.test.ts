@@ -148,6 +148,31 @@ describe("OverlayService", () => {
       expect(await service.getGifts()).toEqual(gifts);
     });
 
+    it("writes gifts that changed after load into the loaded overlays", async () => {
+      await configurable(join(folder, "title"));
+      stored = [{ id: "title", name: "Title", version: "1.0.0", config: true }];
+      await service.load(gifts);
+      const lion = { value: 2, label: "Lion", img: "", coins: 29999 };
+      vi.mocked(processHTML).mockClear();
+
+      await service.refreshGifts([...gifts, lion]);
+
+      expect(processHTML).toHaveBeenCalledOnce();
+      expect(vi.mocked(processHTML).mock.calls[0][5]).toEqual([...gifts, lion]);
+      expect(await service.getGifts()).toEqual([...gifts, lion]);
+    });
+
+    it("leaves the overlays alone when the gifts didn't change", async () => {
+      await configurable(join(folder, "title"));
+      stored = [{ id: "title", name: "Title", version: "1.0.0", config: true }];
+      await service.load(gifts);
+      vi.mocked(processHTML).mockClear();
+
+      await service.refreshGifts(structuredClone(gifts));
+
+      expect(processHTML).not.toHaveBeenCalled();
+    });
+
     it("doesn't serve an overlay whose HTML can't be written", async () => {
       await configurable(join(folder, "title"));
       stored = [{ id: "title", name: "Title", version: "1.0.0", config: true }];

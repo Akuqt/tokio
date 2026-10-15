@@ -3,6 +3,7 @@ import {
   APP_EVENTS,
   APP_EVENTS_RESPONSE,
   AppEvents,
+  CustomGift,
   TOKIO_EVENTS,
   TokioEventMap,
 } from "@/common/types";
@@ -16,8 +17,25 @@ import { MusicService } from "@/services/music";
 import { StoreManagerService } from "@/services/store";
 import { TTSService } from "@/services/tts";
 import { CustomBrowserWindow } from "@/types";
+import { throttle } from "es-toolkit";
+
+const STATS_THROTTLE_MS = 250;
 
 const events = createStack();
+
+// Gifts in the shape overlays use, none when TikTok can't be reached.
+const fetchOverlayGifts = async (
+  conn: TikTokConnectorService,
+): Promise<CustomGift[]> => {
+  const gifts = await conn.fetchGifts();
+  if (!gifts.success) return [];
+  return gifts.data.map((g) => ({
+    value: g.id,
+    label: g.name,
+    img: g.image,
+    coins: g.coins,
+  }));
+};
 
 const registerConnectorEvents = (
   conn: TikTokConnectorService,
@@ -31,7 +49,7 @@ const registerConnectorEvents = (
     type: K,
     payload: TokioEventMap[K],
   ) => {
-    if (!store.getSettings().activeFeatures.alerts) return;
+    if (!store.getActiveFeatures().alerts) return;
     const profile = await store.getProfileData();
     if (!profile) return;
     await alerts.handle(type, payload, profile.alerts, (audio) => {
@@ -51,22 +69,28 @@ const registerConnectorEvents = (
     }
   }
 
+  // Busy lives send many of these, the UI only needs the latest few a second.
+  const sendViews = throttle((views: number, viewers: number) => {
+    win.webContents.send(APP_EVENTS_RESPONSE.VIEWS, {
+      data: { views, viewers },
+    });
+  }, STATS_THROTTLE_MS);
+  const sendLikes = throttle((likes: number) => {
+    win.webContents.send(APP_EVENTS_RESPONSE.LIKES, { likes });
+  }, STATS_THROTTLE_MS);
+
   conn.on(TOKIO_EVENTS.ROOM_USER, (d) => {
     store.updateLiveStats({ viewers: d.viewers, views: d.views });
-    win.webContents.send(APP_EVENTS_RESPONSE.VIEWS, {
-      data: {
-        views: d.views,
-        viewers: d.viewers,
-      },
-    });
+    sendViews(d.views, d.viewers);
   });
   conn.on(TOKIO_EVENTS.LIKE, (d) => {
     store.updateLiveStats({ likes: d.totalLikes });
-    win.webContents.send(APP_EVENTS_RESPONSE.LIKES, {
-      likes: d.totalLikes,
-    });
+    sendLikes(d.totalLikes);
   });
   conn.on(TOKIO_EVENTS.DISCONNECTED, () => {
+    // A late stats update would overwrite the reset below.
+    sendViews.cancel();
+    sendLikes.cancel();
     music.clearHandler();
     tts.clearTalk();
     win.webContents.send(APP_EVENTS_RESPONSE.ALERT_CLEAR, undefined);
@@ -80,9 +104,9 @@ const registerConnectorEvents = (
     });
   });
   conn.on(TOKIO_EVENTS.CHAT, async (d) => {
-    const settings = store.getSettings();
+    const features = store.getActiveFeatures();
     const profile = await store.getProfileData();
-    if (settings.activeFeatures.tts) {
+    if (features.tts) {
       if (!profile) return;
       tts.talk(d, profile.tts, (res) => {
         win.webContents.send(APP_EVENTS_RESPONSE.TTS_AUDIO, {
@@ -94,7 +118,7 @@ const registerConnectorEvents = (
     } else {
       tts.clearTalk();
     }
-    if (settings.activeFeatures.music && music.isActive()) {
+    if (features.music && music.isActive()) {
       if (!profile) return;
       music.handle(d, profile.music);
     } else {
@@ -202,19 +226,26 @@ events.push(
 
       const settings = storeManagerService.getSettings();
 
-      const gifts = await connectorService.fetchGifts();
-
-      const gifts_data = !gifts.success
-        ? []
-        : gifts.data.map((g) => ({
-            value: g.id,
-            label: g.name,
-            img: g.image,
-            coins: g.coins,
-          }));
-
-      // Before the server starts, so it serves the overlays right away.
-      await overlayService.load(gifts_data);
+      // Before the server starts, so it serves the overlays right away. The
+      // gifts saved last time are used when there are any, so startup doesn't
+      // wait for TikTok, and fresh ones replace them once they arrive.
+      const cachedGifts = await overlayService.getGifts();
+      if (cachedGifts.length > 0) {
+        await overlayService.load(cachedGifts);
+        void fetchOverlayGifts(connectorService)
+          .then(async (gifts) => {
+            if (gifts.length > 0) await overlayService.refreshGifts(gifts);
+          })
+          .catch((error) => {
+            Logger.error(
+              `<System> Unable to refresh the gifts -- ${formatError(error)}`,
+              pathManagerService.files.logs.system,
+              error,
+            );
+          });
+      } else {
+        await overlayService.load(await fetchOverlayGifts(connectorService));
+      }
 
       // A taken port shouldn't stop the app, the server is turned off instead.
       if (!(await serverService.toggleServer(settings.server.enabled))) {

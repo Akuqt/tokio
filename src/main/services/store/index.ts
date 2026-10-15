@@ -259,6 +259,15 @@ export class StoreManagerService extends Service {
     return [...saved, ...missing];
   }
 
+  /**
+   * The features turned on, read on every live event. Unlike getSettings it
+   * neither clones nor decrypts, so don't change the object it returns.
+   */
+  public getActiveFeatures(): Readonly<AppSettings["activeFeatures"]> {
+    this._ensureInitialized();
+    return this._storeData!.settings.activeFeatures;
+  }
+
   public getProfiles(): EntityMetadata[] {
     this._ensureInitialized();
     return this._storeData!.profiles;
@@ -336,6 +345,7 @@ export class StoreManagerService extends Service {
     return false;
   }
 
+  // Kept in memory only, they're reset when the app loads.
   public updateLiveStats(data: {
     likes?: number;
     viewers?: number;
@@ -346,7 +356,6 @@ export class StoreManagerService extends Service {
       ...this._storeData!.settings.liveStats,
       ...data,
     };
-    this._debouncedSave();
   }
 
   public updateActiveFeatures(data: {

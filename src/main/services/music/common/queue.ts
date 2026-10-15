@@ -75,6 +75,13 @@ export class MusicQueue {
     this._events.on(event, listener);
   }
 
+  public off<K extends TOKIO_EVENTS>(
+    event: K,
+    listener: (data: TokioEventMap[K]) => void,
+  ): void {
+    this._events.off(event, listener);
+  }
+
   private emit<K extends TOKIO_EVENTS>(
     event: K,
     data?: TokioEventMap[K],

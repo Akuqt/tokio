@@ -41,6 +41,8 @@ export const Iframe = ({ source, name }: IframeProps) => {
         src={iframeSrc}
         title={`Viewer for ${name}`}
         name={`TOKIO_APP-${name}`}
+        // Off-screen previews don't load or run until scrolled to.
+        loading="lazy"
         onLoad={() => {
           setLoading(false);
         }}

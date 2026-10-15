@@ -208,6 +208,13 @@ export class Spotify extends MusicProvider {
     this._events.on(event, listener);
   }
 
+  public off<K extends TOKIO_EVENTS>(
+    event: K,
+    listener: (data: TokioEventMap[K]) => void,
+  ): void {
+    this._events.off(event, listener);
+  }
+
   public async playerStatus(): Promise<CurrentSongInfo | null> {
     const searchRes = await this.fetchApi(`/me/player`);
     const song = this._parseSong(searchRes?.item);

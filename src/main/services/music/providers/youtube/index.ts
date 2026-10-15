@@ -218,6 +218,13 @@ export class YouTubeMusic extends MusicProvider {
     this._events.on(event, listener);
   }
 
+  public off<K extends TOKIO_EVENTS>(
+    event: K,
+    listener: (data: TokioEventMap[K]) => void,
+  ): void {
+    this._events.off(event, listener);
+  }
+
   public async playerStatus(): Promise<CurrentSongInfo | null> {
     if (!this._ytView) return null;
     try {

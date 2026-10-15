@@ -1,4 +1,9 @@
-import { APP_EVENTS, APP_EVENTS_RESPONSE, TOKIO_EVENTS } from "@/common/types";
+import {
+  APP_EVENTS,
+  APP_EVENTS_RESPONSE,
+  TOKIO_EVENTS,
+  TokioEventMap,
+} from "@/common/types";
 import { createStack } from "@/helper/events";
 
 const events = createStack();
@@ -13,12 +18,15 @@ events.push(
         },
       });
       const stats = storeManagerService.getSettings().liveStats;
-      connectorService.on(TOKIO_EVENTS.CONNECTED, (d) => {
+      // Answers this connect only, so connects don't pile up listeners.
+      const onConnected = (d: TokioEventMap[TOKIO_EVENTS.CONNECTED]) => {
+        connectorService.off(TOKIO_EVENTS.CONNECTED, onConnected);
         e.reply(APP_EVENTS_RESPONSE.CONNECTED, {
           success: d.success,
           stats,
         });
-      });
+      };
+      connectorService.on(TOKIO_EVENTS.CONNECTED, onConnected);
       await connectorService.connect(username);
     } catch {
       e.reply(APP_EVENTS_RESPONSE.CONNECTED, {

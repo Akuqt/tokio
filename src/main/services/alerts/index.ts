@@ -7,7 +7,6 @@ import {
 } from "@/common/types";
 import { formatError } from "@/common/util";
 import Logger from "@/logger";
-import * as cheerio from "cheerio";
 import { createHash } from "node:crypto";
 import { access, readFile, unlink, writeFile } from "node:fs/promises";
 import { basename, extname, join } from "node:path";
@@ -34,8 +33,9 @@ export interface AlertAudio {
 
 export const AUDIO_EXTENSIONS = ["mp3", "wav", "ogg"];
 
-// Number of sounds kept in memory
-const CACHE_SIZE = 30;
+// Bytes of sounds kept in memory. Bigger files are always read from disk.
+export const CACHE_MAX_BYTES = 32 * 1024 * 1024;
+export const CACHE_MAX_FILE_BYTES = 8 * 1024 * 1024;
 
 const hash = (data: string | Uint8Array) =>
   createHash("sha256").update(data).digest("hex").slice(0, 32);
@@ -46,6 +46,7 @@ export class AlertsService extends Service {
   private _soundsFolder = "";
   // Keyed by sound file name, in least recently used order
   private _cache = new Map<string, Uint8Array>();
+  private _cacheBytes = 0;
 
   public setLogFile(logFile: string): void {
     this._logFile = logFile;
@@ -158,7 +159,7 @@ export class AlertsService extends Service {
 
   public async deleteSound(file: string): Promise<AlertsResult<void>> {
     const name = basename(file);
-    this._cache.delete(name);
+    this._forget(name);
     try {
       await unlink(join(this._soundsFolder, name));
       return { success: true };
@@ -259,7 +260,7 @@ export class AlertsService extends Service {
         throw new Error(`MyInstants responded with status: ${response.status}`);
       }
 
-      const parsed = this._parseSoundsFromHtml(await response.text());
+      const parsed = await this._parseSoundsFromHtml(await response.text());
       const sounds = await Promise.all(
         parsed.map(async (sound) => ({
           ...sound,
@@ -279,8 +280,10 @@ export class AlertsService extends Service {
   /**
    * Parses the HTML to extract sound buttons.
    */
-  private _parseSoundsFromHtml(html: string): MyInstantsSound[] {
-    const $ = cheerio.load(html);
+  private async _parseSoundsFromHtml(html: string): Promise<MyInstantsSound[]> {
+    // Loaded on the first search. The slim build skips parse5 and undici.
+    const { load } = await import("cheerio/slim");
+    const $ = load(html);
     const sounds: MyInstantsSound[] = [];
 
     $("#instants_container > div.instants.result-page > .instant").each(
@@ -318,12 +321,22 @@ export class AlertsService extends Service {
   }
 
   private _remember(file: string, data: Uint8Array) {
-    this._cache.delete(file);
+    this._forget(file);
+    if (data.byteLength > CACHE_MAX_FILE_BYTES) return;
     this._cache.set(file, data);
-    if (this._cache.size > CACHE_SIZE) {
-      const oldest = this._cache.keys().next().value;
-      if (oldest !== undefined) this._cache.delete(oldest);
+    this._cacheBytes += data.byteLength;
+    // Maps keep insertion order, so the first key is the least recently used.
+    for (const oldest of this._cache.keys()) {
+      if (this._cacheBytes <= CACHE_MAX_BYTES) break;
+      this._forget(oldest);
     }
+  }
+
+  private _forget(file: string) {
+    const data = this._cache.get(file);
+    if (!data) return;
+    this._cache.delete(file);
+    this._cacheBytes -= data.byteLength;
   }
 
   private _isMyInstantsUrl(url: string) {

@@ -60,6 +60,14 @@ export class MusicService extends ProviderService<MusicProvider> {
     this._music_queue.on(event, listener);
   }
 
+  public off<K extends TOKIO_EVENTS>(
+    event: K,
+    listener: (data: TokioEventMap[K]) => void,
+  ): void {
+    this._current?.provider?.off(event, listener);
+    this._music_queue.off(event, listener);
+  }
+
   public clearHandler() {
     this._queue.stop();
     this._music_queue.clear();
