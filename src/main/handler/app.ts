@@ -4,6 +4,7 @@ import { AlertsService } from "@/services/alerts";
 import { TikTokConnectorService } from "@/services/connector";
 import { JSONManagerService } from "@/services/json";
 import { MusicService } from "@/services/music";
+import { OverlayService } from "@/services/overlay";
 import { PathManagerService } from "@/services/path";
 import { ServerService } from "@/services/server";
 import { StoreManagerService } from "@/services/store";
@@ -29,6 +30,7 @@ export class AppHandler implements AppHandlerVariables {
   public readonly ttsService: TTSService;
   public readonly musicService: MusicService;
   public readonly serverService: ServerService;
+  public readonly overlayService: OverlayService;
   public readonly urlManagerService: URLManagerService;
   public readonly jsonManagerService: JSONManagerService;
   public readonly yamlManagerService: YAMLManagerService;

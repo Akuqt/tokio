@@ -133,13 +133,7 @@ describe("ServerService", () => {
       const overlay = join(dir, "clock");
       await mkdir(overlay);
       await writeFile(join(overlay, "index.html"), "<h1>clock</h1>");
-      server.addOverlayApp({
-        id: "clock",
-        path: overlay,
-        name: "Clock",
-        version: "1.0.0",
-        config: false,
-      });
+      server.mount("clock", overlay);
       await server.start();
     });
 
@@ -157,11 +151,10 @@ describe("ServerService", () => {
       expect(res.headers.get("location")).toBe("/clock/");
     });
 
-    it("stops serving a removed overlay", async () => {
-      server.removeOverlayApp("clock");
+    it("stops serving an unmounted overlay", async () => {
+      server.unmount("clock");
 
       expect((await fetch(url("/clock/"))).status).toBe(404);
-      expect(server.getOverlayApps()).toEqual([]);
     });
   });
 

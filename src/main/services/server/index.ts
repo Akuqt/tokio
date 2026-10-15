@@ -1,5 +1,4 @@
-import { OverlayMetadata } from "@/common/schemas";
-import { OverlayApp, TOKIO_EVENTS, TokioEventMap } from "@/common/types";
+import { TOKIO_EVENTS, TokioEventMap } from "@/common/types";
 import { formatError, SERVER_PORT } from "@/common/util";
 import Logger from "@/logger";
 import express, { Express, Router } from "express";
@@ -18,8 +17,8 @@ export class ServerService extends Service {
   private _wss: CustomWebSocketServer | null = null;
   private _dynamicRouter: Router;
   private _port: number;
-  private _activeOverlays: (OverlayMetadata & { id: string; path: string })[] =
-    [];
+  // Folders served under /<id>/, keyed by id.
+  private _routes = new Map<string, string>();
   private _boundEvents: {
     event: TOKIO_EVENTS;
     handler: BoundHandler;
@@ -39,15 +38,15 @@ export class ServerService extends Service {
 
   private rebuildRoutes() {
     const newRouter = express.Router();
-    this._activeOverlays.forEach((overlay) => {
-      const route = "/" + overlay.id;
+    this._routes.forEach((path, id) => {
+      const route = "/" + id;
       newRouter.use(route, (req, res, next) => {
         if (req.originalUrl === route) {
           return res.redirect(route + "/");
         }
         next();
       });
-      newRouter.use(route, express.static(overlay.path));
+      newRouter.use(route, express.static(path));
     });
     this._dynamicRouter = newRouter;
   }
@@ -144,17 +143,13 @@ export class ServerService extends Service {
     }
   }
 
-  public addOverlayApp(overlayApp: OverlayApp, rebuild: boolean = true): void {
-    this._activeOverlays.push(overlayApp);
+  public mount(id: string, path: string, rebuild: boolean = true): void {
+    this._routes.set(id, path);
     if (rebuild) this.rebuildRoutes();
   }
 
-  public getOverlayApps(): OverlayApp[] {
-    return this._activeOverlays;
-  }
-
-  public removeOverlayApp(id: string) {
-    this._activeOverlays = this._activeOverlays.filter((a) => a.id !== id);
+  public unmount(id: string): void {
+    this._routes.delete(id);
     this.rebuildRoutes();
   }
 

@@ -16,8 +16,6 @@ import { MusicService } from "@/services/music";
 import { StoreManagerService } from "@/services/store";
 import { TTSService } from "@/services/tts";
 import { CustomBrowserWindow } from "@/types";
-import { join } from "path";
-import { findOverlays, processHTML, processOverlay } from "./helper";
 
 const events = createStack();
 
@@ -140,6 +138,7 @@ events.push(
       ttsService,
       musicService,
       serverService,
+      overlayService,
       urlManagerService,
       jsonManagerService,
       yamlManagerService,
@@ -156,6 +155,7 @@ events.push(
           connectorService.setLogFile(files.logs.connector);
           ttsService.setLogFile(files.logs.tts);
           serverService.setLogFile(files.logs.server);
+          overlayService.setLogFile(files.logs.overlays);
           urlManagerService.setLogFile(files.logs.system);
           storeManagerService.setLogFile(files.logs.system);
           jsonManagerService.setLogFile(files.logs.system);
@@ -173,15 +173,18 @@ events.push(
         jsonManagerService,
         pathManagerService,
       );
-      if (storeManagerService.wasRebuilt()) {
-        const overlays = await findOverlays(
-          pathManagerService.folders.overlaysFolder,
-          yamlManagerService,
-        );
-        for (const overlay of overlays) {
-          await storeManagerService.addOverlayInfo(overlay);
-        }
-      }
+      overlayService.initialize(
+        {
+          folder: pathManagerService.folders.overlaysFolder,
+          giftsFile: pathManagerService.files.gifts,
+        },
+        {
+          yaml: yamlManagerService,
+          json: jsonManagerService,
+          server: serverService,
+          store: storeManagerService,
+        },
+      );
       serverService.initEvents(connectorService, musicService);
       storeManagerService.updateLiveStats({
         likes: 0,
@@ -201,7 +204,7 @@ events.push(
 
       const gifts = await connectorService.fetchGifts();
 
-      let gifts_data = !gifts.success
+      const gifts_data = !gifts.success
         ? []
         : gifts.data.map((g) => ({
             value: g.id,
@@ -210,40 +213,8 @@ events.push(
             coins: g.coins,
           }));
 
-      await jsonManagerService.saveArbitraryFile(
-        pathManagerService.files.gifts,
-        gifts_data,
-      );
-
-      for (const overlay of settings.overlays) {
-        const dir = join(pathManagerService.folders.overlaysFolder, overlay.id);
-        const res = await processOverlay(
-          dir,
-          yamlManagerService,
-          overlay.external!,
-        );
-
-        if (!res.success) {
-          await storeManagerService.removeOverlayInfo(overlay.id);
-        } else {
-          const html = await processHTML(
-            overlay.id,
-            res.data!.htmlContent,
-            dir,
-            "value",
-            res.data!.config,
-            gifts_data,
-          );
-
-          if (!html.success) {
-            await storeManagerService.removeOverlayInfo(overlay.id);
-          }
-          serverService.addOverlayApp(
-            { ...res.data!.info, id: overlay.id, path: dir },
-            false,
-          );
-        }
-      }
+      // Before the server starts, so it serves the overlays right away.
+      await overlayService.load(gifts_data);
 
       // A taken port shouldn't stop the app, the server is turned off instead.
       if (!(await serverService.toggleServer(settings.server.enabled))) {

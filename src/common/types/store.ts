@@ -23,6 +23,7 @@ export interface Files {
     server: string;
     alerts: string;
     music: string;
+    overlays: string;
   };
   gifts: string;
 }

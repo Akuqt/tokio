@@ -8,6 +8,7 @@ import { AlertsService } from "@/services/alerts";
 import { TikTokConnectorService } from "@/services/connector";
 import { JSONManagerService } from "@/services/json";
 import { MusicService } from "@/services/music";
+import { OverlayService } from "@/services/overlay";
 import { PathManagerService } from "@/services/path";
 import { ServerService } from "@/services/server";
 import { StoreManagerService } from "@/services/store";
@@ -40,6 +41,7 @@ export interface AppServices {
   readonly ttsService: TTSService;
   readonly musicService: MusicService;
   readonly serverService: ServerService;
+  readonly overlayService: OverlayService;
   readonly urlManagerService: URLManagerService;
   readonly jsonManagerService: JSONManagerService;
   readonly storeManagerService: StoreManagerService;

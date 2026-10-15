@@ -4,6 +4,7 @@ import { AlertsService } from "@/services/alerts";
 import { TikTokConnectorService } from "@/services/connector";
 import { JSONManagerService } from "@/services/json";
 import { MusicService } from "@/services/music";
+import { OverlayService } from "@/services/overlay";
 import { PathManagerService } from "@/services/path";
 import { ServerService } from "@/services/server";
 import { StoreManagerService } from "@/services/store";
@@ -41,6 +42,7 @@ const services: AppServices = {
   ttsService: new TTSService(),
   musicService: new MusicService(),
   serverService: new ServerService(),
+  overlayService: new OverlayService(),
   urlManagerService: new URLManagerService(),
   jsonManagerService: new JSONManagerService(),
   pathManagerService: new PathManagerService(),

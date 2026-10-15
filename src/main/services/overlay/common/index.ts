@@ -125,10 +125,8 @@ export async function processOverlay(
         return { success: false };
       }
 
-      config_data = (await yaml.loadFile(
-        configPath,
-        OverlayConfigSchema,
-      )) as OverlayConfig;
+      config_data =
+        (await yaml.loadFile(configPath, OverlayConfigSchema)) ?? undefined;
 
       if (!config_data) {
         return { success: false };

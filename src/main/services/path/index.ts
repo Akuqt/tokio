@@ -35,6 +35,7 @@ export class PathManagerService {
         tts: join(this.folders.logsFolder, "tts.log"),
         alerts: join(this.folders.logsFolder, "alerts.log"),
         music: join(this.folders.logsFolder, "music.log"),
+        overlays: join(this.folders.logsFolder, "overlays.log"),
       },
       gifts: join(this.folders.extraFolder, "gifts.json"),
     };
