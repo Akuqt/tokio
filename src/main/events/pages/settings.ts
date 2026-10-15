@@ -238,9 +238,9 @@ events.push(
   APP_EVENTS.SET_SERVER,
   async ({ storeManagerService, serverService }, e, { enabled }) => {
     try {
-      await storeManagerService.updateServerSettings(enabled);
+      // Save the state the server ended up in, so a taken port turns the toggle off.
       const res = await serverService.toggleServer(enabled);
-      if (!res) throw new Error("Unable to start server");
+      await storeManagerService.updateServerSettings(enabled && res);
       const settings = storeManagerService.getSettings();
       const profiles = storeManagerService.getProfiles();
 
@@ -252,7 +252,7 @@ events.push(
         success: true,
       });
       e.reply(APP_EVENTS_RESPONSE.SET_SERVER, {
-        success: true,
+        success: res,
       });
     } catch {
       e.reply(APP_EVENTS_RESPONSE.SET_SERVER, {
@@ -262,14 +262,14 @@ events.push(
   },
 );
 
-events.push(APP_EVENTS.REQ_FDQN, async ({ urlManagerService }, e) => {
+events.push(APP_EVENTS.REQ_FQDN, async ({ urlManagerService }, e) => {
   try {
     const res = await urlManagerService.installAppFQDN();
-    e.reply(APP_EVENTS_RESPONSE.REQ_FDQN, {
+    e.reply(APP_EVENTS_RESPONSE.REQ_FQDN, {
       success: res,
     });
   } catch {
-    e.reply(APP_EVENTS_RESPONSE.REQ_FDQN, {
+    e.reply(APP_EVENTS_RESPONSE.REQ_FQDN, {
       success: false,
     });
   }

@@ -1,4 +1,5 @@
 import { OverlayApp } from "@/common/types";
+import { getOverlayURL } from "@/common/util";
 import copy from "copy-to-clipboard";
 import { FaRegCopy } from "react-icons/fa";
 import { GoUnverified, GoVerified } from "react-icons/go";
@@ -6,8 +7,6 @@ import { PiShootingStarThin } from "react-icons/pi";
 import { VscPackage, VscSettings } from "react-icons/vsc";
 import { Iframe } from "../Iframe";
 import styles from "./overlayview.module.css";
-
-const getUrl = (id: string) => `http://tokio-app.local:37891/${id}`;
 
 interface Props {
   onTest: (id: string) => void;
@@ -52,13 +51,13 @@ export function OverlayView({
             type="url"
             className={styles.input_style}
             disabled
-            value={getUrl(overlay.id)}
+            value={getOverlayURL(overlay.id)}
           />
           <button
             className={styles.action_btn}
             style={{ padding: "2px 8px" }}
             onClick={() => {
-              copy(getUrl(overlay.id));
+              copy(getOverlayURL(overlay.id));
             }}
           >
             <FaRegCopy size={18} />

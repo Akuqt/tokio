@@ -43,7 +43,7 @@ export enum APP_EVENTS {
   EXPORT_ENTITY = "app:settings:export:entity",
   SET_PROVIDER = "app:settings:set:provider",
   SET_SERVER = "app:settings:set:server",
-  REQ_FDQN = "app:settings:req:fqdn",
+  REQ_FQDN = "app:settings:req:fqdn",
 
   // HOME
   CONNECT = "app:home:connect",
@@ -148,7 +148,7 @@ export interface AppEventsMap {
     enabled: boolean;
   };
 
-  [APP_EVENTS.REQ_FDQN]: void;
+  [APP_EVENTS.REQ_FQDN]: void;
 
   // HOME
   [APP_EVENTS.CONNECT]: {

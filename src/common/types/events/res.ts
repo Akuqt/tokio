@@ -49,7 +49,7 @@ export enum APP_EVENTS_RESPONSE {
   EXPORT_ENTITY = "app:settings:res:export:entity",
   SET_PROVIDER = "app:settings:res:set:provider",
   SET_SERVER = "app:settings:res:set:server",
-  REQ_FDQN = "app:settings:res:fqdn",
+  REQ_FQDN = "app:settings:res:fqdn",
 
   //HOME
   CONNECTED = "app:home:res:connect",
@@ -164,7 +164,7 @@ export interface AppEventsResponseMap {
     success: boolean;
   };
 
-  [APP_EVENTS_RESPONSE.REQ_FDQN]: {
+  [APP_EVENTS_RESPONSE.REQ_FQDN]: {
     success: boolean;
   };
 

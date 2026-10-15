@@ -67,7 +67,7 @@ export function Settings() {
         if (res?.success) console.log("SET SERVER");
       },
     );
-    const removeFQDN = window.api.on(APP_EVENTS_RESPONSE.REQ_FDQN, (res) => {
+    const removeFQDN = window.api.on(APP_EVENTS_RESPONSE.REQ_FQDN, (res) => {
       dispatch({ type: "setServerEnabled", payload: res?.success || false });
       if (res?.success) {
         window.api.emit(APP_EVENTS.SET_SERVER, {

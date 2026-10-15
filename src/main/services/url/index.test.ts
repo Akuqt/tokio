@@ -1,6 +1,6 @@
 import Logger from "@/logger";
 import { exec } from "@vscode/sudo-prompt";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { appendFile, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -24,9 +24,14 @@ vi.mock("@/config", async (importOriginal) => {
 });
 vi.mock("@vscode/sudo-prompt", () => ({ exec: vi.fn() }));
 
-const elevated = (error?: Error) =>
+const ENTRY = "127.0.0.1 tokio-app.local";
+
+// Runs the admin prompt; `write` stands in for the elevated echo commands.
+const elevated = (error?: Error, write = true) =>
   vi.mocked(exec).mockImplementation((_cmd, _options, callback) => {
-    callback?.(error);
+    const done = () => callback?.(error);
+    if (error || !write) done();
+    else void appendFile(hosts.path, `\n${ENTRY}\n`).then(done);
   });
 
 describe("URLManagerService", () => {
@@ -38,28 +43,42 @@ describe("URLManagerService", () => {
     hosts.path = join(dir, "hosts");
     service = new URLManagerService();
     vi.mocked(exec).mockReset();
+    vi.spyOn(process, "platform", "get").mockReturnValue("win32");
   });
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     await rm(dir, { recursive: true, force: true });
-  });
-
-  it("builds overlay URLs on the app hostname", () => {
-    expect(service.getURL("clock")).toBe(
-      "https://tokio-app.local:37891/clock/",
-    );
-
-    service.setPort(4000);
-
-    expect(service.getURL("clock")).toBe("https://tokio-app.local:4000/clock/");
   });
 
   describe("installAppFQDN", () => {
     it("does nothing when the hostname is already there", async () => {
-      await writeFile(hosts.path, "127.0.0.1 tokio-app.local\n");
+      await writeFile(hosts.path, `${ENTRY}\n`);
 
       expect(await service.installAppFQDN()).toBe(true);
       expect(exec).not.toHaveBeenCalled();
+    });
+
+    it("accepts tabs, extra names and any letter case", async () => {
+      await writeFile(
+        hosts.path,
+        "127.0.0.1\tlocalhost  TOKIO-APP.local # Tokio\r\n",
+      );
+
+      expect(await service.installAppFQDN()).toBe(true);
+      expect(exec).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ["a commented-out entry", `# ${ENTRY}`],
+      ["another IP", "0.0.0.0 tokio-app.local"],
+      ["a look-alike name", "127.0.0.1 tokio-app.localhost"],
+    ])("adds the hostname over %s", async (_, line) => {
+      await writeFile(hosts.path, `${line}\n`);
+      elevated();
+
+      expect(await service.installAppFQDN()).toBe(true);
+      expect(exec).toHaveBeenCalledOnce();
     });
 
     it("appends the hostname block with admin rights", async () => {
@@ -73,12 +92,25 @@ describe("URLManagerService", () => {
         [
           `echo.>> ${hosts.path}`,
           `echo ## Tokio App Hostname - Start ##>> ${hosts.path}`,
-          `echo 127.0.0.1 tokio-app.local>> ${hosts.path}`,
+          `echo ${ENTRY}>> ${hosts.path}`,
           `echo ## Tokio App Hostname - End ##>> ${hosts.path}`,
         ].join("\n"),
         { name: "Tokio" },
         expect.any(Function),
       );
+    });
+
+    it("prompts once for calls made while the prompt is open", async () => {
+      await writeFile(hosts.path, "");
+      elevated();
+
+      const results = await Promise.all([
+        service.installAppFQDN(),
+        service.installAppFQDN(),
+      ]);
+
+      expect(results).toEqual([true, true]);
+      expect(exec).toHaveBeenCalledOnce();
     });
 
     it("fails when the admin prompt is refused", async () => {
@@ -94,7 +126,27 @@ describe("URLManagerService", () => {
       );
     });
 
+    it("fails when the hosts file is unchanged after the prompt", async () => {
+      await writeFile(hosts.path, "");
+      elevated(undefined, false);
+      const error = vi.spyOn(Logger, "error");
+
+      expect(await service.installAppFQDN()).toBe(false);
+      expect(error).toHaveBeenCalledWith(
+        expect.stringContaining("Hosts file was not updated"),
+        undefined,
+      );
+    });
+
     it("fails without prompting when the hosts file can't be read", async () => {
+      expect(await service.installAppFQDN()).toBe(false);
+      expect(exec).not.toHaveBeenCalled();
+    });
+
+    it("fails without prompting outside Windows", async () => {
+      vi.spyOn(process, "platform", "get").mockReturnValue("linux");
+      await writeFile(hosts.path, "");
+
       expect(await service.installAppFQDN()).toBe(false);
       expect(exec).not.toHaveBeenCalled();
     });

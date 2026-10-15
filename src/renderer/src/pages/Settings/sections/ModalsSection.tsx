@@ -29,7 +29,7 @@ export function ModalsSection({
           onConfirm={() => {
             dispatch({ type: "setServerEnabled", payload: true });
             dispatch({ type: "clearModal" });
-            window.api.emit(APP_EVENTS.REQ_FDQN);
+            window.api.emit(APP_EVENTS.REQ_FQDN);
           }}
           confirmText="Enable Server"
         />
