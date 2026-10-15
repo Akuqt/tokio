@@ -245,11 +245,14 @@ events.push(
         }
       }
 
-      const serverRes = await serverService.toggleServer(
-        settings.server.enabled,
-      );
-
-      if (!serverRes) throw new Error("Unable to start server");
+      // A taken port shouldn't stop the app, the server is turned off instead.
+      if (!(await serverService.toggleServer(settings.server.enabled))) {
+        Logger.warn(
+          "<System> Unable to start the overlay server, it has been disabled.",
+          pathManagerService.files.logs.system,
+        );
+        await storeManagerService.updateServerSettings(false);
+      }
 
       win.setResizable(true);
       win.setSize(1200, 800);

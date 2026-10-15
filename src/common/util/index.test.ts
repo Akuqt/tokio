@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { formatError, TaskQueue } from "./index";
+import { formatError, getOverlayURL, TaskQueue } from "./index";
 
 const deferred = () => {
   let resolve!: () => void;
@@ -170,5 +170,17 @@ describe("formatError", () => {
     expect(formatError({ code: 1 })).toBe('{"code":1}');
     expect(formatError(undefined)).toBe("undefined");
     expect(formatError("")).toBe("unknown");
+  });
+});
+
+describe("getOverlayURL", () => {
+  it("points at the overlay folder on the app hostname", () => {
+    expect(getOverlayURL("clock")).toBe("http://tokio-app.local:37891/clock/");
+  });
+
+  it("encodes the overlay id", () => {
+    expect(getOverlayURL("my overlay")).toBe(
+      "http://tokio-app.local:37891/my%20overlay/",
+    );
   });
 });

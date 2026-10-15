@@ -1,6 +1,6 @@
 import { OverlayMetadata } from "@/common/schemas";
 import { OverlayApp, TOKIO_EVENTS, TokioEventMap } from "@/common/types";
-import { formatError } from "@/common/util";
+import { formatError, SERVER_PORT } from "@/common/util";
 import Logger from "@/logger";
 import express, { Express, Router } from "express";
 import { randomUUID } from "node:crypto";
@@ -25,8 +25,8 @@ export class ServerService extends Service {
     handler: BoundHandler;
   }[] = [];
 
-  // NOTE: Overlays connect to 37891, other ports are for tests.
-  constructor(port: number = 37891) {
+  // NOTE: Overlays connect to SERVER_PORT, other ports are for tests.
+  constructor(port: number = SERVER_PORT) {
     super();
     this._app = express();
     this._dynamicRouter = express.Router();
@@ -76,7 +76,10 @@ export class ServerService extends Service {
         if (address && typeof address === "object") this._port = address.port;
         this._wss = new CustomWebSocketServer({ server: this._server! });
         this._wss.on("connection", (client, req) => {
-          const url = new URL(req.url || "/", "http://localhost:37891");
+          const url = new URL(
+            req.url || "/",
+            `http://localhost:${SERVER_PORT}`,
+          );
 
           const clientId = url.searchParams.get("id") || randomUUID();
 
