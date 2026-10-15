@@ -2,7 +2,7 @@ import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
 import { useEffect, useReducer, useRef } from "react";
 import { FiPlay, FiSquare } from "react-icons/fi";
 import { ClipLoader } from "react-spinners";
-import { defaultState, reducer } from "./helper";
+import { defaultState, formatStat, reducer } from "./helper";
 import styles from "./home.module.css";
 
 export function Home() {
@@ -90,6 +90,12 @@ export function Home() {
     dispatch({ type: "setLoading", payload: true });
     window.api.emit(APP_EVENTS.DISCONNECT);
   };
+
+  const stats = [
+    { label: "Viewers", value: views.current },
+    { label: "Likes", value: likes },
+    { label: "Total Views", value: views.total },
+  ];
 
   return (
     <div className={styles.container}>
@@ -233,22 +239,20 @@ export function Home() {
         </div>
 
         <div className={styles.statsGrid}>
-          <div className={styles.statBox}>
-            <span className={styles.statValue}>
-              {connected ? views.current : "--"}
-            </span>
-            <span className={styles.statLabel}>Viewers</span>
-          </div>
-          <div className={styles.statBox}>
-            <span className={styles.statValue}>{connected ? likes : "--"}</span>
-            <span className={styles.statLabel}>Likes</span>
-          </div>
-          <div className={styles.statBox}>
-            <span className={styles.statValue}>
-              {connected ? views.total : "--"}
-            </span>
-            <span className={styles.statLabel}>Total Views</span>
-          </div>
+          {stats.map(({ label, value }) => {
+            const formatted = formatStat(value);
+            return (
+              <div key={label} className={styles.statBox}>
+                <span
+                  className={styles.statValue}
+                  title={connected ? formatted.full : undefined}
+                >
+                  {connected ? formatted.short : "--"}
+                </span>
+                <span className={styles.statLabel}>{label}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

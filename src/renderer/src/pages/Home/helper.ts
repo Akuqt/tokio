@@ -79,6 +79,19 @@ const actionHandlers: ActionHandlers = {
   },
 };
 
+const compactFormat = new Intl.NumberFormat("en-US", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+const exactFormat = new Intl.NumberFormat("en-US");
+
+export function formatStat(value: number) {
+  return {
+    short: compactFormat.format(value),
+    full: exactFormat.format(value),
+  };
+}
+
 export const reducer = produce((draft: HomeState, action: HomeAction) => {
   const handler = actionHandlers[action.type] as any;
   if (handler) {
