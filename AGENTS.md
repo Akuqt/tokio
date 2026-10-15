@@ -126,3 +126,5 @@ Tokio's source is MIT. The project is open source, so treat license compliance a
 - Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `feat!:` for breaking changes). commitlint enforces this in a husky hook, so don't bypass hooks.
 - Keep the shared server port (`37891`) and existing event names stable. Overlays and saved user data depend on them.
 - Respect inline `NOTE: DO NOT CHANGE` markers.
+- Inside a folder that has a barrel `index` (`common/types`, `common/schemas`, `components`, `context`, `hooks`), import sibling files directly, never through the folder's own barrel. Barrel self-imports create import cycles.
+- `npx fallow -c .\.fallowrc.json health` (and `dead-code`, `dupes`) reports import cycles, dead code and duplication. The music window and installer UIs are listed as entry points in `.fallowrc.json`.
