@@ -1,7 +1,8 @@
 import { Profile } from "@/common/schemas";
 import { ChatEvent, TOKIO_EVENTS, TokioEventMap } from "@/common/types";
-import { TaskQueue } from "@/common/util";
+import { formatError, TaskQueue } from "@/common/util";
 import { hasPermission } from "@/helper/permissions";
+import Logger from "@/logger";
 import { ProviderService } from "@/services/shared";
 import { IpcMain } from "electron";
 import { ConnectionResponse, MusicProvider, MusicQueue } from "./common";
@@ -13,7 +14,12 @@ export class MusicService extends ProviderService<MusicProvider> {
   constructor() {
     super();
     this._queue = new TaskQueue();
-    this._music_queue = new MusicQueue();
+    this._music_queue = new MusicQueue(Infinity, (id, error) => {
+      Logger.error(
+        `<Music> Unable to play track [${id}] -- ${formatError(error)}`,
+        this._logFile,
+      );
+    });
     this.addProvider("YouTube", new YouTubeMusic(), true);
     this.addProvider("Spotify", new Spotify());
   }

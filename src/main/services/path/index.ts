@@ -1,7 +1,10 @@
 import { Files, Folders } from "@/common/types";
 import { existsSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rename, stat, writeFile } from "node:fs/promises";
 import { join, resolve } from "path";
+
+// Bigger logs are moved to `<name>.old.log` on startup, keeping one backup.
+const MAX_LOG_SIZE = 5 * 1024 * 1024;
 
 export class PathManagerService {
   public folders: Folders;
@@ -31,6 +34,7 @@ export class PathManagerService {
         server: join(this.folders.logsFolder, "server.log"),
         tts: join(this.folders.logsFolder, "tts.log"),
         alerts: join(this.folders.logsFolder, "alerts.log"),
+        music: join(this.folders.logsFolder, "music.log"),
       },
       gifts: join(this.folders.extraFolder, "gifts.json"),
     };
@@ -45,6 +49,9 @@ export class PathManagerService {
 
     const logFiles = Object.values(this.files.logs);
     for (const file of logFiles) {
+      if (existsSync(file) && (await stat(file)).size > MAX_LOG_SIZE) {
+        await rename(file, file.replace(/\.log$/, ".old.log"));
+      }
       if (!existsSync(file)) {
         await writeFile(file, "", { encoding: "utf-8" });
       }

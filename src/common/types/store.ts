@@ -22,6 +22,7 @@ export interface Files {
     system: string;
     server: string;
     alerts: string;
+    music: string;
   };
   gifts: string;
 }

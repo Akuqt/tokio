@@ -1,12 +1,30 @@
 export * from "./constants";
 export * from "./samples";
 
-export function formatError(error: unknown) {
-  if (!(error instanceof Error)) return "unknown";
-  const message = error.message || "<message?>";
-  const cause =
-    error.cause instanceof Error ? error.cause : new Error("<cause?>");
-  return `message: ${message} -- cause: ${cause.message}`;
+export function formatError(error: unknown): string {
+  return describeError(error, 0);
+}
+
+function describeError(error: unknown, depth: number): string {
+  if (error instanceof Error) {
+    const message = error.message || error.name;
+    if (error.cause === undefined || depth >= 3) return message;
+    return `${message} -- cause: ${describeError(error.cause, depth + 1)}`;
+  }
+  if (typeof error === "string") return error || "unknown";
+  if (
+    error &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    return error.message;
+  }
+  try {
+    return JSON.stringify(error) ?? String(error);
+  } catch {
+    return String(error);
+  }
 }
 
 export function delay(ms: number): Promise<void> {

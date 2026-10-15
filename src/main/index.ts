@@ -1,3 +1,5 @@
+import { formatError } from "@/common/util";
+import Logger from "@/logger";
 import { AlertsService } from "@/services/alerts";
 import { TikTokConnectorService } from "@/services/connector";
 import { JSONManagerService } from "@/services/json";
@@ -46,6 +48,18 @@ const services: AppServices = {
   storeManagerService: new StoreManagerService(),
   yamlManagerService: new YAMLManagerService(),
 };
+
+const logFatal = (kind: string) => (error: unknown) => {
+  Logger.error(
+    `<System> ${kind} -- ${formatError(error)}`,
+    services.pathManagerService.files?.logs.system,
+  );
+};
+
+// The monitor only observes, so Electron still handles the exception as usual.
+process.on("uncaughtExceptionMonitor", logFatal("Uncaught exception"));
+// Electron only warns about these, the listener keeps that behavior.
+process.on("unhandledRejection", logFatal("Unhandled rejection"));
 
 const APP_ICON = join(__dirname, "../../resources/icon.png");
 const APP_PRELOAD = join(__dirname, "../preload/index.mjs");

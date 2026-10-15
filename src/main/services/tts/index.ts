@@ -30,7 +30,7 @@ export class TTSService extends ProviderService<TTSProvider> {
       return await this._current.provider.getVoices();
     } catch (e) {
       Logger.error(
-        `<tts> Unable to get voices - ${formatError(e)}`,
+        `<TTS> Unable to get voices - ${formatError(e)}`,
         this._logFile,
       );
       return [];
@@ -43,7 +43,7 @@ export class TTSService extends ProviderService<TTSProvider> {
       return await this._current.provider.getDefaultVoice();
     } catch (e) {
       Logger.error(
-        `<tts> Unable to get default voice - ${formatError(e)}`,
+        `<TTS> Unable to get default voice - ${formatError(e)}`,
         this._logFile,
       );
       return null;
@@ -178,7 +178,7 @@ export class TTSService extends ProviderService<TTSProvider> {
         });
       } else {
         Logger.error(
-          `<tts> Unable to generate audio - ${formatError(res.error)}`,
+          `<TTS> Unable to generate audio - ${formatError(res.error)}`,
           this._logFile,
         );
       }

@@ -6,8 +6,10 @@ import {
   TOKIO_EVENTS,
   TokioEventMap,
 } from "@/common/types";
+import { formatError } from "@/common/util";
 import config from "@/config";
 import { createStack } from "@/helper/events";
+import Logger from "@/logger";
 import { AlertsService } from "@/services/alerts";
 import { TikTokConnectorService } from "@/services/connector";
 import { MusicService } from "@/services/music";
@@ -103,21 +105,28 @@ const registerConnectorEvents = (
   });
 };
 
-events.push(APP_EVENTS.GET_PROFILE, async ({ storeManagerService }, e) => {
-  try {
-    const profile = await storeManagerService.getProfileData();
-    const profiles = storeManagerService.getProfiles();
-    if (!profile || !profiles) throw new Error("Unable to load profile");
+events.push(
+  APP_EVENTS.GET_PROFILE,
+  async ({ storeManagerService, pathManagerService }, e) => {
+    try {
+      const profile = await storeManagerService.getProfileData();
+      const profiles = storeManagerService.getProfiles();
+      if (!profile || !profiles) throw new Error("Unable to load profile");
 
-    e.reply(APP_EVENTS_RESPONSE.GET_PROFILE, {
-      success: true,
-      profile,
-      profiles,
-    });
-  } catch {
-    e.reply(APP_EVENTS_RESPONSE.GET_PROFILE, { success: false });
-  }
-});
+      e.reply(APP_EVENTS_RESPONSE.GET_PROFILE, {
+        success: true,
+        profile,
+        profiles,
+      });
+    } catch (error) {
+      Logger.error(
+        `<System> Unable to get the profile -- ${formatError(error)}`,
+        pathManagerService.files?.logs.system,
+      );
+      e.reply(APP_EVENTS_RESPONSE.GET_PROFILE, { success: false });
+    }
+  },
+);
 
 events.push(
   APP_EVENTS.LOAD_APP,
@@ -150,6 +159,7 @@ events.push(
           storeManagerService.setLogFile(files.logs.system);
           jsonManagerService.setLogFile(files.logs.system);
           alertsService.setLogFile(files.logs.alerts);
+          musicService.setLogFile(files.logs.music);
           alertsService.setSoundsFolder(folders.soundsFolder);
         },
       );
@@ -247,7 +257,11 @@ events.push(
       e.reply(APP_EVENTS_RESPONSE.LOAD_APP, {
         success: true,
       });
-    } catch {
+    } catch (error) {
+      Logger.error(
+        `<System> Unable to load the app -- ${formatError(error)}`,
+        pathManagerService.files?.logs.system,
+      );
       e.reply(APP_EVENTS_RESPONSE.LOAD_APP, { success: false });
     }
   },

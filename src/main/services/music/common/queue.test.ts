@@ -61,17 +61,20 @@ describe("MusicQueue", () => {
     ]);
   });
 
-  it("keeps playing when a song's action throws", async () => {
-    const queue = new MusicQueue();
+  it("keeps playing when a song's action throws, and reports it", async () => {
+    const onError = vi.fn();
+    const queue = new MusicQueue(Infinity, onError);
     const b = vi.fn();
+    const error = new Error("player crashed");
 
     queue.enqueue("a", song("a"), () => {
-      throw new Error("player crashed");
+      throw error;
     });
     queue.enqueue("b", song("b"), b);
     await vi.advanceTimersByTimeAsync(1000);
 
     expect(b).toHaveBeenCalledOnce();
+    expect(onError).toHaveBeenCalledExactlyOnceWith(expect.any(String), error);
   });
 
   it("only waits the remaining time of a song that was already playing", async () => {

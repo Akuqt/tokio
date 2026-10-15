@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { TaskQueue } from "./index";
+import { formatError, TaskQueue } from "./index";
 
 const deferred = () => {
   let resolve!: () => void;
@@ -135,5 +135,40 @@ describe("TaskQueue", () => {
     expect(c).not.toHaveBeenCalled();
     await vi.advanceTimersByTimeAsync(1);
     expect(c).toHaveBeenCalledOnce();
+  });
+});
+
+describe("formatError", () => {
+  it("returns the message of an error", () => {
+    expect(formatError(new Error("offline"))).toBe("offline");
+  });
+
+  it("falls back to the name of an error without a message", () => {
+    expect(formatError(new TypeError())).toBe("TypeError");
+  });
+
+  it("follows the cause chain", () => {
+    const error = new Error("save failed", {
+      cause: new Error("disk full", { cause: "EIO" }),
+    });
+    expect(formatError(error)).toBe(
+      "save failed -- cause: disk full -- cause: EIO",
+    );
+  });
+
+  it("stops following a cyclic cause chain", () => {
+    const error = new Error("loop");
+    error.cause = error;
+    expect(formatError(error)).toBe(
+      "loop -- cause: loop -- cause: loop -- cause: loop",
+    );
+  });
+
+  it("describes values that are not errors", () => {
+    expect(formatError("timeout")).toBe("timeout");
+    expect(formatError({ message: "denied", code: 1 })).toBe("denied");
+    expect(formatError({ code: 1 })).toBe('{"code":1}');
+    expect(formatError(undefined)).toBe("undefined");
+    expect(formatError("")).toBe("unknown");
   });
 });

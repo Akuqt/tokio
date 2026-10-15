@@ -40,14 +40,19 @@ export class MusicQueue {
   private _abortController: AbortController | null;
   private _events: EventEmitter;
   private _maxSize: number;
+  private _onError?: (id: string, error: unknown) => void;
 
-  constructor(maxSize: number = Infinity) {
+  constructor(
+    maxSize: number = Infinity,
+    onError?: (id: string, error: unknown) => void,
+  ) {
     this._queue = [];
     this._currentIndex = 0;
     this._isPlaying = false;
     this._abortController = null;
     this._events = new EventEmitter();
     this._maxSize = maxSize;
+    this._onError = onError;
   }
 
   /**
@@ -212,7 +217,7 @@ export class MusicQueue {
       try {
         await item.action();
       } catch (error) {
-        console.error(`MusicQueue: Error playing track [${item.id}]`, error);
+        this._onError?.(item.id, error);
       }
 
       const waitTime =

@@ -1,35 +1,57 @@
-import { appendFile } from "node:fs";
+import { appendFile } from "node:fs/promises";
+
+type Level = "INFO" | "WARN" | "SUCCESS" | "ERROR";
 
 export default class Logger {
-  private static log(tag: string, msg: string, logFile?: string) {
-    const cmsg = `${Logger.gen_date()} -- ${tag} ${msg}`;
-    if (logFile && logFile !== "") {
-      const fmsg = `${Logger.gen_date()} -- ${tag} ${msg}\n`;
-      appendFile(logFile, fmsg, "utf-8", (err) => {
-        if (err) throw err; // TODO: Check later
-      });
-    }
-    console.log(cmsg);
+  // One write chain per file keeps its lines in call order.
+  private static _writes = new Map<string, Promise<void>>();
+  // Files whose last write failed, so a broken file is reported only once.
+  private static _failed = new Set<string>();
+
+  private static log(level: Level, msg: string, logFile?: string) {
+    const line = `${new Date().toISOString()} -- [${level}]: ${msg.replace(/\n/g, "\n    ")}`;
+
+    if (level === "ERROR") console.error(line);
+    else if (level === "WARN") console.warn(line);
+    else console.log(line);
+
+    if (logFile) Logger.write(logFile, `${line}\n`);
   }
 
-  private static gen_date() {
-    return new Date().toISOString();
+  private static write(logFile: string, line: string) {
+    const previous = Logger._writes.get(logFile) ?? Promise.resolve();
+    const next = previous.then(async () => {
+      try {
+        await appendFile(logFile, line, "utf-8");
+        Logger._failed.delete(logFile);
+      } catch (error) {
+        // Logging must never crash the app, so the error stops here.
+        if (Logger._failed.has(logFile)) return;
+        Logger._failed.add(logFile);
+        console.error(`Logger: unable to write to ${logFile}`, error);
+      }
+    });
+    Logger._writes.set(logFile, next);
+    void next.then(() => {
+      if (Logger._writes.get(logFile) === next) Logger._writes.delete(logFile);
+    });
+  }
+
+  /** Resolves once every pending file write has finished. */
+  public static async flush() {
+    await Promise.all(Logger._writes.values());
   }
 
   public static info(msg: string, logFile?: string) {
-    const tag = "[INFO]:";
-    this.log(tag, msg, logFile);
+    Logger.log("INFO", msg, logFile);
   }
   public static warn(msg: string, logFile?: string) {
-    const tag = "[WARN]:";
-    this.log(tag, msg, logFile);
+    Logger.log("WARN", msg, logFile);
   }
   public static success(msg: string, logFile?: string) {
-    const tag = "[SUCCESS]:";
-    this.log(tag, msg, logFile);
+    Logger.log("SUCCESS", msg, logFile);
   }
   public static error(msg: string, logFile?: string) {
-    const tag = "[ERROR]:";
-    this.log(tag, msg, logFile);
+    Logger.log("ERROR", msg, logFile);
   }
 }
