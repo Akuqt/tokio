@@ -1,0 +1,81 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--background-primary);
+}
+
+.section_header {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--font-primary);
+  margin: 0 0 4px 0;
+}
+
+.section_description {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--font-secondary);
+  margin: 0 0 16px 0;
+}
+
+.label_title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--font-primary);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.input_style {
+  background-color: var(--background-secondary);
+  color: var(--font-primary);
+  border: 1px solid var(--background-primary);
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.secondary_text {
+  color: var(--font-secondary);
+  font-size: 12px;
+  opacity: 0.8;
+  font-weight: 600;
+}
+
+.check_input_container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+.check_input {
+  accent-color: var(--accent-primary);
+  transform: scale(1.2);
+}
+
+.check_input_number {
+  width: 80px;
+  padding: 4px 8px;
+  transition: opacity 0.2s;
+}
+
+.check_label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--font-primary);
+  cursor: pointer;
+  width: fit-content;
+}
+
+.text_area_input {
+  min-height: 80px;
+  resize: vertical;
+}

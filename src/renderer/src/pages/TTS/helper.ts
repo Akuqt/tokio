@@ -1,5 +1,6 @@
 import { Profile } from "@/common/schemas";
 import { VoiceData } from "@/common/types";
+import { PermissionsAction, permissionHandlers, syncListTemps } from "@/helper";
 import { produce } from "immer";
 
 export interface TTSState {
@@ -29,24 +30,14 @@ export type TTSAction =
       payload: { mode: "any" | "dot" | "slash" | "custom"; value: string };
     }
   | { type: "setTemplate"; payload: string }
-  | { type: "setPermissionsAll"; payload: boolean }
-  | { type: "setPermissionsFollowers"; payload: boolean }
-  | { type: "setPermissionsSuperfans"; payload: boolean }
-  | { type: "setPermissionsModerators"; payload: boolean }
-  | { type: "setPermissionsLevelEnabled"; payload: boolean }
-  | { type: "setPermissionsLevelValue"; payload: number }
-  | { type: "setPermissionsListEnabled"; payload: boolean }
-  | { type: "setPermissionsListWhite"; payload: string[] }
-  | { type: "setPermissionsListWhiteTemp"; payload: string }
-  | { type: "setPermissionsListBlack"; payload: string[] }
-  | { type: "setPermissionsListBlackTemp"; payload: string }
   | { type: "setProtectionCooldown"; payload: number }
   | { type: "setProtectionQueueLength"; payload: number }
   | { type: "setProtectionCommentLength"; payload: number }
   | { type: "setProtectionBanned"; payload: string[] }
   | { type: "setProtectionBannedTemp"; payload: string }
   | { type: "AddReplacements"; payload: { old: string; new: string } }
-  | { type: "setReplacements"; payload: { old: string; new: string }[] };
+  | { type: "setReplacements"; payload: { old: string; new: string }[] }
+  | PermissionsAction;
 
 type ActionHandlers = {
   [K in TTSAction["type"]]: (
@@ -56,24 +47,22 @@ type ActionHandlers = {
 };
 
 const actionHandlers: ActionHandlers = {
+  ...permissionHandlers,
   initSettings: (draft, action) => {
     draft.settings = action.payload;
     draft.settingsTemp = action.payload;
     draft.bannedlistTemp = action.payload.protection.banned.join(", ");
-    draft.whitelistTemp = action.payload.permissions.list.white.join(", ");
-    draft.blacklistTemp = action.payload.permissions.list.black.join(", ");
+    syncListTemps(draft);
   },
   setSettings: (draft, action) => {
     draft.settings = action.payload;
     draft.bannedlistTemp = action.payload.protection.banned.join(", ");
-    draft.whitelistTemp = action.payload.permissions.list.white.join(", ");
-    draft.blacklistTemp = action.payload.permissions.list.black.join(", ");
+    syncListTemps(draft);
   },
   setSettingsTemp: (draft) => {
     draft.settingsTemp = draft.settings;
     draft.bannedlistTemp = draft.settings.protection.banned.join(", ");
-    draft.whitelistTemp = draft.settings.permissions.list.white.join(", ");
-    draft.blacklistTemp = draft.settings.permissions.list.black.join(", ");
+    syncListTemps(draft);
   },
   setVoice: (draft, action) => {
     draft.settings.voice = action.payload;
@@ -98,39 +87,6 @@ const actionHandlers: ActionHandlers = {
   },
   setTemplate: (draft, action) => {
     draft.settings.format.template = action.payload;
-  },
-  setPermissionsAll: (draft, action) => {
-    draft.settings.permissions.all = action.payload;
-  },
-  setPermissionsFollowers: (draft, action) => {
-    draft.settings.permissions.followers = action.payload;
-  },
-  setPermissionsSuperfans: (draft, action) => {
-    draft.settings.permissions.superfans = action.payload;
-  },
-  setPermissionsModerators: (draft, action) => {
-    draft.settings.permissions.moderators = action.payload;
-  },
-  setPermissionsLevelEnabled: (draft, action) => {
-    draft.settings.permissions.level.enabled = action.payload;
-  },
-  setPermissionsLevelValue: (draft, action) => {
-    draft.settings.permissions.level.value = action.payload;
-  },
-  setPermissionsListEnabled: (draft, action) => {
-    draft.settings.permissions.list.enabled = action.payload;
-  },
-  setPermissionsListWhite: (draft, action) => {
-    draft.settings.permissions.list.white = action.payload;
-  },
-  setPermissionsListWhiteTemp: (draft, action) => {
-    draft.whitelistTemp = action.payload;
-  },
-  setPermissionsListBlack: (draft, action) => {
-    draft.settings.permissions.list.black = action.payload;
-  },
-  setPermissionsListBlackTemp: (draft, action) => {
-    draft.blacklistTemp = action.payload;
   },
   setProtectionCooldown: (draft, action) => {
     draft.settings.protection.cooldown = action.payload;

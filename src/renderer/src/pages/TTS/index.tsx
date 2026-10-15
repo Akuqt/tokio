@@ -1,4 +1,5 @@
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
+import { PermissionsSection } from "@/components";
 import { defaultProfile } from "@/common/util";
 import { useAudio } from "@renderer/hooks";
 import isEqual from "fast-deep-equal";
@@ -6,7 +7,6 @@ import { useEffect, useMemo, useReducer, useRef } from "react";
 import { FiSave } from "react-icons/fi";
 import { reducer } from "./helper";
 import { FormatSection } from "./sections/FormatSection";
-import { PermissionsSection } from "./sections/PermissionsSection";
 import { ProtectionSection } from "./sections/ProtectionSection";
 import { ReplacementsSection } from "./sections/ReplacementsSection";
 import { VoiceSection } from "./sections/VoiceSection";
@@ -127,6 +127,7 @@ export function TTS() {
         <span className={styles.section_delimiter} />
 
         <PermissionsSection
+          feature="TTS"
           permissions={state.settings.permissions}
           whitelistTemp={state.whitelistTemp}
           blacklistTemp={state.blacklistTemp}

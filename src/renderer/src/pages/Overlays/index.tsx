@@ -5,6 +5,7 @@ import {
   CustomGift,
   OverlayApp,
   TokioPayload,
+  TokioPreviewMessage,
 } from "@/common/types";
 import { OverlayModal, OverlayView } from "@/components";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -106,13 +107,11 @@ export function Overlays() {
     const targetWindow = window.frames[name];
 
     if (targetWindow) {
-      targetWindow.postMessage(
-        {
-          action: "TOKIO_PREVIEW",
-          payload,
-        },
-        "*",
-      );
+      const message: TokioPreviewMessage = {
+        action: "TOKIO_PREVIEW",
+        payload,
+      };
+      targetWindow.postMessage(message, "*");
       window.api.emit(APP_EVENTS.SEND_OVERLAY_DATA, {
         id,
         payload,

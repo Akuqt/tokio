@@ -1,17 +1,21 @@
-import { MusicAction, MusicState } from "../helper";
-import styles from "../music.module.css";
+import { Permissions } from "@/common/schemas";
+import { PermissionsAction } from "@/helper";
+import styles from "./permissionssection.module.css";
 
 interface Props {
-  permissions: MusicState["settings"]["permissions"];
+  permissions: Permissions;
   whitelistTemp: string;
   blacklistTemp: string;
-  dispatch: React.Dispatch<MusicAction>;
+  // Feature name shown in the description
+  feature: "TTS" | "Music";
+  dispatch: React.Dispatch<PermissionsAction>;
 }
 
 export function PermissionsSection({
   permissions,
   whitelistTemp,
   blacklistTemp,
+  feature,
   dispatch,
 }: Props) {
   return (
@@ -19,7 +23,7 @@ export function PermissionsSection({
       <div>
         <h2 className={styles.section_header}>Permissions</h2>
         <p className={styles.section_description}>
-          Control exactly who has permission to use the Music system.
+          Control exactly who has permission to use the {feature} system.
         </p>
       </div>
 

@@ -24,7 +24,7 @@ export const defaultState: HomeState = {
   loading: false,
 };
 
-export type HomeAction =
+type HomeAction =
   | { type: "initSettings"; payload: AppSettings }
   | { type: "setProfile"; payload: Profile }
   | { type: "setUsername"; payload: string }

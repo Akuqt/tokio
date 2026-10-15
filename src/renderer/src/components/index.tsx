@@ -4,6 +4,7 @@ export * from "./Iframe";
 export * from "./Modal";
 export * from "./OverlayModal";
 export * from "./OverlayView";
+export * from "./PermissionsSection";
 export * from "./ProfileDropdown";
 export * from "./Select";
 export * from "./SoundPicker";

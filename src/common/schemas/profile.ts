@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TOKIO_EVENTS } from "../types/connector";
 
-const Permissions = z.object({
+const PermissionsSchema = z.object({
   all: z.boolean(),
   followers: z.boolean(),
   superfans: z.boolean(),
@@ -23,7 +23,7 @@ const MusicControl = z.object({
 });
 
 // Every live event (AppEvents) can trigger an alert.
-export const AlertTriggerSchema = z
+const AlertTriggerSchema = z
   .enum(TOKIO_EVENTS)
   .exclude(["CONNECTED", "DISCONNECTED", "MUSIC_PROCCESS_ENDED"]);
 
@@ -54,7 +54,7 @@ export const ProfileSchema = z.object({
     username: z.string(),
   }),
   music: z.object({
-    permissions: Permissions,
+    permissions: PermissionsSchema,
     protection: z.object({
       cooldown: z.number(),
       queue_length: z.number(),
@@ -80,7 +80,7 @@ export const ProfileSchema = z.object({
       pitch: z.number(),
       volume: z.number(),
     }),
-    permissions: Permissions,
+    permissions: PermissionsSchema,
     format: z.object({
       template: z.string(),
       trigger: z.object({
@@ -113,5 +113,6 @@ export const ProfileSchema = z.object({
 });
 
 export type Profile = z.infer<typeof ProfileSchema>;
+export type Permissions = z.infer<typeof PermissionsSchema>;
 export type Alert = z.infer<typeof AlertSchema>;
 export type AlertSound = z.infer<typeof AlertSoundSchema>;

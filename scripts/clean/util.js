@@ -7,7 +7,7 @@ import { glob, rm } from "node:fs/promises";
  * @param {string} file - The absolute or relative path to the file or directory to remove.
  * @returns {Promise<void>} Resolves when the deletion completes or fails gracefully.
  */
-export async function remove(file) {
+async function remove(file) {
   try {
     console.info(`Removing file: ${file}`);
     await rm(file, { force: true, recursive: true });
@@ -26,7 +26,7 @@ export async function remove(file) {
  * @param {string} ignore - The glob pattern to match (e.g., '**\/*.log').
  * @returns {Promise<void>} Resolves when all matching files have been processed.
  */
-export async function remove_glob(pattern, ignore) {
+async function remove_glob(pattern, ignore) {
   for await (const file of glob(pattern)) {
     if (file.includes(ignore)) continue;
     await remove(file);

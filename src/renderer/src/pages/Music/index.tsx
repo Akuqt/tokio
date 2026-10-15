@@ -1,11 +1,11 @@
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
+import { PermissionsSection } from "@/components";
 import isEqual from "fast-deep-equal";
 import { useEffect, useMemo, useReducer, useRef } from "react";
 import { FiSave } from "react-icons/fi";
 import { defaultState, reducer } from "./helper";
 import styles from "./music.module.css";
 import { ControlsSection } from "./sections/ControlsSection";
-import { PermissionsSection } from "./sections/PermissionsSection";
 import { ProtectionSection } from "./sections/ProtectionSection";
 import { ProviderSection } from "./sections/ProviderSection";
 
@@ -115,6 +115,7 @@ export function Music() {
         <span className={styles.section_delimiter} />
 
         <PermissionsSection
+          feature="Music"
           permissions={settings.permissions}
           whitelistTemp={whitelistTemp}
           blacklistTemp={blacklistTemp}

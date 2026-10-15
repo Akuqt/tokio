@@ -1,4 +1,4 @@
-import { OverlayConfigRedux } from ".";
+import { OverlayConfigRedux } from "./overlay";
 
 export interface UserData {
   username: string;

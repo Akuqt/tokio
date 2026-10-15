@@ -1,6 +1,7 @@
 import { Profile } from "@/common/schemas";
 import { ChatEvent } from "@/common/types";
 import { formatError, TaskQueue } from "@/common/util";
+import { hasPermission } from "@/helper/permissions";
 import Logger from "@/logger";
 import { ProviderService } from "../shared";
 import { GenerationResponse, TTSProvider, VoiceData } from "./common";
@@ -82,40 +83,7 @@ export class TTSService extends ProviderService<TTSProvider> {
 
     if (banned || over_length) return false;
 
-    if (settings.permissions.all) return true;
-
-    if (settings.permissions.list.enabled) {
-      const handle = chat.user.handle;
-      const { black, white } = settings.permissions.list;
-
-      return (
-        !black.includes(handle) &&
-        (white.length === 0 || white.includes(handle))
-      );
-    }
-
-    const passedRoles: boolean[] = [];
-
-    if (settings.permissions.followers) {
-      passedRoles.push(chat.user.follower ?? false);
-    }
-    if (settings.permissions.moderators) {
-      passedRoles.push(chat.user.moderator ?? false);
-    }
-    if (settings.permissions.superfans) {
-      passedRoles.push(chat.user.superfan ?? false);
-    }
-    if (settings.permissions.level.enabled) {
-      passedRoles.push(
-        (chat.user.fanLevel ?? 0) >= settings.permissions.level.value,
-      );
-    }
-
-    if (passedRoles.length > 0) {
-      return passedRoles.some((passed) => passed === true);
-    }
-
-    return true;
+    return hasPermission(settings.permissions, chat.user);
   }
 
   private _escapeRegExp(str: string) {

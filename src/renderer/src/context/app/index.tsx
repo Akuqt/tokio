@@ -3,11 +3,11 @@ import { SplashScreen } from "@/splash";
 import { useAudio } from "@renderer/hooks";
 import React, { createContext, useEffect, useRef, useState } from "react";
 
-export interface AppContextType {
+interface AppContextType {
   appLoading: boolean;
 }
 
-export const AppContext = createContext<AppContextType | undefined>(undefined);
+const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const isInitialMount = useRef(true);

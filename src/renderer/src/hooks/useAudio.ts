@@ -1,4 +1,4 @@
-import { AudioContext, AudioContextType } from "@/context";
+import { AudioContext, AudioContextType } from "@/context/audio";
 import { useContext } from "react";
 
 export function useAudio(): AudioContextType {

@@ -181,34 +181,6 @@
   PERMISSIONS
 */
 
-.check_input_container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  align-items: center;
-}
-
-.check_input {
-  accent-color: var(--accent-primary);
-  transform: scale(1.2);
-}
-
-.check_input_number {
-  width: 80px;
-  padding: 4px 8px;
-  transition: opacity 0.2s;
-}
-
-.check_label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: var(--font-primary);
-  cursor: pointer;
-  width: fit-content;
-}
-
 .text_area_input {
   min-height: 80px;
   resize: vertical;

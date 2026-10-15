@@ -1,6 +1,6 @@
 import { Alert, ALERT_TRIGGERS } from "@/common/schemas";
 import { ALERT_TRIGGER_LABELS, CustomGift, TOKIO_EVENTS } from "@/common/types";
-import { Btn, Select, Slider, Toggle } from "@/components";
+import { Btn, Select, Slider, Toggle } from "../Elements";
 import { AlertTestRequest } from "@renderer/hooks";
 import { FiPlayCircle, FiStopCircle, FiTrash2 } from "react-icons/fi";
 import styles from "./alertitem.module.css";

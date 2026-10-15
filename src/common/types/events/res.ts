@@ -1,9 +1,6 @@
-import {
-  CustomGift,
-  MyInstantsSound,
-  OverlayConfigRedux,
-  TokioPayload,
-} from "..";
+import { MyInstantsSound } from "../alerts";
+import { TokioPayload } from "../connector";
+import { CustomGift, OverlayConfigRedux } from "../overlay";
 import {
   Alert,
   AlertSound,

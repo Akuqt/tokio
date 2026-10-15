@@ -32,34 +32,6 @@
   -webkit-app-region: drag;
 }
 
-.sidebar {
-  width: 72px;
-  background-color: var(--background-secondary);
-  border-right: 1px solid var(--background-primary);
-  display: flex;
-  flex-direction: column;
-  padding: 8px 0;
-  gap: 4px;
-  z-index: 10;
-}
-
-.sidebar_item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  color: var(--font-secondary);
-  text-decoration: none;
-  font-size: 12px;
-  padding: 12px 4px;
-  cursor: pointer;
-}
-
-.sidebar_item:hover {
-  color: var(--font-primary);
-}
-
 .nav_top_items_container {
   display: flex;
   height: 100%;

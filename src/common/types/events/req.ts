@@ -1,4 +1,5 @@
-import { CustomGift, TokioPayload } from "..";
+import { TokioPayload } from "../connector";
+import { CustomGift } from "../overlay";
 import { OverlayConfig, Profile } from "../../schemas";
 import { VoiceData } from "../store";
 
