@@ -12,7 +12,7 @@ interface Props {
 
 export function ProfileSection({ store, dispatch }: Props) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div className={styles.section}>
       <div>
         <h2 className={styles.section_header}>
           <FiUsers style={{ marginRight: "8px", verticalAlign: "middle" }} />{" "}
