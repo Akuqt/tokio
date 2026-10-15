@@ -1,4 +1,4 @@
-import { OverlayMetadata } from "@/common/schemas";
+import { OverlayMetadata, TestOverlay } from "@/common/schemas";
 import { CustomGift, TOKIO_EVENTS } from "@/common/types";
 import { defaultStoreData, generateTikTokEventSample } from "@/common/util";
 import { JSONManagerService } from "@/services/json";
@@ -55,6 +55,7 @@ describe("OverlayService", () => {
   let folder: string;
   let service: OverlayService;
   let stored: (OverlayMetadata & { id: string })[];
+  let testOverlays: TestOverlay[];
   let rebuilt: boolean;
   let mount: MockInstance<ServerService["mount"]>;
   let sendToClient: MockInstance<ServerService["sendToClient"]>;
@@ -64,12 +65,19 @@ describe("OverlayService", () => {
     getSettings: () => ({
       ...defaultStoreData.settings,
       overlays: structuredClone(stored),
+      testOverlays: structuredClone(testOverlays),
     }),
     addOverlayInfo: async (o: OverlayMetadata & { id: string }) => {
       stored.push(o);
     },
     removeOverlayInfo: async (id: string) => {
       stored = stored.filter((o) => o.id !== id);
+    },
+    addTestOverlay: async (o: TestOverlay) => {
+      testOverlays.push(o);
+    },
+    removeTestOverlay: async (id: string) => {
+      testOverlays = testOverlays.filter((o) => o.id !== id);
     },
   };
 
@@ -92,6 +100,7 @@ describe("OverlayService", () => {
     folder = join(root, "overlays");
     await mkdir(folder);
     stored = [];
+    testOverlays = [];
     rebuilt = false;
     // Not started, it only keeps the routes.
     const server = new ServerService(0);
@@ -243,5 +252,44 @@ describe("OverlayService", () => {
     expect(types).not.toContain(TOKIO_EVENTS.CONNECTED);
     expect(types).not.toContain(TOKIO_EVENTS.DISCONNECTED);
     expect(types).not.toContain(TOKIO_EVENTS.MUSIC_PROCCESS_ENDED);
+  });
+
+  describe("test overlays", () => {
+    it("creates a named id and removes it", async () => {
+      const created = await service.createTestOverlay("  Gift goal  ");
+
+      expect(created.success).toBe(true);
+      expect(created.data).toEqual([
+        { id: expect.any(String), name: "Gift goal" },
+      ]);
+      expect(service.getTestOverlays()).toEqual(created.data);
+
+      const removed = await service.removeTestOverlay(created.data![0].id);
+
+      expect(removed).toEqual({ success: true, data: [] });
+    });
+
+    it("rejects an empty name", async () => {
+      expect(await service.createTestOverlay("   ")).toEqual({
+        success: false,
+      });
+      expect(service.getTestOverlays()).toEqual([]);
+    });
+
+    it("sends every test payload to the id", () => {
+      sendToClient.mockReturnValue(true);
+
+      expect(service.sendTestEvents("dev")).toEqual({ success: true });
+
+      const sent = sendToClient.mock.calls;
+      expect(sent.every(([id]) => id === "dev")).toBe(true);
+      expect(sent.map(([, p]) => p.type)).toEqual(
+        service.getTestPayloads().map((p) => p.type),
+      );
+    });
+
+    it("fails when no overlay is connected with the id", () => {
+      expect(service.sendTestEvents("dev")).toEqual({ success: false });
+    });
   });
 });

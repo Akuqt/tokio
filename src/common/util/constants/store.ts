@@ -13,6 +13,7 @@ export const defaultStoreData: StoreSchema = {
       enabled: false,
     },
     overlays: [],
+    testOverlays: [],
     sounds: [],
     activeFeatures: {
       tts: false,

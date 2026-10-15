@@ -118,6 +118,10 @@ describe("ServerService", () => {
     expect(res.status).toBe(404);
   });
 
+  it("sends nothing while stopped", () => {
+    expect(server.sendToClient("a", "ping")).toBe(false);
+  });
+
   it("fails to start on a port in use", async () => {
     await server.start();
     const other = new ServerService(server.getPort());
@@ -205,10 +209,14 @@ describe("ServerService", () => {
       b.on("message", onB);
 
       const message = nextMessage(a);
-      server.sendToClient("a", { hello: "a" });
+      expect(server.sendToClient("a", { hello: "a" })).toBe(true);
 
       expect(await message).toEqual({ hello: "a" });
       expect(onB).not.toHaveBeenCalled();
+    });
+
+    it("reports a send to an id with no overlay connected", () => {
+      expect(server.sendToClient("missing", "ping")).toBe(false);
     });
 
     it("stops forwarding after cleanupEvents", async () => {

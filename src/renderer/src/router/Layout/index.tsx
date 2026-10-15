@@ -6,7 +6,7 @@ import { useAudio } from "@/hooks";
 import { Link, Outlet } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BsLightningCharge } from "react-icons/bs";
-import { FiHome, FiMusic, FiSettings, FiVolume2 } from "react-icons/fi";
+import { FiHome, FiMusic, FiSettings, FiTool, FiVolume2 } from "react-icons/fi";
 import { LuMonitorCog } from "react-icons/lu";
 import {
   VscChromeClose,
@@ -191,9 +191,23 @@ export function Layout() {
           </Link>
 
           <Link
-            to="/settings"
+            to="/tools"
             className={styles.sidebar_item}
             style={{ marginTop: "auto" }}
+            activeProps={{
+              style: {
+                color: "var(--accent-primary)",
+                fontWeight: "bold",
+              },
+            }}
+          >
+            <FiTool size={22} />
+            Tools
+          </Link>
+
+          <Link
+            to="/settings"
+            className={styles.sidebar_item}
             activeProps={{
               style: {
                 color: "var(--accent-primary)",

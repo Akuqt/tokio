@@ -8,6 +8,7 @@ import {
   ProfileSchema,
   StoreSchema,
   StoreZodSchema,
+  TestOverlay,
 } from "@/common/schemas";
 import { defaultProfile, formatError } from "@/common/util";
 import { defaultStoreData } from "@/common/util/constants/store";
@@ -280,6 +281,19 @@ export class StoreManagerService extends Service {
     this._ensureInitialized();
     this._storeData!.settings.overlays =
       this._storeData!.settings.overlays.filter((o) => o.id !== id);
+    await this._queueSave();
+  }
+
+  public async addTestOverlay(overlay: TestOverlay): Promise<void> {
+    this._ensureInitialized();
+    this._storeData!.settings.testOverlays.push(overlay);
+    await this._queueSave();
+  }
+
+  public async removeTestOverlay(id: string): Promise<void> {
+    this._ensureInitialized();
+    this._storeData!.settings.testOverlays =
+      this._storeData!.settings.testOverlays.filter((o) => o.id !== id);
     await this._queueSave();
   }
 

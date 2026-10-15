@@ -25,15 +25,18 @@ export class CustomWebSocketServer extends WebSocketServer {
     }
   }
 
-  sendToClient<T>(clientId: string, data: T) {
+  // Whether the client got the data.
+  sendToClient(clientId: string, data: unknown): boolean {
     const client = this._mappedClients.get(clientId);
 
     if (client && client.readyState === WebSocket.OPEN) {
       if (client.bufferedAmount > 1024 * 1024) {
-        return;
+        return false;
       }
       client.send(JSON.stringify(data));
+      return true;
     }
+    return false;
   }
 
   closeAll() {

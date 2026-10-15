@@ -1,4 +1,8 @@
-import { OverlayConfig, OverlayConfigSchema } from "@/common/schemas";
+import {
+  OverlayConfig,
+  OverlayConfigSchema,
+  TestOverlay,
+} from "@/common/schemas";
 import {
   AppEvents,
   CustomGift,
@@ -19,10 +23,15 @@ import { StoreManagerService } from "../store";
 import { YAMLManagerService } from "../yaml";
 import { findOverlays, processHTML, processOverlay } from "./common";
 
-// The parts of the store that keep the overlay list.
+// The parts of the store that keep the overlay lists.
 type OverlayStore = Pick<
   StoreManagerService,
-  "wasRebuilt" | "getSettings" | "addOverlayInfo" | "removeOverlayInfo"
+  | "wasRebuilt"
+  | "getSettings"
+  | "addOverlayInfo"
+  | "removeOverlayInfo"
+  | "addTestOverlay"
+  | "removeTestOverlay"
 >;
 
 export interface OverlayResult<T = undefined> {
@@ -228,6 +237,46 @@ export class OverlayService extends Service {
     return Object.values(TOKIO_EVENTS)
       .filter(isLiveEvent)
       .map((key) => generateTikTokEventSample(key));
+  }
+
+  // IDs for overlays tested without importing them, see the Tools page.
+  public getTestOverlays(): TestOverlay[] {
+    return this._store.getSettings().testOverlays;
+  }
+
+  public async createTestOverlay(
+    name: string,
+  ): Promise<OverlayResult<TestOverlay[]>> {
+    const trimmed = name.trim();
+    if (!trimmed) return { success: false };
+
+    await this._store.addTestOverlay({ id: randomUUID(), name: trimmed });
+    return { success: true, data: this.getTestOverlays() };
+  }
+
+  public async removeTestOverlay(
+    id: string,
+  ): Promise<OverlayResult<TestOverlay[]>> {
+    await this._store.removeTestOverlay(id);
+    return { success: true, data: this.getTestOverlays() };
+  }
+
+  /**
+   * Sends every test payload to the overlay connected with `id`. Fails when
+   * no overlay is connected with it.
+   */
+  public sendTestEvents(id: string): OverlayResult {
+    const payloads = this.getTestPayloads();
+    const sent = payloads.every((payload) =>
+      this._server.sendToClient(id, payload),
+    );
+    if (!sent) {
+      Logger.info(
+        `<Overlays> No overlay connected with id ${id} to send test events to.`,
+        this._logFile,
+      );
+    }
+    return { success: sent };
   }
 
   private _register(overlay: OverlayApp, rebuild: boolean): void {

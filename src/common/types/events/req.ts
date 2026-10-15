@@ -60,6 +60,12 @@ export enum APP_EVENTS {
   SEND_OVERLAY_DATA = "app:overlays:send:data",
   TEST_OVERLAY = "app:overlays:test",
 
+  // TOOLS
+  GET_TEST_OVERLAYS = "app:tools:overlays:get",
+  ADD_TEST_OVERLAY = "app:tools:overlays:add",
+  REMOVE_TEST_OVERLAY = "app:tools:overlays:remove",
+  SEND_TEST_EVENTS = "app:tools:overlays:test",
+
   // ALERTS
   UPDATE_ALERTS_SETTINGS = "app:alerts:update:settings",
   SEARCH_SOUNDS = "app:alerts:search:sounds",
@@ -181,6 +187,12 @@ export interface AppEventsMap {
   [APP_EVENTS.TEST_OVERLAY]: {
     id: string;
   };
+
+  // TOOLS
+  [APP_EVENTS.GET_TEST_OVERLAYS]: void;
+  [APP_EVENTS.ADD_TEST_OVERLAY]: { name: string };
+  [APP_EVENTS.REMOVE_TEST_OVERLAY]: { id: string };
+  [APP_EVENTS.SEND_TEST_EVENTS]: { id: string };
 
   // ALERTS
   [APP_EVENTS.UPDATE_ALERTS_SETTINGS]: {

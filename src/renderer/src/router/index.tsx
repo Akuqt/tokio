@@ -4,7 +4,7 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import { Alerts, Home, Music, Overlays, Settings, TTS } from "../pages";
+import { Alerts, Home, Music, Overlays, Settings, Tools, TTS } from "../pages";
 import { Layout } from "./Layout";
 
 const rootRoute = createRootRoute({
@@ -41,6 +41,12 @@ const musicRoute = createRoute({
   component: Music,
 });
 
+const toolsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/tools",
+  component: Tools,
+});
+
 const settingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/settings",
@@ -53,6 +59,7 @@ const routeTree = rootRoute.addChildren([
   ttsRoute,
   alertsRoute,
   musicRoute,
+  toolsRoute,
   settingsRoute,
 ]);
 

@@ -7,6 +7,7 @@ import {
   OverlayConfig,
   Profile,
   StoreSchema,
+  TestOverlay,
 } from "../../schemas";
 import { OverlayApp } from "../server";
 import { VoiceData } from "../store";
@@ -63,6 +64,10 @@ export enum APP_EVENTS_RESPONSE {
   SAVE_OVERLAY_CONFIG = "app:overlays:res:save:config",
   GET_GIFTS = "app:overlays:res:get:gifts",
   TEST_OVERLAY = "app:overlays:res:test",
+
+  // TOOLS
+  GET_TEST_OVERLAYS = "app:tools:res:overlays:get",
+  SEND_TEST_EVENTS = "app:tools:res:overlays:test",
 
   // ALERTS
   ALERT_AUDIO = "app:alerts:audio",
@@ -211,6 +216,18 @@ export interface AppEventsResponseMap {
   [APP_EVENTS_RESPONSE.TEST_OVERLAY]: {
     payloads: TokioPayload[];
     id: string;
+  };
+
+  // TOOLS
+  // Adding and removing a test overlay also reply with the updated list.
+  [APP_EVENTS_RESPONSE.GET_TEST_OVERLAYS]: {
+    success: boolean;
+    data?: TestOverlay[];
+  };
+  // Fails when no overlay is connected with the id.
+  [APP_EVENTS_RESPONSE.SEND_TEST_EVENTS]: {
+    id: string;
+    success: boolean;
   };
 
   // ALERTS

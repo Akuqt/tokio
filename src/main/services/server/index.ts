@@ -175,10 +175,9 @@ export class ServerService extends Service {
     this._boundEvents = [];
   }
 
-  public sendToClient(id: string, payload: any) {
-    if (this._wss) {
-      this._wss.sendToClient(id, payload);
-    }
+  // Whether an overlay connected with the id got the payload.
+  public sendToClient(id: string, payload: any): boolean {
+    return this._wss?.sendToClient(id, payload) ?? false;
   }
 
   private broadcast<T extends TOKIO_EVENTS>(type: T, data: TokioEventMap[T]) {

@@ -21,11 +21,18 @@ const OverlayMeta = {
 
 export const OverlayMetaSchema = z.object(OverlayMeta);
 
+// An ID handed out on the Tools page, for overlays tested without importing them.
+const TestOverlaySchema = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
 const AppSettingsSchema = z.object({
   server: z.object({
     enabled: z.boolean(),
   }),
   overlays: z.array(z.object({ ...OverlayMeta, id: z.string() })),
+  testOverlays: z.array(TestOverlaySchema).default([]),
   // Uploaded sounds, available to alerts in every profile
   sounds: z.array(AlertSoundSchema).default([]),
   activeFeatures: z.object({
@@ -55,5 +62,6 @@ export const StoreZodSchema = z.object({
 export type AppProvider = z.infer<typeof ProviderSchema>;
 export type EntityMetadata = z.infer<typeof EntityMetadataSchema>;
 export type OverlayMetadata = z.infer<typeof OverlayMetaSchema>;
+export type TestOverlay = z.infer<typeof TestOverlaySchema>;
 export type AppSettings = z.infer<typeof AppSettingsSchema>;
 export type StoreSchema = z.infer<typeof StoreZodSchema>;

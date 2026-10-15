@@ -165,6 +165,7 @@ describe("StoreManagerService", () => {
         defaultStoreData.settings,
       );
       delete old.sounds;
+      delete old.testOverlays;
       const oldProfile: Partial<Profile> = structuredClone(defaultProfile);
       delete oldProfile.alerts;
       await writeFile(
@@ -176,6 +177,7 @@ describe("StoreManagerService", () => {
       const store = await init();
 
       expect(store.getSounds()).toEqual([]);
+      expect(store.getSettings().testOverlays).toEqual([]);
       expect((await store.getProfileData())?.alerts).toEqual(
         defaultProfile.alerts,
       );
@@ -303,6 +305,19 @@ describe("StoreManagerService", () => {
 
       expect(await store.isSoundInUse("ding.mp3")).toBe(true);
       expect(await store.isSoundInUse("other.mp3")).toBe(false);
+    });
+  });
+
+  describe("test overlays", () => {
+    it("saves and removes test overlays", async () => {
+      const store = await init();
+      const overlay = { id: "a", name: "Dev" };
+
+      await store.addTestOverlay(overlay);
+      expect((await init()).getSettings().testOverlays).toEqual([overlay]);
+
+      await store.removeTestOverlay("a");
+      expect((await init()).getSettings().testOverlays).toEqual([]);
     });
   });
 });
