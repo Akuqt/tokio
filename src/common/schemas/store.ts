@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AlertSoundSchema } from "./profile";
 
 const ProviderSchema = z.object({
   name: z.string(),
@@ -25,6 +26,8 @@ const AppSettingsSchema = z.object({
     enabled: z.boolean(),
   }),
   overlays: z.array(z.object({ ...OverlayMeta, id: z.string() })),
+  // Uploaded sounds, available to alerts in every profile
+  sounds: z.array(AlertSoundSchema).default([]),
   activeFeatures: z.object({
     tts: z.boolean(),
     music: z.boolean(),

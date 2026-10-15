@@ -5,6 +5,7 @@ import { ModalsSection } from "./sections/ModalsSection";
 import { ProfileSection } from "./sections/ProfileSection";
 import { ProvidersSection } from "./sections/ProvidersSection";
 import { ServerSection } from "./sections/ServerSection";
+import { SoundsSection } from "./sections/SoundsSection";
 import styles from "./settings.module.css";
 
 export function Settings() {
@@ -117,6 +118,10 @@ export function Settings() {
         <span className={styles.section_delimiter} />
 
         <ProfileSection store={store} dispatch={dispatch} />
+
+        <span className={styles.section_delimiter} />
+
+        <SoundsSection />
       </div>
     </>
   );

@@ -4,6 +4,8 @@ import * as Tone from "tone";
 
 export interface AudioContextType {
   getQueue: (name: string) => AudioQueue;
+  stopQueues: (prefix: string) => void;
+  setItemGain: (key: string, gain: number) => void;
   resumeContext: () => Promise<void>;
 }
 
@@ -21,6 +23,16 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({
     return queuesRef.current.get(name)!;
   };
 
+  const stopQueues = (prefix: string) => {
+    queuesRef.current.forEach((queue, name) => {
+      if (name.startsWith(prefix)) queue.stop();
+    });
+  };
+
+  const setItemGain = (key: string, gain: number) => {
+    queuesRef.current.forEach((queue) => queue.setItemGain(key, gain));
+  };
+
   const resumeContext = async () => {
     if (Tone.getContext().state !== "running") {
       await Tone.start();
@@ -28,7 +40,9 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   return (
-    <AudioContext.Provider value={{ getQueue, resumeContext }}>
+    <AudioContext.Provider
+      value={{ getQueue, stopQueues, setItemGain, resumeContext }}
+    >
       {children}
     </AudioContext.Provider>
   );

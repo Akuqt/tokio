@@ -21,6 +21,7 @@ export class PathManagerService {
       overlaysFolder: join(appFolder, "overlays"),
       profilesFolder: join(appFolder, "profiles"),
       extraFolder: join(appFolder, "extra"),
+      soundsFolder: join(appFolder, "sounds"),
     };
 
     this.files = {
@@ -29,6 +30,7 @@ export class PathManagerService {
         system: join(this.folders.logsFolder, "system.log"),
         server: join(this.folders.logsFolder, "server.log"),
         tts: join(this.folders.logsFolder, "tts.log"),
+        alerts: join(this.folders.logsFolder, "alerts.log"),
       },
       gifts: join(this.folders.extraFolder, "gifts.json"),
     };

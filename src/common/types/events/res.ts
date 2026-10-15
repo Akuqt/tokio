@@ -1,5 +1,16 @@
-import { CustomGift, OverlayConfigRedux, TokioPayload } from "..";
-import { OverlayConfig, Profile, StoreSchema } from "../../schemas";
+import {
+  CustomGift,
+  MyInstantsSound,
+  OverlayConfigRedux,
+  TokioPayload,
+} from "..";
+import {
+  Alert,
+  AlertSound,
+  OverlayConfig,
+  Profile,
+  StoreSchema,
+} from "../../schemas";
 import { OverlayApp } from "../server";
 import { VoiceData } from "../store";
 
@@ -55,6 +66,17 @@ export enum APP_EVENTS_RESPONSE {
   SAVE_OVERLAY_CONFIG = "app:overlays:res:save:config",
   GET_GIFTS = "app:overlays:res:get:gifts",
   TEST_OVERLAY = "app:overlays:res:test",
+
+  // ALERTS
+  ALERT_AUDIO = "app:alerts:audio",
+  ALERT_CLEAR = "app:alerts:clear",
+  TEST_ALERT = "app:alerts:res:test",
+  UPDATE_ALERTS_SETTINGS = "app:alerts:res:update:settings",
+  SEARCH_SOUNDS = "app:alerts:res:search:sounds",
+  SET_ALERT_SOUND = "app:alerts:res:set:sound",
+
+  // SOUND LIBRARY
+  GET_SOUNDS = "app:sounds:res",
 }
 
 export interface AppEventsResponseMap {
@@ -192,5 +214,47 @@ export interface AppEventsResponseMap {
   [APP_EVENTS_RESPONSE.TEST_OVERLAY]: {
     payloads: TokioPayload[];
     id: string;
+  };
+
+  // ALERTS
+  [APP_EVENTS_RESPONSE.ALERT_AUDIO]: {
+    data: Uint8Array;
+    volume: number;
+    // Name of the renderer audio queue to play on
+    channel: string;
+    maxQueueLength: number;
+    // Alert the sound belongs to, so volume changes reach it while playing
+    id?: string;
+  };
+  // Drops queued and playing alert sounds
+  [APP_EVENTS_RESPONSE.ALERT_CLEAR]: void;
+  [APP_EVENTS_RESPONSE.TEST_ALERT]: {
+    success: boolean;
+    id: string;
+    data?: Uint8Array;
+    volume: number;
+  };
+  [APP_EVENTS_RESPONSE.UPDATE_ALERTS_SETTINGS]: {
+    success: boolean;
+  };
+  [APP_EVENTS_RESPONSE.SEARCH_SOUNDS]: {
+    success: boolean;
+    // Echo of the request, so stale responses can be dropped
+    query: string;
+    page: number;
+    data: MyInstantsSound[];
+    hasNextPage: boolean;
+  };
+  [APP_EVENTS_RESPONSE.SET_ALERT_SOUND]: {
+    success: boolean;
+    id: string;
+    sound?: Alert["sound"];
+  };
+
+  // SOUND LIBRARY
+  [APP_EVENTS_RESPONSE.GET_SOUNDS]: {
+    // false when the last upload or removal failed
+    success: boolean;
+    data: AlertSound[];
   };
 }

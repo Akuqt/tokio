@@ -5,10 +5,33 @@ interface AudioQueueOptions {
   gapTime?: number;
 }
 
+interface EnqueueOptions {
+  // Per item volume, applied on top of the queue volume
+  gain?: number;
+  // Lets the volume of this item be changed while it waits or plays
+  key?: string;
+  // Called when the item finishes playing, not when the queue is stopped
+  onEnded?: () => void;
+}
+
+interface QueueItem extends EnqueueOptions {
+  buffer: Tone.ToneAudioBuffer;
+  gain: number;
+}
+
+interface ActiveItem {
+  player: Tone.GrainPlayer;
+  gainNode: Tone.Gain;
+  key?: string;
+}
+
 export class AudioQueue {
   private gainNode: Tone.Gain;
-  private queue: Tone.ToneAudioBuffer[] = [];
-  private activePlayers: Tone.GrainPlayer[] = [];
+  private queue: QueueItem[] = [];
+  // Scheduled or playing
+  private active: ActiveItem[] = [];
+  // Bumped by stop(), so audio still decoding from before is dropped
+  private generation: number = 0;
   private nextPlayTime: number = 0;
   public isPlaying: boolean = false;
   private maxQueueLength: number;
@@ -42,7 +65,7 @@ export class AudioQueue {
       this.currentFilters.pitch = Math.max(0.5, Math.min(filters.pitch, 2.0));
     }
 
-    this.activePlayers.forEach((player) => {
+    this.active.forEach(({ player }) => {
       if (filters.speed !== undefined) {
         player.playbackRate = this.currentFilters.speed;
       }
@@ -60,11 +83,14 @@ export class AudioQueue {
   async enqueue(
     input: string | Uint8Array | ArrayBuffer,
     autoplay: boolean = true,
+    { gain = 1, key, onEnded }: EnqueueOptions = {},
   ) {
-    if (this.queue.length >= this.maxQueueLength) {
+    if (this.pending() >= this.maxQueueLength) {
       console.warn("AudioQueue: Max queue length reached. Ignoring input.");
       return false;
     }
+
+    const generation = this.generation;
 
     try {
       let audioData: ArrayBuffer;
@@ -84,14 +110,16 @@ export class AudioQueue {
       const rawBuffer = await Tone.getContext().decodeAudioData(audioData);
       const toneBuffer = new Tone.ToneAudioBuffer(rawBuffer);
 
-      if (this.queue.length >= this.maxQueueLength) {
+      if (generation !== this.generation) return false;
+
+      if (this.pending() >= this.maxQueueLength) {
         console.warn(
           "AudioQueue: Queue filled up while downloading. Dropping audio.",
         );
         return false;
       }
 
-      this.queue.push(toneBuffer);
+      this.queue.push({ buffer: toneBuffer, gain, key, onEnded });
 
       if (autoplay) {
         this.start();
@@ -111,18 +139,50 @@ export class AudioQueue {
     this.scheduleNext();
   }
 
+  /**
+   * Changes the volume of every waiting or playing item with this key.
+   */
+  setItemGain(key: string, gain: number) {
+    this.queue.forEach((item) => {
+      if (item.key === key) item.gain = gain;
+    });
+    this.active.forEach((item) => {
+      if (item.key === key) item.gainNode.gain.rampTo(gain, 0.05);
+    });
+  }
+
   stop() {
+    this.generation++;
     this.isPlaying = false;
     this.queue = [];
     this.nextPlayTime = 0;
 
-    this.activePlayers.forEach((player) => {
+    const active = this.active;
+    this.active = [];
+    for (const { player, gainNode } of active) {
+      player.onstop = () => {};
       try {
         player.stop();
+      } catch {}
+      try {
         player.dispose();
       } catch {}
-    });
-    this.activePlayers = [];
+      try {
+        gainNode.dispose();
+      } catch {}
+    }
+
+    // Start over with a fresh output, so later audio never goes through
+    // nodes that were torn down above.
+    const output = this.gainNode;
+    this.gainNode = new Tone.Gain(this.currentFilters.volume).toDestination();
+    try {
+      output.dispose();
+    } catch {}
+  }
+
+  private pending() {
+    return this.queue.length + this.active.length;
   }
 
   private scheduleNext() {
@@ -133,7 +193,7 @@ export class AudioQueue {
     }
 
     while (this.queue.length > 0) {
-      const buffer = this.queue.shift()!;
+      const { buffer, gain, key, onEnded } = this.queue.shift()!;
 
       const player = new Tone.GrainPlayer({
         url: buffer,
@@ -143,13 +203,16 @@ export class AudioQueue {
         overlap: 0.05,
       });
 
-      player.connect(this.gainNode);
+      const gainNode = new Tone.Gain(gain).connect(this.gainNode);
+      player.connect(gainNode);
       player.start(this.nextPlayTime);
-      this.activePlayers.push(player);
+      this.active.push({ player, gainNode, key });
 
       player.onstop = () => {
-        this.activePlayers = this.activePlayers.filter((p) => p !== player);
+        this.active = this.active.filter((item) => item.player !== player);
         player.dispose();
+        gainNode.dispose();
+        onEnded?.();
       };
 
       const actualDuration = buffer.duration / this.currentFilters.speed;

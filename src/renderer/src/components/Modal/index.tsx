@@ -24,6 +24,7 @@ export function Modal({
   onClose,
   onConfirm,
   confirmText = "Confirm",
+  maxWidth = "400px",
   children,
 }: {
   title: string;
@@ -31,6 +32,7 @@ export function Modal({
   onClose: () => void;
   onConfirm: () => void;
   confirmText?: string;
+  maxWidth?: string;
   children?: React.ReactNode;
 }) {
   return (
@@ -54,7 +56,7 @@ export function Modal({
           border: "1px solid var(--background-primary)",
           borderRadius: "8px",
           padding: "24px",
-          maxWidth: "400px",
+          maxWidth,
           width: "100%",
           boxShadow: "0 10px 25px rgba(0, 0, 0, 0.5)",
           display: "flex",

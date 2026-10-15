@@ -58,6 +58,18 @@ export enum APP_EVENTS {
   GET_GIFTS = "app:overlays:get:gifts",
   SEND_OVERLAY_DATA = "app:overlays:send:data",
   TEST_OVERLAY = "app:overlays:test",
+
+  // ALERTS
+  UPDATE_ALERTS_SETTINGS = "app:alerts:update:settings",
+  SEARCH_SOUNDS = "app:alerts:search:sounds",
+  DOWNLOAD_SOUND = "app:alerts:download:sound",
+  IMPORT_SOUND = "app:alerts:import:sound",
+  TEST_ALERT = "app:alerts:test",
+
+  // SOUND LIBRARY
+  GET_SOUNDS = "app:sounds:get",
+  UPLOAD_SOUNDS = "app:sounds:upload",
+  REMOVE_SOUND = "app:sounds:remove",
 }
 
 export interface AppEventsMap {
@@ -167,5 +179,35 @@ export interface AppEventsMap {
   };
   [APP_EVENTS.TEST_OVERLAY]: {
     id: string;
+  };
+
+  // ALERTS
+  [APP_EVENTS.UPDATE_ALERTS_SETTINGS]: {
+    settings: Profile["alerts"];
+  };
+  [APP_EVENTS.SEARCH_SOUNDS]: {
+    // Without a query, trending sounds are returned.
+    query?: string;
+    page: number;
+  };
+  [APP_EVENTS.DOWNLOAD_SOUND]: {
+    id: string;
+    url: string;
+    name: string;
+  };
+  [APP_EVENTS.IMPORT_SOUND]: {
+    id: string;
+  };
+  [APP_EVENTS.TEST_ALERT]: ({ file: string } | { url: string }) & {
+    volume: number;
+    // Identifies the test: the alert id, or the url for previews
+    id: string;
+  };
+
+  // SOUND LIBRARY
+  [APP_EVENTS.GET_SOUNDS]: void;
+  [APP_EVENTS.UPLOAD_SOUNDS]: void;
+  [APP_EVENTS.REMOVE_SOUND]: {
+    file: string;
   };
 }

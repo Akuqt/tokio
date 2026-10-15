@@ -158,3 +158,75 @@
   gap: 24px;
   align-items: flex-end;
 }
+
+/* SOUND LIBRARY */
+
+.sounds_header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.sounds_list {
+  display: flex;
+  flex-direction: column;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.sound_row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--background-secondary);
+}
+
+.sound_name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  color: var(--font-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.icon_btn {
+  display: flex;
+  background: transparent;
+  border: none;
+  color: var(--font-secondary);
+  padding: 6px;
+  cursor: pointer;
+}
+
+.icon_btn:hover {
+  color: var(--accent-primary);
+}
+
+.playing {
+  color: var(--accent-primary);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.sounds_empty {
+  font-size: 14px;
+  color: var(--font-secondary);
+  margin: 0;
+}
+
+.sounds_error {
+  font-size: 13px;
+  color: var(--accent-primary);
+  margin: 0;
+}

@@ -4,6 +4,7 @@ import {
   AppEventsMap,
   AppEventsResponseMap,
 } from "@/common/types";
+import { AlertsService } from "@/services/alerts";
 import { TikTokConnectorService } from "@/services/connector";
 import { JSONManagerService } from "@/services/json";
 import { MusicService } from "@/services/music";
@@ -44,6 +45,7 @@ export interface AppServices {
   readonly storeManagerService: StoreManagerService;
   readonly pathManagerService: PathManagerService;
   readonly yamlManagerService: YAMLManagerService;
+  readonly alertsService: AlertsService;
 }
 
 export interface AppHandlerVariables extends AppServices {

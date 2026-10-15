@@ -12,6 +12,7 @@ export interface Folders {
   overlaysFolder: string;
   profilesFolder: string;
   extraFolder: string;
+  soundsFolder: string;
 }
 
 export interface Files {
@@ -20,6 +21,7 @@ export interface Files {
     tts: string;
     system: string;
     server: string;
+    alerts: string;
   };
   gifts: string;
 }

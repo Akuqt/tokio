@@ -75,11 +75,14 @@ events.push(
 
 events.push(
   APP_EVENTS.ACTIVE_FEATURES,
-  async ({ storeManagerService }, _, data) => {
+  async ({ storeManagerService, win }, _, data) => {
     try {
       storeManagerService.updateActiveFeatures({
         ...data,
       });
+      if (data.alerts === false) {
+        win.webContents.send(APP_EVENTS_RESPONSE.ALERT_CLEAR, undefined);
+      }
     } catch {
       // Next
     }

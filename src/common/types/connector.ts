@@ -133,6 +133,22 @@ export type AppEvents = Exclude<
   | TOKIO_EVENTS.MUSIC_PROCCESS_ENDED
 >;
 
+// Typed as Record<AppEvents, ...> so a new live event can't be left out of the alert triggers.
+export const ALERT_TRIGGER_LABELS: Record<AppEvents, string> = {
+  [TOKIO_EVENTS.CHAT]: "Chat",
+  [TOKIO_EVENTS.SHARE]: "Share",
+  [TOKIO_EVENTS.FOLLOW]: "Follow",
+  [TOKIO_EVENTS.GIFT]: "Gift",
+  [TOKIO_EVENTS.LIKE]: "Like",
+  [TOKIO_EVENTS.ENVELOPE]: "Envelope",
+  [TOKIO_EVENTS.SUPER_FAN]: "Super Fan",
+  [TOKIO_EVENTS.SUPER_FAN_BOX]: "Super Fan Box",
+  [TOKIO_EVENTS.SUPER_FAN_JOIN]: "Super Fan Join",
+  [TOKIO_EVENTS.MEMBER_JOIN]: "Member Join",
+  [TOKIO_EVENTS.ROOM_USER]: "Room Users",
+  [TOKIO_EVENTS.MUSIC_CHANGE]: "Music Change",
+};
+
 export type TokioPayload =
   | {
       [K in AppEvents]: {

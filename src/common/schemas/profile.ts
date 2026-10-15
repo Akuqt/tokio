@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TOKIO_EVENTS } from "../types/connector";
 
 const Permissions = z.object({
   all: z.boolean(),
@@ -19,6 +20,31 @@ const Permissions = z.object({
 const MusicControl = z.object({
   enabled: z.boolean(),
   command: z.string(),
+});
+
+// Every live event (AppEvents) can trigger an alert.
+export const AlertTriggerSchema = z
+  .enum(TOKIO_EVENTS)
+  .exclude(["CONNECTED", "DISCONNECTED", "MUSIC_PROCCESS_ENDED"]);
+
+export const ALERT_TRIGGERS = AlertTriggerSchema.options;
+
+// file is a basename inside the sounds folder
+export const AlertSoundSchema = z.object({
+  name: z.string(),
+  file: z.string(),
+});
+
+const AlertSchema = z.object({
+  id: z.string(),
+  enabled: z.boolean(),
+  trigger: z.object({
+    type: AlertTriggerSchema,
+    // Only used by gift alerts. Empty means any gift.
+    gifts: z.array(z.number()),
+  }),
+  sound: AlertSoundSchema.nullable(),
+  volume: z.number().min(0).max(100),
 });
 
 // TODO: Finish Profile schema
@@ -75,6 +101,17 @@ export const ProfileSchema = z.object({
       }),
     ),
   }),
+  // Defaults keep profiles saved before alerts existed valid.
+  alerts: z
+    .object({
+      simultaneous: z.boolean().default(false),
+      // Max sounds waiting per queue
+      queue_length: z.number().min(1).default(100),
+      items: z.array(AlertSchema).default([]),
+    })
+    .default({ simultaneous: false, queue_length: 100, items: [] }),
 });
 
 export type Profile = z.infer<typeof ProfileSchema>;
+export type Alert = z.infer<typeof AlertSchema>;
+export type AlertSound = z.infer<typeof AlertSoundSchema>;

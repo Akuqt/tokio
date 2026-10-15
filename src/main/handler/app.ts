@@ -1,5 +1,6 @@
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
 import config from "@/config";
+import { AlertsService } from "@/services/alerts";
 import { TikTokConnectorService } from "@/services/connector";
 import { JSONManagerService } from "@/services/json";
 import { MusicService } from "@/services/music";
@@ -33,6 +34,7 @@ export class AppHandler implements AppHandlerVariables {
   public readonly yamlManagerService: YAMLManagerService;
   public readonly storeManagerService: StoreManagerService;
   public readonly pathManagerService: PathManagerService;
+  public readonly alertsService: AlertsService;
 
   constructor(deps: AppHandlerVariables) {
     Object.assign(this, deps);

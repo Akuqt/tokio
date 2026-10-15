@@ -88,4 +88,9 @@ export const defaultProfile: Profile = {
     },
     replacements: [],
   },
+  alerts: {
+    simultaneous: false,
+    queue_length: 100,
+    items: [],
+  },
 };

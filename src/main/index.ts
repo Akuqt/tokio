@@ -1,3 +1,4 @@
+import { AlertsService } from "@/services/alerts";
 import { TikTokConnectorService } from "@/services/connector";
 import { JSONManagerService } from "@/services/json";
 import { MusicService } from "@/services/music";
@@ -34,6 +35,7 @@ app.commandLine.appendSwitch("disable-renderer-backgrounding");
 app.commandLine.appendSwitch("disable-background-timer-throttling");
 
 const services: AppServices = {
+  alertsService: new AlertsService(),
   ttsService: new TTSService(),
   musicService: new MusicService(),
   serverService: new ServerService(),

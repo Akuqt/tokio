@@ -1,6 +1,14 @@
-import { APP_EVENTS, APP_EVENTS_RESPONSE, TOKIO_EVENTS } from "@/common/types";
+import { ALERT_TRIGGERS } from "@/common/schemas";
+import {
+  APP_EVENTS,
+  APP_EVENTS_RESPONSE,
+  AppEvents,
+  TOKIO_EVENTS,
+  TokioEventMap,
+} from "@/common/types";
 import config from "@/config";
 import { createStack } from "@/helper/events";
+import { AlertsService } from "@/services/alerts";
 import { TikTokConnectorService } from "@/services/connector";
 import { MusicService } from "@/services/music";
 import { StoreManagerService } from "@/services/store";
@@ -17,7 +25,32 @@ const registerConnectorEvents = (
   store: StoreManagerService,
   tts: TTSService,
   music: MusicService,
+  alerts: AlertsService,
 ) => {
+  const dispatchAlert = async <K extends AppEvents>(
+    type: K,
+    payload: TokioEventMap[K],
+  ) => {
+    if (!store.getSettings().activeFeatures.alerts) return;
+    const profile = await store.getProfileData();
+    if (!profile) return;
+    await alerts.handle(type, payload, profile.alerts, (audio) => {
+      win.webContents.send(APP_EVENTS_RESPONSE.ALERT_AUDIO, audio);
+    });
+  };
+
+  for (const trigger of ALERT_TRIGGERS) {
+    const listener = (d: TokioEventMap[typeof trigger]) => {
+      void dispatchAlert(trigger, d);
+    };
+    // MUSIC_CHANGE comes from the music service, the rest from the connector.
+    if (trigger === TOKIO_EVENTS.MUSIC_CHANGE) {
+      music.on(trigger, listener);
+    } else {
+      conn.on(trigger, listener);
+    }
+  }
+
   conn.on(TOKIO_EVENTS.ROOM_USER, (d) => {
     store.updateLiveStats({ viewers: d.viewers, views: d.views });
     win.webContents.send(APP_EVENTS_RESPONSE.VIEWS, {
@@ -36,6 +69,7 @@ const registerConnectorEvents = (
   conn.on(TOKIO_EVENTS.DISCONNECTED, () => {
     music.clearHandler();
     tts.clearTalk();
+    win.webContents.send(APP_EVENTS_RESPONSE.ALERT_CLEAR, undefined);
     win.webContents.send(APP_EVENTS_RESPONSE.CONNECTED, {
       success: false,
       stats: {
@@ -99,6 +133,7 @@ events.push(
       urlManagerService,
       jsonManagerService,
       yamlManagerService,
+      alertsService,
       win,
     },
     e,
@@ -107,13 +142,15 @@ events.push(
       await pathManagerService.initialize(
         app.getPath("home"),
         config.APP.folderName,
-        ({ files }) => {
+        ({ files, folders }) => {
           connectorService.setLogFile(files.logs.connector);
           ttsService.setLogFile(files.logs.tts);
           serverService.setLogFile(files.logs.server);
           urlManagerService.setLogFile(files.logs.system);
           storeManagerService.setLogFile(files.logs.system);
           jsonManagerService.setLogFile(files.logs.system);
+          alertsService.setLogFile(files.logs.alerts);
+          alertsService.setSoundsFolder(folders.soundsFolder);
         },
       );
       await storeManagerService.initialize(
@@ -137,6 +174,7 @@ events.push(
         storeManagerService,
         ttsService,
         musicService,
+        alertsService,
       );
 
       const settings = storeManagerService.getSettings();

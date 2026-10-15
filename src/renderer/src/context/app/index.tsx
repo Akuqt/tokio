@@ -13,7 +13,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const isInitialMount = useRef(true);
   const [appLoading, setAppLoading] = useState(true);
 
-  const { getQueue } = useAudio();
+  const { getQueue, stopQueues } = useAudio();
 
   const ttsQueue = getQueue("tts_data");
 
@@ -41,6 +41,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       },
     );
 
+    const removeAlertAudio = window.api.on(
+      APP_EVENTS_RESPONSE.ALERT_AUDIO,
+      (res) => {
+        if (!res) return;
+        const queue = getQueue(res.channel);
+        queue.setQueueOptions({
+          maxQueueLength: res.maxQueueLength,
+          gapTime: 0.2,
+        });
+        queue.enqueue(res.data, true, {
+          gain: res.volume / 100,
+          key: res.id,
+        });
+      },
+    );
+
+    const removeAlertClear = window.api.on(
+      APP_EVENTS_RESPONSE.ALERT_CLEAR,
+      () => stopQueues("alerts"),
+    );
+
     if (isInitialMount.current) {
       window.api.emit(APP_EVENTS.LOAD_APP);
       isInitialMount.current = false;
@@ -49,6 +70,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => {
       removeLoadApp();
       removeTTSData();
+      removeAlertAudio();
+      removeAlertClear();
     };
   }, []);
 

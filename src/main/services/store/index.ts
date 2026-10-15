@@ -1,4 +1,5 @@
 import {
+  AlertSound,
   AppProvider,
   AppSettings,
   EntityMetadata,
@@ -199,6 +200,45 @@ export class StoreManagerService extends Service {
     this._storeData!.settings.overlays =
       this._storeData!.settings.overlays.filter((o) => o.id !== id);
     await this._queueSave();
+  }
+
+  public getSounds(): AlertSound[] {
+    this._ensureInitialized();
+    return this._storeData!.settings.sounds;
+  }
+
+  public async addSound(sound: AlertSound): Promise<void> {
+    this._ensureInitialized();
+    const sounds = this._storeData!.settings.sounds;
+    // Files are named by content, so the same file means the same sound.
+    if (sounds.some((s) => s.file === sound.file)) return;
+    sounds.push(sound);
+    await this._queueSave();
+  }
+
+  public async removeSound(file: string): Promise<void> {
+    this._ensureInitialized();
+    this._storeData!.settings.sounds = this._storeData!.settings.sounds.filter(
+      (s) => s.file !== file,
+    );
+    await this._queueSave();
+  }
+
+  /**
+   * Whether an alert in any profile plays this sound file.
+   */
+  public async isSoundInUse(file: string): Promise<boolean> {
+    this._ensureInitialized();
+    for (const { file: profileFile } of this.getProfiles()) {
+      const profile = await this._jsonManagerService.loadFile(
+        join(this._pathManagerService.folders.profilesFolder, profileFile),
+        ProfileSchema,
+      );
+      if (profile?.alerts.items.some((a) => a.sound?.file === file)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public updateLiveStats(data: {
