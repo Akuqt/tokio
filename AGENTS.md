@@ -14,13 +14,22 @@ Stack: Electron 39, electron-vite, React 19, TypeScript, TanStack Router, Expres
 yarn dev           # builds the music window UI, then runs electron-vite in dev mode
 yarn typecheck     # tsc for main/preload/common (node) and renderer/music/installer (web)
 yarn lint          # oxlint --type-aware
+yarn test          # vitest, offline unit tests for main and common (yarn test:watch to watch)
 yarn format        # prettier --write .
 yarn build         # typecheck + music UI + electron-vite build
 yarn build:win     # build + electron-builder Windows package
 yarn tts:edge:check # live check of the Edge TTS provider against Microsoft's service (needs network)
 ```
 
-There is no test suite. Verify changes with `yarn typecheck` and `yarn lint`. For changes to the Edge TTS provider, also run `yarn tts:edge:check`.
+Verify changes with `yarn test`, `yarn typecheck` and `yarn lint`. For changes to the Edge TTS provider, also run `yarn tts:edge:check`.
+
+### Tests
+
+- Vitest runs in Node, without Electron or network. Tests sit next to the code as `<file>.test.ts` under `src/main` and `src/common`.
+- `test/setup.ts` mocks `electron` (`safeStorage` round-trips plain text) and silences the console. Spy on `Logger` to assert logs.
+- Give services a temp folder (`mkdtemp(join(tmpdir(), "tokio-test-"))`) through their setters or `initialize`, and stub `fetch` with `vi.stubGlobal`. Use fake timers for the queues.
+- Fixtures live in `test/fixtures` and Prettier skips them, so saved HTML keeps its original markup.
+- `it.fails` marks a known bug. Turn it into `it` when the bug is fixed.
 
 ## Layout
 
