@@ -13,6 +13,7 @@ import { defaultProfile, formatError } from "@/common/util";
 import { defaultStoreData } from "@/common/util/constants/store";
 import { cleanText } from "@/helper/chat";
 import Logger from "@/logger";
+import { AUDIO_EXTENSIONS } from "@/services/alerts";
 import { TikTokConnectorService } from "@/services/connector";
 import { JSONManagerService } from "@/services/json";
 import { PathManagerService } from "@/services/path";
@@ -20,8 +21,8 @@ import { TTSService } from "@/services/tts";
 import { safeStorage } from "electron";
 import { debounce } from "es-toolkit";
 import { EventEmitter } from "events";
-import { access, copyFile } from "fs/promises";
-import { basename, join, resolve } from "path";
+import { access, copyFile, readdir } from "fs/promises";
+import { basename, extname, join, resolve } from "path";
 import { Service } from "../shared";
 
 type Providers = {
@@ -38,6 +39,7 @@ export class StoreManagerService extends Service {
   private _storeFilePath!: string;
   private _storeData: StoreSchema | null = null;
   private _memoryProfile: Profile | null = null;
+  private _rebuilt = false;
 
   public setLogFile(logFile: string) {
     this._logFile = logFile;
@@ -86,6 +88,15 @@ export class StoreManagerService extends Service {
       if (!data) {
         await this._generatePhysicalDefaults();
         data = structuredClone(defaultStoreData);
+        const profiles = await this._findProfiles();
+        data.profiles = profiles.map(({ file, profile }) => ({
+          file,
+          name: profile.name,
+        }));
+        data.settings.sounds = await this._findSounds(
+          profiles.map(({ profile }) => profile),
+        );
+        this._rebuilt = true;
         await this._jsonManagerService.saveFile(
           this._storeFilePath,
           StoreZodSchema,
@@ -128,13 +139,82 @@ export class StoreManagerService extends Service {
       "default.json",
     );
 
-    await Promise.all([
-      this._jsonManagerService.saveFile(
-        defaultProfilePath,
+    // The store can be rebuilt (missing or corrupted) while the user's Default
+    // profile is fine, so only write it when it can't be loaded.
+    const existing = await this._jsonManagerService.loadFile(
+      defaultProfilePath,
+      ProfileSchema,
+    );
+    if (existing) return;
+
+    await this._jsonManagerService.saveFile(
+      defaultProfilePath,
+      ProfileSchema,
+      defaultProfile,
+    );
+  }
+
+  /**
+   * Whether initialize started from the defaults (first run, or a missing or
+   * corrupted store). Things only the store knew, like overlays, are then
+   * recovered by the caller.
+   */
+  public wasRebuilt(): boolean {
+    return this._rebuilt;
+  }
+
+  // Profile files outlive a rebuilt store, so list the ones that still load.
+  private async _findProfiles(): Promise<{ file: string; profile: Profile }[]> {
+    const folder = this._pathManagerService.folders.profilesFolder;
+    const files = (await readdir(folder))
+      .filter((file) => extname(file) === ".json")
+      .sort();
+
+    const profiles: { file: string; profile: Profile }[] = [];
+    for (const file of files) {
+      const profile = await this._jsonManagerService.loadFile(
+        join(folder, file),
         ProfileSchema,
-        defaultProfile,
-      ),
-    ]);
+      );
+      if (profile) profiles.push({ file, profile });
+    }
+
+    // Default first, like a fresh store.
+    const isDefault = (p: { file: string }) =>
+      p.file === defaultStoreData.profiles[0].file;
+    return [
+      ...profiles.filter(isDefault),
+      ...profiles.filter((p) => !isDefault(p)),
+    ];
+  }
+
+  // Alerts keep the names of the sounds they use. Files no alert uses lost
+  // their name, they're listed anyway so they can be played or deleted.
+  private async _findSounds(profiles: Profile[]): Promise<AlertSound[]> {
+    const folder = this._pathManagerService.folders.soundsFolder;
+    const files = new Set(
+      (await readdir(folder).catch(() => []))
+        .filter((file) => AUDIO_EXTENSIONS.includes(extname(file).slice(1)))
+        .sort(),
+    );
+
+    const sounds = new Map<string, AlertSound>();
+    for (const profile of profiles) {
+      for (const { sound } of profile.alerts.items) {
+        if (sound && files.has(sound.file) && !sounds.has(sound.file)) {
+          sounds.set(sound.file, sound);
+        }
+      }
+    }
+
+    let unnamed = 0;
+    for (const file of files) {
+      if (!sounds.has(file)) {
+        sounds.set(file, { name: `Recovered sound ${++unnamed}`, file });
+      }
+    }
+
+    return [...sounds.values()];
   }
 
   public getSettings(): AppSettings {

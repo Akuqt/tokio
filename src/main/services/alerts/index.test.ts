@@ -1,0 +1,340 @@
+import { Alert, Profile } from "@/common/schemas";
+import {
+  AppEvents,
+  GiftEvent,
+  TOKIO_EVENTS,
+  TokioEventMap,
+} from "@/common/types";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  unlink,
+  writeFile,
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { AlertAudio, AlertsService } from "./index";
+
+const FIXTURE = resolve("test/fixtures/myinstants-search.html");
+
+const bytes = (...values: number[]) => new Uint8Array(values);
+
+const alert = (overrides: Partial<Alert> = {}): Alert => ({
+  id: "alert-1",
+  enabled: true,
+  trigger: { type: TOKIO_EVENTS.FOLLOW, gifts: [] },
+  sound: { name: "Ding", file: "ding.mp3" },
+  volume: 80,
+  ...overrides,
+});
+
+const settings = (items: Alert[], simultaneous = false): Profile["alerts"] => ({
+  simultaneous,
+  queue_length: 100,
+  items,
+});
+
+const user = { username: "Viewer", handle: "viewer", profilePictures: [] };
+
+const gift = (id: string, repeatEnd: boolean): GiftEvent => ({
+  user,
+  gift: { id, coins: 1, repeatEnd, type: 1, name: "Rose", comboCount: 1 },
+});
+
+const htmlResponse = (html: string, status = 200) =>
+  new Response(html, { status, headers: { "content-type": "text/html" } });
+
+describe("AlertsService", () => {
+  let root: string;
+  let sounds: string;
+  let service: AlertsService;
+
+  beforeEach(async () => {
+    root = await mkdtemp(join(tmpdir(), "tokio-test-"));
+    sounds = join(root, "sounds");
+    await mkdir(sounds);
+    service = new AlertsService();
+    service.setSoundsFolder(sounds);
+    await writeFile(join(sounds, "ding.mp3"), bytes(1, 2, 3));
+  });
+
+  afterEach(async () => {
+    await rm(root, { recursive: true, force: true });
+  });
+
+  describe("handle", () => {
+    const run = async <K extends AppEvents>(
+      type: K,
+      payload: TokioEventMap[K],
+      alerts: Profile["alerts"],
+    ) => {
+      const sent: AlertAudio[] = [];
+      await service.handle(type, payload, alerts, (audio) => sent.push(audio));
+      return sent;
+    };
+
+    it("sends the sound of a matching alert on the shared queue", async () => {
+      const sent = await run(
+        TOKIO_EVENTS.FOLLOW,
+        { user },
+        settings([alert()]),
+      );
+
+      expect(sent).toEqual([
+        {
+          data: bytes(1, 2, 3),
+          volume: 80,
+          channel: "alerts",
+          maxQueueLength: 100,
+          id: "alert-1",
+        },
+      ]);
+    });
+
+    it("gives each trigger its own queue when simultaneous", async () => {
+      const sent = await run(
+        TOKIO_EVENTS.FOLLOW,
+        { user },
+        settings([alert()], true),
+      );
+
+      expect(sent[0].channel).toBe(`alerts:${TOKIO_EVENTS.FOLLOW}`);
+    });
+
+    it("sends every matching alert in order", async () => {
+      await writeFile(join(sounds, "pop.mp3"), bytes(9));
+      const items = [
+        alert({ id: "one" }),
+        alert({ id: "two", sound: { name: "Pop", file: "pop.mp3" } }),
+      ];
+
+      const sent = await run(TOKIO_EVENTS.FOLLOW, { user }, settings(items));
+
+      expect(sent.map((a) => a.id)).toEqual(["one", "two"]);
+    });
+
+    it("skips disabled, silent, unrelated and missing alerts", async () => {
+      const items = [
+        alert({ enabled: false }),
+        alert({ sound: null }),
+        alert({ trigger: { type: TOKIO_EVENTS.SHARE, gifts: [] } }),
+        alert({ sound: { name: "Gone", file: "gone.mp3" } }),
+      ];
+
+      expect(await run(TOKIO_EVENTS.FOLLOW, { user }, settings(items))).toEqual(
+        [],
+      );
+    });
+
+    it("fires gift alerts once per combo, when it ends", async () => {
+      const alerts = settings([
+        alert({ trigger: { type: TOKIO_EVENTS.GIFT, gifts: [] } }),
+      ]);
+
+      expect(await run(TOKIO_EVENTS.GIFT, gift("5655", false), alerts)).toEqual(
+        [],
+      );
+      expect(
+        await run(TOKIO_EVENTS.GIFT, gift("5655", true), alerts),
+      ).toHaveLength(1);
+    });
+
+    it("only fires gift alerts for the chosen gifts", async () => {
+      const alerts = settings([
+        alert({ trigger: { type: TOKIO_EVENTS.GIFT, gifts: [5655] } }),
+      ]);
+
+      expect(
+        await run(TOKIO_EVENTS.GIFT, gift("5655", true), alerts),
+      ).toHaveLength(1);
+      expect(await run(TOKIO_EVENTS.GIFT, gift("1", true), alerts)).toEqual([]);
+    });
+  });
+
+  describe("readSound", () => {
+    it("never reads outside the sounds folder", async () => {
+      await writeFile(join(root, "secret.mp3"), bytes(7));
+
+      const res = await service.readSound("../secret.mp3", false);
+
+      expect(res.success).toBe(false);
+    });
+
+    it("keeps the 30 most recently used sounds in memory", async () => {
+      const names = Array.from({ length: 31 }, (_, i) => `s${i}.mp3`);
+      await Promise.all(
+        names.map((name, i) => writeFile(join(sounds, name), bytes(i))),
+      );
+
+      await service.readSound("s0.mp3");
+      for (const name of names.slice(1, 30)) await service.readSound(name);
+      // Using s0 again makes s1 the oldest.
+      await service.readSound("s0.mp3");
+      await service.readSound("s30.mp3");
+
+      await unlink(join(sounds, "s0.mp3"));
+      await unlink(join(sounds, "s1.mp3"));
+
+      expect((await service.readSound("s0.mp3")).data).toEqual(bytes(0));
+      expect((await service.readSound("s1.mp3", false)).success).toBe(false);
+    });
+
+    it("deleteSound removes the file and the cached copy", async () => {
+      await service.readSound("ding.mp3");
+
+      expect((await service.deleteSound("ding.mp3")).success).toBe(true);
+
+      expect(await readdir(sounds)).toEqual([]);
+      expect((await service.readSound("ding.mp3", false)).success).toBe(false);
+    });
+  });
+
+  describe("importSound", () => {
+    let src: string;
+
+    beforeEach(async () => {
+      src = join(root, "src");
+      await mkdir(src);
+    });
+
+    it("names the copy by its content and keeps the file name as label", async () => {
+      await writeFile(join(src, "My Sound.MP3"), bytes(4, 5));
+
+      const res = await service.importSound(join(src, "My Sound.MP3"));
+
+      expect(res.success).toBe(true);
+      expect(res.data?.name).toBe("My Sound");
+      expect(res.data?.file).toMatch(/^[0-9a-f]{32}\.mp3$/);
+      expect(await readFile(join(sounds, res.data!.file))).toEqual(
+        Buffer.from([4, 5]),
+      );
+    });
+
+    it("stores the same audio once", async () => {
+      await writeFile(join(src, "a.wav"), bytes(4, 5));
+      await writeFile(join(src, "b.wav"), bytes(4, 5));
+
+      const a = await service.importSound(join(src, "a.wav"));
+      const b = await service.importSound(join(src, "b.wav"));
+
+      expect(a.data?.file).toBe(b.data?.file);
+      expect(await readdir(sounds)).toHaveLength(2); // ding.mp3 + the import
+    });
+
+    it("rejects formats that are not audio", async () => {
+      await writeFile(join(src, "notes.txt"), "hi");
+
+      const res = await service.importSound(join(src, "notes.txt"));
+
+      expect(res.success).toBe(false);
+      expect(res.error).toContain("Unsupported audio format");
+    });
+  });
+
+  describe("MyInstants", () => {
+    const SOUND_URL = "https://www.myinstants.com/media/sounds/movie_1.mp3";
+
+    it("refuses to fetch other hosts", async () => {
+      const fetchMock = vi.fn();
+      vi.stubGlobal("fetch", fetchMock);
+
+      for (const url of [
+        "https://evil.example/x.mp3",
+        "https://www.myinstants.com.evil.example/x.mp3",
+        "http://www.myinstants.com/x.mp3",
+        "not a url",
+      ]) {
+        expect((await service.fetchSound(url)).success).toBe(false);
+      }
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("fetches a sound once, then serves it from memory", async () => {
+      const fetchMock = vi.fn(async () => new Response(bytes(1, 1)));
+      vi.stubGlobal("fetch", fetchMock);
+
+      await service.fetchSound(SOUND_URL);
+      const res = await service.fetchSound(SOUND_URL);
+
+      expect(res.data).toEqual(bytes(1, 1));
+      expect(fetchMock).toHaveBeenCalledOnce();
+    });
+
+    it("downloads a sound to disk only once", async () => {
+      const fetchMock = vi.fn(async () => new Response(bytes(1, 1)));
+      vi.stubGlobal("fetch", fetchMock);
+
+      const first = await service.downloadSound(SOUND_URL, "BRUH");
+      // A new instance has no memory cache, so only the file can stop a fetch.
+      const fresh = new AlertsService();
+      fresh.setSoundsFolder(sounds);
+      const again = await fresh.downloadSound(SOUND_URL, "BRUH");
+
+      expect(first).toEqual(again);
+      expect(first.data?.name).toBe("BRUH");
+      expect(await readdir(sounds)).toContain(first.data?.file);
+      expect(fetchMock).toHaveBeenCalledOnce();
+    });
+
+    it("parses search results and marks the downloaded ones", async () => {
+      const html = await readFile(FIXTURE, "utf-8");
+      const fetchMock = vi.fn(async (url: string) =>
+        url.endsWith(".mp3") ? new Response(bytes(1)) : htmlResponse(html),
+      );
+      vi.stubGlobal("fetch", fetchMock);
+      await service.downloadSound(SOUND_URL, "BRUH");
+
+      const res = await service.search("bruh");
+
+      expect(fetchMock).toHaveBeenLastCalledWith(
+        "https://www.myinstants.com/search/?name=bruh&page=1",
+      );
+      expect(res).toEqual({
+        success: true,
+        data: {
+          hasNextPage: false,
+          sounds: [
+            { name: "BRUH", url: SOUND_URL, saved: true },
+            {
+              name: "yeah boiii i i i",
+              url: "https://www.myinstants.com/media/sounds/yeah-boiii-i-i-i.mp3",
+              saved: false,
+            },
+          ],
+        },
+      });
+    });
+
+    it("reports a next page when the page is full", async () => {
+      const instant = (i: number) =>
+        `<div class="instant"><button class="small-button" onclick="play('/media/sounds/${i}.mp3', 'loader-${i}', '${i}')"></button><a class="instant-link">Sound ${i}</a></div>`;
+      const html = `<div id="instants_container"><div class="instants result-page">${Array.from({ length: 36 }, (_, i) => instant(i)).join("")}</div></div>`;
+      vi.stubGlobal("fetch", async () => htmlResponse(html));
+
+      const res = await service.getTrending(2);
+
+      expect(res.data?.sounds).toHaveLength(36);
+      expect(res.data?.hasNextPage).toBe(true);
+    });
+
+    it("treats a 404 as the end of the results", async () => {
+      vi.stubGlobal("fetch", async () => htmlResponse("", 404));
+
+      expect(await service.search("nothing", 9)).toEqual({
+        success: true,
+        data: { sounds: [], hasNextPage: false },
+      });
+    });
+
+    it("fails on other errors and invalid pages", async () => {
+      vi.stubGlobal("fetch", async () => htmlResponse("", 500));
+
+      expect((await service.search("x")).success).toBe(false);
+      expect((await service.getTrending(0)).success).toBe(false);
+    });
+  });
+});

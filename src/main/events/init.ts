@@ -15,7 +15,7 @@ import { StoreManagerService } from "@/services/store";
 import { TTSService } from "@/services/tts";
 import { CustomBrowserWindow } from "@/types";
 import { join } from "path";
-import { processHTML, processOverlay } from "./helper";
+import { findOverlays, processHTML, processOverlay } from "./helper";
 
 const events = createStack();
 
@@ -162,6 +162,15 @@ events.push(
         jsonManagerService,
         pathManagerService,
       );
+      if (storeManagerService.wasRebuilt()) {
+        const overlays = await findOverlays(
+          pathManagerService.folders.overlaysFolder,
+          yamlManagerService,
+        );
+        for (const overlay of overlays) {
+          await storeManagerService.addOverlayInfo(overlay);
+        }
+      }
       serverService.initEvents(connectorService, musicService);
       storeManagerService.updateLiveStats({
         likes: 0,

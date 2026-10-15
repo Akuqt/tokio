@@ -50,6 +50,29 @@ export function getOverlayConfig(
   return extracted;
 }
 
+/**
+ * Overlays installed in the overlays folder, each in a folder named by its id.
+ * Lets a rebuilt store get its overlay list back.
+ */
+export async function findOverlays(
+  folder: string,
+  yaml: YAMLManagerService,
+): Promise<(OverlayMetadata & { id: string })[]> {
+  const entries = await readdir(folder, { withFileTypes: true }).catch(
+    () => [],
+  );
+  const overlays: (OverlayMetadata & { id: string })[] = [];
+  for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+    if (!entry.isDirectory()) continue;
+    // Every overlay in the folder was imported, see APP_EVENTS.IMPORT_OVERLAY.
+    const res = await processOverlay(join(folder, entry.name), yaml, true);
+    if (res.success && res.data) {
+      overlays.push({ ...res.data.info, id: entry.name });
+    }
+  }
+  return overlays;
+}
+
 export async function processOverlay(
   basedir: string,
   yaml: YAMLManagerService,

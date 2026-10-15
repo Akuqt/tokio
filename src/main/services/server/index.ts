@@ -25,11 +25,12 @@ export class ServerService extends Service {
     handler: BoundHandler;
   }[] = [];
 
-  constructor() {
+  // NOTE: Overlays connect to 37891, other ports are for tests.
+  constructor(port: number = 37891) {
     super();
     this._app = express();
     this._dynamicRouter = express.Router();
-    this._port = 37891;
+    this._port = port;
 
     this._app.use((req, res, next) => {
       this._dynamicRouter(req, res, next);
@@ -55,6 +56,10 @@ export class ServerService extends Service {
     this._logFile = logFile;
   }
 
+  public getPort(): number {
+    return this._port;
+  }
+
   public start(): Promise<{ success: boolean; message: string }> {
     if (this._server)
       return Promise.resolve({
@@ -63,7 +68,12 @@ export class ServerService extends Service {
       });
 
     return new Promise((resolve) => {
-      this._server = this._app.listen(this._port, "0.0.0.0", () => {
+      // Express 5 calls this with the error too, the "error" handler reports it.
+      this._server = this._app.listen(this._port, "0.0.0.0", (error) => {
+        if (error) return;
+        // Port 0 picks a free port.
+        const address = this._server!.address();
+        if (address && typeof address === "object") this._port = address.port;
         this._wss = new CustomWebSocketServer({ server: this._server! });
         this._wss.on("connection", (client, req) => {
           const url = new URL(req.url || "/", "http://localhost:37891");

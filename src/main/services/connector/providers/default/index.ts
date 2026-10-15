@@ -162,7 +162,7 @@ export class TikTokLiveConnector extends ConnectorProvider {
   public async fetchGifts(): Promise<GiftResponse> {
     try {
       const region = await this.getUserRegionAndLanguage();
-      const url = this.getGiftURL(region.data.region, region.data.language);
+      const url = this.getGiftURL(region.data.language, region.data.region);
 
       const response = await fetch(url, {
         method: "GET",
@@ -321,9 +321,10 @@ export class TikTokLiveConnector extends ConnectorProvider {
       for (const rank of tdata.ranks) {
         const user = rank.user;
         ranks.push({
-          handle: this.withDefault(user?.nickname, ""),
+          // Same as getUserData
+          username: this.withDefault(user?.nickname, ""),
+          handle: this.withDefault(user?.displayId, ""),
           profilePictures: this.withDefault(user?.avatarThumb?.urlList, []),
-          username: this.withDefault(user?.displayId, ""),
           score: this.withDefault(Number(rank.score), 0),
           position: this.withDefault(Number(rank.rank), 0),
         });

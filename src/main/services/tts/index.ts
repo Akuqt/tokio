@@ -90,6 +90,15 @@ export class TTSService extends ProviderService<TTSProvider> {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
+  // Matches whole words. Ends that are symbols (e.g. ":)") match anywhere,
+  // because \b would need a word character there.
+  private _replacementRegExp(old: string) {
+    const isWord = (char: string) => /[\p{L}\p{N}_]/u.test(char);
+    const start = isWord(old.at(0) ?? "") ? "(?<![\\p{L}\\p{N}_])" : "";
+    const end = isWord(old.at(-1) ?? "") ? "(?![\\p{L}\\p{N}_])" : "";
+    return new RegExp(`${start}${this._escapeRegExp(old)}${end}`, "giu");
+  }
+
   private _parseText(settings: Profile["tts"], chat: ChatEvent) {
     let template = settings.format?.template;
     const originalTemplate = template;
@@ -118,9 +127,12 @@ export class TTSService extends ProviderService<TTSProvider> {
 
     if (settings.replacements && settings.replacements.length > 0) {
       for (const repl of settings.replacements) {
-        const escapedOld = this._escapeRegExp(repl.old);
-        const regex = new RegExp(`\\b${escapedOld}\\b`, "gi");
-        template = template.replace(regex, repl.new);
+        if (!repl.old) continue;
+        // A function keeps "$&" and the like in the new text literal.
+        template = template.replace(
+          this._replacementRegExp(repl.old),
+          () => repl.new,
+        );
       }
     }
 

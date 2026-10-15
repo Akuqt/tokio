@@ -27,6 +27,7 @@ type Task = () => void | Promise<void>;
 export class TaskQueue {
   private queue: Task[] = [];
   private isProcessing: boolean = false;
+  private run: number = 0;
 
   public maxQueueLength: number;
   public gapTime: number;
@@ -65,9 +66,13 @@ export class TaskQueue {
   }
 
   private async processQueue() {
+    // A loop stopped while awaiting a task or the gap can wake up after a new
+    // one started. The run id makes it exit instead of running alongside it.
+    const run = ++this.run;
+    const active = () => this.isProcessing && this.run === run;
     this.isProcessing = true;
 
-    while (this.queue.length > 0 && this.isProcessing) {
+    while (this.queue.length > 0 && active()) {
       const task = this.queue.shift();
 
       if (task) {
@@ -78,11 +83,11 @@ export class TaskQueue {
         }
       }
 
-      if (this.queue.length > 0 && this.gapTime > 0 && this.isProcessing) {
+      if (this.queue.length > 0 && this.gapTime > 0 && active()) {
         await delay(this.gapTime * 1000);
       }
     }
 
-    this.isProcessing = false;
+    if (this.run === run) this.isProcessing = false;
   }
 }
