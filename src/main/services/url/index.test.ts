@@ -90,6 +90,7 @@ describe("URLManagerService", () => {
       expect(error).toHaveBeenCalledWith(
         expect.stringContaining("User did not grant permission."),
         undefined,
+        expect.any(Error),
       );
     });
 

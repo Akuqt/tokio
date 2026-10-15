@@ -122,6 +122,7 @@ events.push(
       Logger.error(
         `<System> Unable to get the profile -- ${formatError(error)}`,
         pathManagerService.files?.logs.system,
+        error,
       );
       e.reply(APP_EVENTS_RESPONSE.GET_PROFILE, { success: false });
     }
@@ -261,6 +262,7 @@ events.push(
       Logger.error(
         `<System> Unable to load the app -- ${formatError(error)}`,
         pathManagerService.files?.logs.system,
+        error,
       );
       e.reply(APP_EVENTS_RESPONSE.LOAD_APP, { success: false });
     }

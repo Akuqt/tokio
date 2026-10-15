@@ -32,6 +32,7 @@ export class TTSService extends ProviderService<TTSProvider> {
       Logger.error(
         `<TTS> Unable to get voices - ${formatError(e)}`,
         this._logFile,
+        e,
       );
       return [];
     }
@@ -45,6 +46,7 @@ export class TTSService extends ProviderService<TTSProvider> {
       Logger.error(
         `<TTS> Unable to get default voice - ${formatError(e)}`,
         this._logFile,
+        e,
       );
       return null;
     }
@@ -180,6 +182,7 @@ export class TTSService extends ProviderService<TTSProvider> {
         Logger.error(
           `<TTS> Unable to generate audio - ${formatError(res.error)}`,
           this._logFile,
+          res.error,
         );
       }
     });

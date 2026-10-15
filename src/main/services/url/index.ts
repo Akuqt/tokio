@@ -57,6 +57,7 @@ export class URLManagerService extends Service {
               Logger.error(
                 `<System> Failed to modify hosts file -- ${formatError(error)}`,
                 this._logFile,
+                error,
               );
               res(false);
             } else {
@@ -72,6 +73,7 @@ export class URLManagerService extends Service {
         Logger.error(
           `<System> Unable to read hosts file -- ${formatError(error)}`,
           this._logFile,
+          error,
         );
         res(false);
       }

@@ -113,6 +113,7 @@ export abstract class BaseFileManagerService extends Service {
         `Unable to save ${this.fileType} file`,
         filePath,
         formatError(error),
+        error,
       );
       await fs.unlink(tempPath).catch(() => {});
       return false;
@@ -140,6 +141,7 @@ export abstract class BaseFileManagerService extends Service {
           : `Unable to save ${this.fileType} file`,
         filePath,
         formatError(error),
+        error,
       );
       await fs.unlink(tempPath).catch(() => {});
       return false;
@@ -170,6 +172,7 @@ export abstract class BaseFileManagerService extends Service {
           : `Unable to load ${this.fileType} file`,
         filePath,
         formatError(error),
+        error,
       );
       return null;
     }
@@ -190,6 +193,7 @@ export abstract class BaseFileManagerService extends Service {
           : `Unable to load ${this.fileType} file`,
         filePath,
         formatError(error),
+        error,
       );
       return null;
     }
@@ -232,8 +236,17 @@ export abstract class BaseFileManagerService extends Service {
     }
   }
 
-  private _logError(action: string, filePath: string, details: string) {
-    Logger.error(`<System> ${action} ${filePath} -- ${details}`, this._logFile);
+  private _logError(
+    action: string,
+    filePath: string,
+    details: string,
+    error?: unknown,
+  ) {
+    Logger.error(
+      `<System> ${action} ${filePath} -- ${details}`,
+      this._logFile,
+      error,
+    );
   }
 
   private _validate<T>(

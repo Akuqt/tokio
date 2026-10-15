@@ -110,6 +110,7 @@ export class ServerService extends Service {
         Logger.error(
           `<Server> Unable to start server on port ${this._port} -- ${formatError(err)}`,
           this._logFile,
+          err,
         );
         resolve({ success: false, message: err.message });
       });

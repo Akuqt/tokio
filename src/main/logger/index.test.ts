@@ -65,6 +65,36 @@ describe("Logger", () => {
     expect(written[1]).toBe("    second");
   });
 
+  it("appends the stack trace and causes of an error", async () => {
+    const error = new Error("save failed", { cause: new Error("disk full") });
+    Logger.error("<System> Unable to save", file, error);
+    await Logger.flush();
+
+    const text = await readFile(file, "utf-8");
+    expect(text).toMatch(
+      /\[ERROR\]: <System> Unable to save\n {4}Error: save failed\n/,
+    );
+    expect(text).toMatch(/^ {8}at .+index\.test\.ts/m);
+    expect(text).toContain("[cause]: Error: disk full");
+    // Every line after the first is indented, so each entry still starts with a timestamp.
+    expect(
+      text
+        .trimEnd()
+        .split("\n")
+        .slice(1)
+        .every((l) => l.startsWith("    ")),
+    ).toBe(true);
+  });
+
+  it("logs only the message for values that are not errors", async () => {
+    Logger.error("failed", file, "timeout");
+    await Logger.flush();
+
+    expect(await lines()).toEqual([
+      expect.stringMatching(/\[ERROR\]: failed$/),
+    ]);
+  });
+
   it("reports a failing file once without throwing", async () => {
     const missing = join(dir, "missing", "test.log");
 

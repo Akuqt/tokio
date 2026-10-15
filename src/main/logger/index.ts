@@ -1,4 +1,5 @@
 import { appendFile } from "node:fs/promises";
+import { inspect } from "node:util";
 
 type Level = "INFO" | "WARN" | "SUCCESS" | "ERROR";
 
@@ -8,8 +9,15 @@ export default class Logger {
   // Files whose last write failed, so a broken file is reported only once.
   private static _failed = new Set<string>();
 
-  private static log(level: Level, msg: string, logFile?: string) {
-    const line = `${new Date().toISOString()} -- [${level}]: ${msg.replace(/\n/g, "\n    ")}`;
+  private static log(
+    level: Level,
+    msg: string,
+    logFile?: string,
+    error?: unknown,
+  ) {
+    // inspect prints the stack, the cause chain and fields such as `code`.
+    const text = error instanceof Error ? `${msg}\n${inspect(error)}` : msg;
+    const line = `${new Date().toISOString()} -- [${level}]: ${text.replace(/\n/g, "\n    ")}`;
 
     if (level === "ERROR") console.error(line);
     else if (level === "WARN") console.warn(line);
@@ -51,7 +59,8 @@ export default class Logger {
   public static success(msg: string, logFile?: string) {
     Logger.log("SUCCESS", msg, logFile);
   }
-  public static error(msg: string, logFile?: string) {
-    Logger.log("ERROR", msg, logFile);
+  /** Pass the caught `error` to append its stack trace to the entry. */
+  public static error(msg: string, logFile?: string, error?: unknown) {
+    Logger.log("ERROR", msg, logFile, error);
   }
 }

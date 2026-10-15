@@ -147,6 +147,7 @@ describe.each([
     expect(error).toHaveBeenCalledWith(
       expect.stringContaining(`Malformed ${type.toUpperCase()}`),
       undefined,
+      expect.any(Error),
     );
   });
 
@@ -157,6 +158,7 @@ describe.each([
     expect(await service.loadFile(file, Schema)).toBeNull();
     expect(error).toHaveBeenCalledWith(
       expect.stringContaining("Schema validation failed"),
+      undefined,
       undefined,
     );
     expect(await service.loadArbitraryFile(file)).toEqual({ name: 1 });

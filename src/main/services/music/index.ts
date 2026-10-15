@@ -18,6 +18,7 @@ export class MusicService extends ProviderService<MusicProvider> {
       Logger.error(
         `<Music> Unable to play track [${id}] -- ${formatError(error)}`,
         this._logFile,
+        error,
       );
     });
     this.addProvider("YouTube", new YouTubeMusic(), true);

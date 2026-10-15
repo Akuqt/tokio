@@ -46,6 +46,7 @@ export class TikTokConnectorService extends ProviderService<ConnectorProvider> {
       Logger.error(
         `<Connector> Unable to connect to ${username} -- ${formatError(res.error)}`,
         this._logFile,
+        res.error,
       );
     } else {
       Logger.success(`<Connector> Connected to ${username}.`, this._logFile);

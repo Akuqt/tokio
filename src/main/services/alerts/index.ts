@@ -336,7 +336,7 @@ export class AlertsService extends Service {
 
   private _fail(action: string, error: unknown) {
     const message = formatError(error);
-    Logger.error(`<Alerts> ${action} -- ${message}`, this._logFile);
+    Logger.error(`<Alerts> ${action} -- ${message}`, this._logFile, error);
     return { success: false, error: message };
   }
 }

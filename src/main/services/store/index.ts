@@ -116,6 +116,7 @@ export class StoreManagerService extends Service {
       Logger.error(
         `<System> Fatal: Unable to initialize JSON store -- ${formatError(error)}`,
         this._logFile,
+        error,
       );
       throw new Error("Unable to initialize store.", { cause: error });
     }
@@ -628,6 +629,7 @@ export class StoreManagerService extends Service {
       Logger.error(
         `<System> Background save failed -- ${formatError(e)}`,
         this._logFile,
+        e,
       );
     }
   }

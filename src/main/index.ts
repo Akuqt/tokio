@@ -53,6 +53,7 @@ const logFatal = (kind: string) => (error: unknown) => {
   Logger.error(
     `<System> ${kind} -- ${formatError(error)}`,
     services.pathManagerService.files?.logs.system,
+    error,
   );
 };
 

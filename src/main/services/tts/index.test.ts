@@ -215,6 +215,7 @@ describe("TTSService", () => {
     expect(error).toHaveBeenCalledWith(
       expect.stringContaining("rate limited"),
       undefined,
+      expect.objectContaining({ message: "rate limited" }),
     );
   });
 
