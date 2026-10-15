@@ -3,7 +3,16 @@
   "entry": [
     "src/main/index.ts",
     "src/preload/index.ts",
-    "src/renderer/src/main.tsx"
+    "src/renderer/src/main.tsx",
+    "src/music/src/main.tsx",
+    "src/installer/ui/main.tsx"
+  ],
+  "ignoreDependencies": ["electron-updater"],
+  "ignoreExports": [
+    {
+      "file": "src/renderer/src/components/Elements/elements.module.css",
+      "exports": ["react-colorful__pointer"]
+    }
   ],
   "duplicates": {
     "minOccurrences": 2,
