@@ -1,3 +1,4 @@
-provider: generic
-url: https://tokio.ialfaro.com/auto-updates
+provider: github
+owner: Akuqt
+repo: tokio
 updaterCacheDirName: tokio-updater

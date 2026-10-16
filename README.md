@@ -67,7 +67,7 @@ Building your own overlay? Create a test ID on the **Tools** page and send your 
 
 ### Install
 
-Download the Windows installer from the [latest release](https://github.com/Akuqt/tokio/releases/latest) and run it.
+Download the installer for your system from the [latest release](https://github.com/Akuqt/tokio/releases/latest) (`Tokio-Installer-windows-x64.exe`, `-mac-arm64.zip`, `-mac-x64.zip` or `-linux-x64.tar.gz`) and run it. It downloads and installs the latest version of Tokio. The release also has the app's own packages: the Windows setup, the macOS zips and the Linux AppImage.
 
 ### Platforms
 

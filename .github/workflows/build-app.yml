@@ -1,0 +1,55 @@
+name: Build app
+
+# Packages the Electron app for Windows, macOS and Linux and uploads the files as artifacts.
+# Called by ci.yml (testing builds) and release.yml (release assets).
+on:
+  workflow_call:
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows
+            os: windows-latest
+            flag: --win
+          - name: mac
+            os: macos-latest
+            flag: --mac
+          - name: linux
+            os: ubuntu-22.04
+            flag: --linux
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+
+      - name: Install packages
+        run: yarn install --frozen-lockfile
+
+      - name: Build
+        run: yarn build
+
+      # The files must match the artifactName patterns in electron-builder.yml; the installer looks them up by name.
+      - name: Package
+        run: yarn electron-builder ${{ matrix.flag }} --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-${{ matrix.name }}
+          if-no-files-found: error
+          path: |
+            dist/*-setup.exe
+            dist/*-setup.exe.blockmap
+            dist/*-mac-*.zip
+            dist/*-mac-*.zip.blockmap
+            dist/*.AppImage
+            dist/latest*.yml

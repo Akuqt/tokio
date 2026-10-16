@@ -32,6 +32,10 @@ nsis:
 # (see release_lookup in src/installer/build.rs). Keep them in sync.
 mac:
   icon: "build/icon.png"
+  # Ad-hoc signature, so Apple Silicon runs the app without a certificate. Replace with a Developer ID
+  # (and notarization) to avoid Gatekeeper warnings.
+  identity: "-"
+  hardenedRuntime: false
   artifactName: ${name}-${version}-mac-${arch}.${ext}
   target:
     - target: zip
@@ -46,8 +50,10 @@ linux:
 appImage:
   artifactName: ${name}-${version}-${arch}.${ext}
 npmRebuild: false
+# Auto-update metadata (latest*.yml) points at the GitHub releases, where release.yml uploads the builds.
 publish:
-  provider: generic
-  url: https://tokio.ialfaro.com/auto-updates
+  provider: github
+  owner: Akuqt
+  repo: tokio
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

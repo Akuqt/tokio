@@ -167,6 +167,16 @@ Tokio's source is MIT. The project is open source, so treat license compliance a
 - The About page (`/about`, last sidebar item) shows the AGPL's "Appropriate Legal Notices": copyright, no warranty, the license and where to get the source. Keep it reachable from the sidebar. Its package list comes from `LicensesService` (`src/main/services/licenses`), which walks the production dependency tree in `node_modules` (inside `app.asar` when packaged), so new dependencies appear without changes.
 - Keep `"license": "MIT"` in `package.json`. It describes the repository's own code.
 
+## CI and releases
+
+Workflows live in `.github/workflows/`:
+
+- `ci.yml` runs on every PR and on `main`: Prettier check, lint, typecheck and tests on Linux and Windows. Non-draft PRs, pushes to `main`, and draft PRs whose latest commit message contains `[ci]` also package the app for all three systems through `build-app.yml` and upload the packages as artifacts.
+- `installer.yml` builds the installer for each system when `src/installer` or `scripts/installer` change.
+- `release.yml` runs when a `v<version>` tag is pushed. The tag must match `package.json`'s version. It packages the app and the installers and attaches them, with the `latest*.yml` update files and blockmaps, to a draft GitHub release.
+
+To release: bump `version` in `package.json`, commit, push a `v<version>` tag, then review and publish the draft. Only published releases count as the latest, which the installer and auto-updates read. Keep the `artifactName` patterns in `electron-builder.yml`, the upload paths in `build-app.yml` and `release_lookup` in `src/installer/build.rs` in sync.
+
 ## Conventions
 
 - Prettier: 2-space indent, double quotes, semicolons, trailing commas. Run `yarn format` on files you touch.
