@@ -6,7 +6,7 @@ import {
   TOKIO_EVENTS,
   TokioEventMap,
 } from "@/common/types";
-import { BrowserWindow, WebContentsView, type IpcMain } from "electron";
+import { BrowserWindow, WebContentsView } from "electron";
 import { join } from "node:path";
 
 export { MusicQueue } from "./queue";
@@ -14,7 +14,7 @@ export type ConnectionResponse = { success: boolean; error?: Error };
 
 export abstract class MusicProvider {
   public abstract setKey(key: string): void;
-  public abstract connect(ipcMain: IpcMain): Promise<ConnectionResponse>;
+  public abstract connect(): Promise<ConnectionResponse>;
   public abstract disconnect(): void;
   public abstract play(track: SongInfo): Promise<void>;
   public abstract searchSong(query: string): Promise<SongInfo | null>;
@@ -30,7 +30,7 @@ export abstract class MusicProvider {
   ): void;
 }
 
-export function createWindow(ipcMain: IpcMain) {
+export function createWindow() {
   const APP_ICON = join(__dirname, "../../resources/icon.png");
   const APP_PRELOAD = join(__dirname, "../preload/index.mjs");
 
@@ -70,47 +70,52 @@ export function createWindow(ipcMain: IpcMain) {
     _navView.setBounds({ x: 0, y: 0, width: bounds.width, height: 40 });
   };
 
-  updateNavBounds();
-  _shellWindow.on("resize", updateNavBounds);
+  // The title bar lives in the nav view, so it gets the window state.
+  const nav = _navView.webContents;
+  const sendWindowState = () => {
+    if (nav.isDestroyed()) return;
+    nav.send(APP_EVENTS_RESPONSE.RESIZE_MUSIC_WINDOW, {
+      state: _shellWindow.isMaximized() ? "maximized" : "normal",
+    });
+  };
 
-  _shellWindow?.on("close", async () => {
+  updateNavBounds();
+  _shellWindow.on("resize", () => {
+    updateNavBounds();
+    sendWindowState();
+  });
+  _shellWindow.on("maximize", sendWindowState);
+  _shellWindow.on("unmaximize", sendWindowState);
+
+  // Registered on the nav view, not ipcMain, so the controls only answer this
+  // window's title bar and go away with it. Global handlers piled up on every
+  // reopen and threw on the destroyed window.
+  nav.ipc.on(APP_EVENTS.MAXIMIZE_MUSIC_WINDOW, () => {
+    if (_shellWindow.isDestroyed()) return;
+    if (_shellWindow.isMaximized()) {
+      _shellWindow.unmaximize();
+    } else {
+      _shellWindow.maximize();
+    }
+  });
+
+  nav.ipc.on(APP_EVENTS.MINIMIZE_MUSIC_WINDOW, () => {
+    if (!_shellWindow.isDestroyed()) _shellWindow.minimize();
+  });
+
+  nav.ipc.on(APP_EVENTS.CLOSE_MUSIC_WINDOW, () => {
+    if (!_shellWindow.isDestroyed()) _shellWindow.close();
+  });
+
+  _shellWindow.on("close", () => {
     try {
-      _shellWindow?.contentView.removeChildView(_navView);
+      _shellWindow.contentView.removeChildView(_navView);
     } catch {
       // Next
     }
-  });
-
-  _shellWindow?.on("resize", () => {
-    if (_shellWindow?.isNormal()) {
-      _shellWindow?.webContents.send(APP_EVENTS_RESPONSE.RESIZE_MUSIC_WINDOW, {
-        state: "normal",
-      });
-    } else {
-      _shellWindow?.webContents.send(APP_EVENTS_RESPONSE.RESIZE_MUSIC_WINDOW, {
-        state: "maximized",
-      });
-    }
-  });
-
-  ipcMain.on(APP_EVENTS.MAXIMIZE_MUSIC_WINDOW, () => {
-    if (_shellWindow?.isMaximized()) {
-      _shellWindow?.unmaximize();
-    } else {
-      _shellWindow?.maximize();
-    }
-  });
-
-  ipcMain.on(APP_EVENTS.MINIMIZE_MUSIC_WINDOW, () => {
-    if (_shellWindow && !_shellWindow?.isDestroyed()) {
-      _shellWindow?.minimize();
-    }
-  });
-
-  ipcMain.on(APP_EVENTS.CLOSE_MUSIC_WINDOW, () => {
-    if (_shellWindow && !_shellWindow?.isDestroyed()) {
-      _shellWindow?.close();
-    }
+    // Removing a view doesn't close its webContents, which kept a renderer
+    // process alive for every music window opened.
+    if (!nav.isDestroyed()) nav.close();
   });
 
   return _shellWindow;

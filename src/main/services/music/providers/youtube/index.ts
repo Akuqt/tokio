@@ -5,7 +5,7 @@ import {
   TokioEventMap,
 } from "@/common/types";
 import { delay } from "@/common/util";
-import { BrowserWindow, IpcMain, WebContentsView } from "electron";
+import { BrowserWindow, WebContentsView } from "electron";
 import { EventEmitter } from "node:events";
 import { ConnectionResponse, createWindow, MusicProvider } from "../../common";
 import {
@@ -36,11 +36,8 @@ export class YouTubeMusic extends MusicProvider {
     return this._isActive;
   }
 
-  public connect(
-    ipcMain: IpcMain,
-    requireAuth: boolean = true,
-  ): Promise<ConnectionResponse> {
-    this._shellWindow = createWindow(ipcMain);
+  public connect(requireAuth: boolean = true): Promise<ConnectionResponse> {
+    this._shellWindow = createWindow();
 
     this._ytView = new WebContentsView({
       webPreferences: {

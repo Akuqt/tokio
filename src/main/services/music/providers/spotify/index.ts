@@ -5,7 +5,7 @@ import {
   TokioEventMap,
 } from "@/common/types";
 import crypto from "crypto";
-import { IpcMain, WebContentsView } from "electron";
+import { WebContentsView } from "electron";
 import { EventEmitter } from "node:events";
 import { ConnectionResponse, createWindow, MusicProvider } from "../../common";
 import { CSSScrollBar } from "./common";
@@ -38,7 +38,7 @@ export class Spotify extends MusicProvider {
     return this._isActive;
   }
 
-  public connect(ipcMain: IpcMain): Promise<ConnectionResponse> {
+  public connect(): Promise<ConnectionResponse> {
     return new Promise((res) => {
       if (this._isActive) {
         res({
@@ -54,7 +54,7 @@ export class Spotify extends MusicProvider {
         },
       });
 
-      const shellWindow = createWindow(ipcMain);
+      const shellWindow = createWindow();
 
       shellWindow.contentView.addChildView(authView);
 

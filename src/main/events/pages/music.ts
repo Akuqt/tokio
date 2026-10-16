@@ -26,7 +26,7 @@ events.push(
 
 events.push(
   APP_EVENTS.CONNECT_MUSIC,
-  async ({ musicService, ipcMain }, e, { name, key }) => {
+  async ({ musicService }, e, { name, key }) => {
     try {
       if (onMusicEnded) {
         musicService.off(TOKIO_EVENTS.MUSIC_PROCCESS_ENDED, onMusicEnded);
@@ -44,7 +44,7 @@ events.push(
 
       musicService.setProvider(name, key);
 
-      const res = await musicService.connect(ipcMain);
+      const res = await musicService.connect();
 
       e.reply(APP_EVENTS_RESPONSE.MUSIC_CONNECTED, {
         success: res.success,

@@ -4,7 +4,6 @@ import { formatError, TaskQueue } from "@/common/util";
 import { hasPermission } from "@/helper/permissions";
 import Logger from "@/logger";
 import { ProviderService } from "@/services/shared";
-import { IpcMain } from "electron";
 import { ConnectionResponse, MusicProvider, MusicQueue } from "./common";
 import { Spotify, YouTubeMusic } from "./providers";
 
@@ -29,7 +28,7 @@ export class MusicService extends ProviderService<MusicProvider> {
     return provider instanceof MusicProvider;
   }
 
-  public connect(ipcMain: IpcMain): Promise<ConnectionResponse> {
+  public connect(): Promise<ConnectionResponse> {
     if (!this._current?.provider)
       return new Promise((r) =>
         r({
@@ -38,7 +37,7 @@ export class MusicService extends ProviderService<MusicProvider> {
         }),
       );
 
-    return this._current.provider.connect(ipcMain);
+    return this._current.provider.connect();
   }
 
   public disconnect() {
