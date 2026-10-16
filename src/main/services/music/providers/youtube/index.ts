@@ -37,6 +37,8 @@ export class YouTubeMusic extends MusicProvider {
   }
 
   public connect(requireAuth: boolean = true): Promise<ConnectionResponse> {
+    if (this._isActive) return Promise.resolve({ success: true });
+
     this._shellWindow = createWindow();
 
     this._ytView = new WebContentsView({
@@ -102,11 +104,6 @@ export class YouTubeMusic extends MusicProvider {
     this._shellWindow!.show();
 
     return new Promise((res) => {
-      if (this._isActive) {
-        res({
-          success: true,
-        });
-      }
       const handleAuthAbort = () => {
         res({
           success: false,

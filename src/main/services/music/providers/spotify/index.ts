@@ -39,12 +39,9 @@ export class Spotify extends MusicProvider {
   }
 
   public connect(): Promise<ConnectionResponse> {
+    if (this._isActive) return Promise.resolve({ success: true });
+
     return new Promise((res) => {
-      if (this._isActive) {
-        res({
-          success: true,
-        });
-      }
       const codeVerifier = this.generateRandomString(64);
       const codeChallenge = this.generateCodeChallenge(codeVerifier);
 
