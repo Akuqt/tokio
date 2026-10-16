@@ -2,13 +2,13 @@
 
 By participating in this project, you agree to abide by the Tokio [code of conduct].
 
-[code of conduct]: https://github.com/akuqt/tokio/blob/main/CODE_OF_CONDUCT.md
+[code of conduct]: https://github.com/tokio-app/tokio/blob/main/CODE_OF_CONDUCT.md
 
 To start, [Fork][fork] and then clone the repo to your local machine:
 
     git clone https://github.com/<username>/tokio.git
 
-[fork]: https://github.com/Akuqt/tokio/fork
+[fork]: https://github.com/tokio-app/tokio/fork
 
 System requirements:
 
@@ -29,7 +29,7 @@ Start the application development server:
 
 Start making changes, commit and push to your fork and [submit a pull request][pr].
 
-[pr]: https://github.com/akuqt/tokio/compare
+[pr]: https://github.com/tokio-app/tokio/compare
 
 At this point you're waiting on us. We may suggest
 some changes or improvements or alternatives.

@@ -1,4 +1,4 @@
 provider: github
-owner: Akuqt
+owner: tokio-app
 repo: tokio
 updaterCacheDirName: tokio-updater

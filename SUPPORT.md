@@ -8,7 +8,7 @@ Thank you for contributing to this project! If you need assistance, please refer
    Check the project's documentation for detailed guides and FAQs.
 
 2. **Issue Tracker**
-   Report bugs or request features via the [issue tracker](https://github.com/Akuqt/tokio/issues/new/choose).
+   Report bugs or request features via the [issue tracker](https://github.com/tokio-app/tokio/issues/new/choose).
 
 3. **Community Support**
    Join the discussion in our community forums or chat channels.

@@ -4,8 +4,8 @@
   <p>Make your TikTok LIVE react to chat, gifts and follows: text-to-speech, music requests, sound alerts and overlays.</p>
   <p>
     <a href="https://tokio.ialfaro.com">Website</a> ·
-    <a href="https://github.com/Akuqt/tokio/releases">Download</a> ·
-    <a href="https://github.com/Akuqt/tokio/issues">Report a bug</a>
+    <a href="https://github.com/tokio-app/tokio/releases">Download</a> ·
+    <a href="https://github.com/tokio-app/tokio/issues">Report a bug</a>
   </p>
 </div>
 
@@ -67,7 +67,7 @@ Building your own overlay? Create a test ID on the **Tools** page and send your 
 
 ### Install
 
-Download the installer for your system from the [latest release](https://github.com/Akuqt/tokio/releases/latest) (`Tokio-Installer-windows-x64.exe`, `-mac-arm64.zip`, `-mac-x64.zip` or `-linux-x64.tar.gz`) and run it. It downloads and installs the latest version of Tokio. The release also has the app's own packages: the Windows setup, the macOS zips and the Linux AppImage.
+Download the installer for your system from the [latest release](https://github.com/tokio-app/tokio/releases/latest) (`Tokio-Installer-windows-x64.exe`, `-mac-arm64.zip`, `-mac-x64.zip` or `-linux-x64.tar.gz`) and run it. It downloads and installs the latest version of Tokio. The release also has the app's own packages: the Windows setup, the macOS zips and the Linux AppImage.
 
 ### Platforms
 

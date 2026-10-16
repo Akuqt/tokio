@@ -16,7 +16,7 @@ license texts are embedded in the installer binary next to this file:
   CC-BY-4.0.txt             Creative Commons Attribution 4.0
 
 The same texts are published with the source code at
-https://github.com/Akuqt/tokio (LICENSES/ and src/installer/).
+https://github.com/tokio-app/tokio (LICENSES/ and src/installer/).
 
 
 -----------------------------------------------------------------------

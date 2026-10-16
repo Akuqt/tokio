@@ -11,7 +11,7 @@ const MAIN_LICENSE_BANNER = `/*!
  * edge-tts (https://github.com/rany2/edge-tts) and licensed LGPL-3.0-only.
  * Uses tiktok-live-connector and tiktok-live-proto (AGPL-3.0-only), so the
  * application as distributed is licensed AGPL-3.0-only.
- * Source: https://github.com/Akuqt/tokio
+ * Source: https://github.com/tokio-app/tokio
  * See resources/licenses/THIRD_PARTY_NOTICES.md and resources/licenses/LICENSES.
  */`;
 

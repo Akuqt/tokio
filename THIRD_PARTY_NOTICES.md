@@ -10,7 +10,7 @@
 
 Tokio's own files stay MIT and can be reused under MIT on their own. The application built from them includes `tiktok-live-connector` and `tiktok-live-proto`, which are licensed AGPL-3.0-only. So anyone who distributes the application, modified or not, must do so under the AGPL-3.0, including making the complete corresponding source available.
 
-**Corresponding source.** The complete source of Tokio is published at <https://github.com/Akuqt/tokio>, and every released version is built from it. The exact dependency versions are pinned in `yarn.lock`. See the README for build instructions (`yarn build:win`).
+**Corresponding source.** The complete source of Tokio is published at <https://github.com/tokio-app/tokio>, and every released version is built from it. The exact dependency versions are pinned in `yarn.lock`. See the README for build instructions (`yarn build:win`).
 
 **Licenses in the app.** `LICENSE`, this notice and the `LICENSES/` folder are installed with the application, in its `resources/licenses` folder. Every npm dependency ships with its own license file inside `resources/app.asar`, under `node_modules/<package>/`. The About page of the app shows these notices, the license texts and the license of every npm package it ships.
 

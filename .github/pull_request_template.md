@@ -1,7 +1,7 @@
 # Pull Request
 
 <!--
-Before submitting a PR, please read https://github.com/Akuqt/tokio/blob/main/CONTRIBUTING.md
+Before submitting a PR, please read https://github.com/tokio-app/tokio/blob/main/CONTRIBUTING.md
 
 1. Give the PR a descriptive title.
 

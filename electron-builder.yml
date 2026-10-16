@@ -53,7 +53,7 @@ npmRebuild: false
 # Auto-update metadata (latest*.yml) points at the GitHub releases, where release.yml uploads the builds.
 publish:
   provider: github
-  owner: Akuqt
+  owner: tokio-app
   repo: tokio
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/
