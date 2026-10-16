@@ -1,27 +1,9 @@
-.tabs {
-  display: flex;
-  flex-direction: row;
-  gap: 4px;
-  border-bottom: 1px solid var(--background-secondary);
+.contents {
+  display: contents;
 }
 
-.tab {
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--font-secondary);
-  padding: 8px 12px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.tab:hover {
-  color: var(--font-primary);
-}
-
-.tab_active {
-  color: var(--font-primary);
-  border-bottom-color: var(--accent-primary);
+.hidden {
+  display: none;
 }
 
 .list {
@@ -33,65 +15,30 @@
 
 .row {
   display: flex;
-  flex-direction: row;
   align-items: center;
-  gap: 4px;
-  padding: 4px 0;
+  gap: var(--space-1);
+  padding: var(--space-1) 0;
   border-bottom: 1px solid var(--background-secondary);
 }
 
 .name {
   flex: 1;
   min-width: 0;
-  font-size: 14px;
-  color: var(--font-primary);
   overflow: hidden;
+  color: var(--font-primary);
+  font-size: var(--font-md);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.icon_btn {
-  display: flex;
-  background: transparent;
-  border: none;
-  color: var(--font-secondary);
-  padding: 6px;
-  cursor: pointer;
-}
-
-.icon_btn:hover:not(:disabled) {
-  color: var(--accent-primary);
-}
-
-.saved {
-  color: var(--accent-primary);
-}
-
-.playing {
-  color: var(--accent-primary);
-  animation: pulse 1s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  50% {
-    opacity: 0.5;
-  }
-}
-
-.icon_btn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
 .status {
-  font-size: 14px;
+  margin: var(--space-4) 0;
   color: var(--font-secondary);
+  font-size: var(--font-md);
   text-align: center;
-  margin: 16px 0;
 }
 
 .error {
-  font-size: 13px;
   color: var(--accent-primary);
-  margin: 0;
+  font-size: var(--font-sm);
 }

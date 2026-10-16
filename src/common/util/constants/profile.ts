@@ -25,7 +25,7 @@ export const defaultProfile: Profile = {
       cooldown: 2,
       queue_length: 10,
     },
-    constrols: {
+    controls: {
       play: {
         enabled: true,
         command: "!play",

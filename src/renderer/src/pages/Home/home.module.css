@@ -1,179 +1,93 @@
-.container {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
-  padding-top: 2rem;
-  padding-bottom: 2rem;
-}
+/* CONNECT */
 
-/* --- Redesigned Status Badge --- */
-.headerRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 4px;
-}
-
-.statusBadge {
+.status {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background-color: var(--background-secondary);
+  gap: var(--space-2);
+  padding: 6px var(--space-3);
+  border-radius: var(--radius-full);
   border: 1px solid var(--background-secondary-hover);
-  font-size: 13px;
-  font-weight: 600;
+  background-color: var(--background-secondary);
   color: var(--font-primary);
+  font-size: var(--font-sm);
+  font-weight: 600;
 }
 
 .dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  background-color: var(--offline);
 }
 
-.dotOffline {
-  background-color: #ef4444;
-}
-.dotOnline {
-  background-color: #22c55e;
+.dot_online {
+  background-color: var(--success);
 }
 
-/* --- Flat Sections --- */
-.section {
+.connect_row {
   display: flex;
-  flex-direction: column;
-  gap: 24px;
-  padding-bottom: 32px;
-  margin-bottom: 32px;
-  border-bottom: 1px solid var(--background-secondary-hover);
-}
-
-.title {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--font-primary);
-  margin: 0;
-}
-
-.subtitle {
-  font-size: 14px;
-  color: var(--font-secondary);
-  margin: 0;
-}
-
-/* --- "Hero" Connection Area --- */
-.heroInputGroup {
-  display: flex;
-  gap: 16px;
   align-items: center;
   justify-content: space-between;
-  margin-top: 8px;
+  gap: var(--space-4);
 }
 
-.heroInput {
-  background-color: var(--background-secondary);
-  color: var(--font-primary);
-  border: 1px solid var(--background-secondary-hover);
-  border-radius: 6px;
-  padding: 0 16px;
-  height: 48px; /* Larger than standard settings */
-  font-size: 16px;
-  outline: none;
-  width: 100%;
+.username {
   max-width: 350px;
-  box-sizing: border-box;
-  transition: border-color 0.2s;
+  height: 48px;
+  padding: 0 var(--space-4);
+  border-color: var(--background-secondary-hover);
+  border-radius: var(--radius-md);
+  font-size: var(--font-lg);
+  transition: border-color var(--transition-fast);
 }
 
-.heroInput:focus {
+.username:focus {
   border-color: var(--accent-primary);
 }
 
-.heroButton {
-  background-color: var(--accent-primary);
-  color: var(--font-primary);
-  border: none;
-  border-radius: 6px;
-  height: 48px;
-  padding: 0 32px;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    opacity 0.2s,
-    transform 0.1s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+.connect_btn {
   width: 180px;
 }
 
-.heroButton:hover {
-  opacity: 0.9;
-}
+/* FEATURES */
 
-.heroButton:active {
-  transform: scale(0.98);
-}
-
-/* --- Features Panel --- */
-.checkboxGroup {
+.features {
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
-  background-color: var(--background-secondary);
+  gap: var(--space-6);
+  padding: var(--space-5) var(--space-6);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--background-secondary-hover);
-  padding: 20px 24px;
-  border-radius: 8px;
+  background-color: var(--background-secondary);
 }
 
-.checkboxLabel {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--font-primary);
-  cursor: pointer;
-}
+/* STATS */
 
-.checkboxInput {
-  accent-color: var(--accent-primary);
-  transform: scale(1.2);
-  margin: 0;
-}
-
-/* --- Minimalist Stats --- */
-.statsGrid {
+.stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 24px;
+  gap: var(--space-6);
 }
 
-.statBox {
+.stat {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding-left: 16px;
+  gap: var(--space-1);
+  padding-left: var(--space-4);
   border-left: 3px solid var(--accent-primary);
 }
 
-.statValue {
+.stat_value {
   font-size: 32px;
   font-weight: 700;
-  color: var(--font-primary);
   line-height: 1;
+  color: var(--font-primary);
 }
 
-.statLabel {
-  font-size: 12px;
+.stat_label {
+  font-size: var(--font-xs);
   font-weight: 600;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
   color: var(--font-secondary);
-  letter-spacing: 0.5px;
 }

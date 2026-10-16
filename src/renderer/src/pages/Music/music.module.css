@@ -1,253 +1,68 @@
-/*
-  GLOBALS
-*/
+/* PROVIDER */
 
-.container {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
-  padding-top: 2rem;
-  padding-bottom: 4rem;
-}
-
-.section {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  padding-bottom: 32px;
-  border-bottom: 1px solid var(--background-primary);
-}
-
-.section_delimiter {
-  display: block;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(
-    to right,
-    var(--background-secondary),
-    transparent
-  );
-  margin: 0px 0px 32px 0;
-}
-
-.section_header {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--font-primary);
-  margin: 0 0 4px 0;
-}
-
-.section_description {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--font-secondary);
-  margin: 0 0 16px 0;
-}
-
-.label_title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--font-primary);
-  margin-bottom: 8px;
-  display: block;
-}
-
-.input_style {
-  background-color: var(--background-secondary);
-  color: var(--font-primary);
-  border: 1px solid var(--background-primary);
-  border-radius: 4px;
-  padding: 10px 12px;
-  font-size: 14px;
-  outline: none;
-  box-sizing: border-box;
-  width: 100%;
-}
-
-.secondary_text {
-  color: var(--font-secondary);
-  font-size: 12px;
-  opacity: 0.8;
-  font-weight: 600;
-}
-
-/*
-  VOICE
-*/
-
-.tester_btn {
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  background-color: var(--accent-primary);
-  color: var(--font-primary);
-  border: none;
-  font-weight: 600;
-  font-size: 14px;
-  white-space: nowrap;
-  height: 38px !important;
-  display: flex;
-  justify-content: center;
-  flex-direction: row;
-  align-items: center;
-  width: 90px;
-}
-
-.tester_btn:hover {
-  background-color: var(--accent-primary-hover);
-}
-
-/*
-  PERMISSIONS
-*/
-
-.check_input {
-  accent-color: var(--accent-primary);
-  transform: scale(1.2);
-}
-
-.check_label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: var(--font-primary);
-  cursor: pointer;
-  width: fit-content;
-}
-
-/*
-  PROTECTION
-*/
-
-.protection_input_group {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
-  max-width: 320px;
-}
-
-/*
-  SAVE
-*/
-
-.floating_save {
-  position: absolute;
-  background: transparent;
-  top: 100px;
-  right: 50px;
-  z-index: 100;
-  width: fit-content;
-  height: fit-content;
-}
-
-.floating_save_btn {
-  background: transparent;
-  outline: none;
-  border: none;
-  color: var(--accent-primary);
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.5s;
-}
-
-/*
-  PROVIDER
-*/
-
-.provider_status {
-  font-size: 14px;
+.status {
+  font-size: var(--font-md);
   font-weight: 600;
   color: var(--font-secondary);
 }
 
-.provider_status_connected {
-  color: #4ade80;
+.status_connected {
+  color: var(--success);
 }
 
-.tab_container {
-  display: inline-flex;
-  background-color: var(--background-secondary);
-  padding: 4px;
-  border-radius: 6px;
-  margin-top: 8px;
-  width: fit-content;
-}
-
-.tab_btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 24px;
-  border-radius: 4px;
-  border: none;
-  font-weight: 600;
-  font-size: 15px;
-  transition: all 0.2s ease-in-out;
-  background-color: transparent;
-}
-
-.tab_btn_active {
-  background-color: var(--background-primary);
-  color: var(--font-primary);
-  cursor: default;
-}
-
-.tab_btn_inactive {
-  color: var(--font-secondary);
-  cursor: pointer;
-}
-
-.tab_btn_inactive:hover {
-  color: var(--font-primary);
-}
-
-.locked_state {
+.locked {
   opacity: 0.5;
   pointer-events: none;
 }
 
-/*
-  ANIMATION & CONSTRAINTS
-*/
-
-.expandable_container {
+.expandable {
   display: grid;
   grid-template-rows: 0fr;
+  margin-top: calc(-1 * var(--space-6));
   opacity: 0;
-  margin-top: 0px;
   transition:
     grid-template-rows 0.3s ease-in-out,
     opacity 0.3s ease-in-out,
     margin 0.3s ease-in-out;
 }
 
-.expandable_container.open {
+.expandable_open {
   grid-template-rows: 1fr;
+  margin-top: 0;
   opacity: 1;
-  margin-top: 16px;
 }
 
 .expandable_content {
   min-height: 0;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
-.input_constrained {
+.key_input {
   max-width: 320px;
 }
 
 .connect_btn {
   width: 120px;
-  margin-top: 16px;
 }
 
-.connect_btn_connected {
-  background-color: var(--background-secondary);
+/* CONTROLS */
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.control_label {
+  width: 90px;
+}
+
+.control_command {
+  width: 200px;
 }

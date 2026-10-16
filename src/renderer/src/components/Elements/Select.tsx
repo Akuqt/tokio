@@ -1,321 +1,286 @@
+import { cx } from "@/helper/cx";
+import { usePopover } from "@/hooks/usePopover";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useEffect, useRef, useState } from "react";
+import { ReactNode, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { FiChevronDown } from "react-icons/fi";
 import { VscClose } from "react-icons/vsc";
 import styles from "./elements.module.css";
 
-type Option = { label: string | number; value: string | number; img?: string };
+type Value = string | number;
 
-interface Props<T extends boolean | undefined> {
-  options: Option[];
-  labelColor: {
-    active: string;
-    passive: string;
-  };
-  bgColor: {
-    active: string;
-    passive: string;
-  };
+export type SelectOption<V extends Value = Value> = {
+  label: string | number;
+  value: V;
+  img?: string;
+  // Options with a group are listed under its name. Keep them sorted by group.
+  group?: string;
+};
+
+type CommonProps<V extends Value> = {
+  options: SelectOption<V>[];
   searchable?: boolean;
   placeholder?: string;
-  multiple?: T;
+  className?: string;
+};
 
-  value: T extends true
-    ? string[] | number[]
-    : T extends false | undefined
-      ? string | number
-      : string | string[] | number | number[];
+const OPTION_HEIGHT = 44;
+const GROUP_HEIGHT = 28;
 
-  onChange: (
-    val: T extends true
-      ? string[] | number[]
-      : T extends false | undefined
-        ? string | number
-        : string | string[] | number | number[],
-    label?: string | number,
-  ) => void;
-}
-
-export function Select<T extends boolean | undefined = undefined>(
-  props: Props<T>,
-) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
-
-  const containerRef = useRef<HTMLDivElement>(null);
-  const popoverRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  const arrayValue = Array.isArray(props.value) ? props.value : [];
-
-  const handleToggle = () => {
-    if (!isOpen && containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      setCoords({
-        top: rect.bottom + 4,
-        left: rect.left,
-        width: rect.width, // Grab the exact width of the input
-      });
-    }
-    setIsOpen(!isOpen);
-  };
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      const target = event.target as Node;
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(target) &&
-        popoverRef.current &&
-        !popoverRef.current.contains(target)
-      ) {
-        setIsOpen(false);
-      }
-    }
-
-    function handleScroll(event: Event) {
-      // Ignore scroll events that happen inside the dropdown itself
-      if (
-        popoverRef.current &&
-        popoverRef.current.contains(event.target as Node)
-      ) {
-        return;
-      }
-      if (isOpen) setIsOpen(false);
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    window.addEventListener("scroll", handleScroll, true);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener("scroll", handleScroll, true);
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setSearchTerm("");
-    }
-  }, [isOpen]);
-
-  const renderDisplay = () => {
-    if (props.multiple) {
-      const selected = new Set(arrayValue);
-      const selectedLabels = props.options.filter((op) =>
-        selected.has(op.value),
-      );
-
-      return (
-        <div className={styles.multi_select_label_group}>
-          {selectedLabels.length > 0 ? (
-            selectedLabels.map((lb) => (
-              <span key={lb.value} className={styles.multi_select_label}>
-                {lb.img && <img src={lb.img} className={styles.select_img} />}
-                <label>{lb.label}</label>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const data = new Set(selected);
-                    data.delete(lb.value);
-                    props.onChange(Array.from(data) as any);
-                  }}
-                >
-                  <VscClose
-                    size={18}
-                    color={props.labelColor.passive}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = props.labelColor.active;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = props.labelColor.passive;
-                    }}
-                  />
-                </button>
-              </span>
-            ))
-          ) : (
-            <span>{props.placeholder ?? "Select an option..."}</span>
-          )}
-        </div>
-      );
-    } else {
-      const selectedLabel = props.options.find(
-        (opt) => opt.value === props.value,
-      );
-      return (
-        <div className={styles.select_single_label}>
-          {selectedLabel?.label ? (
-            <>
-              {selectedLabel.img && (
-                <img src={selectedLabel.img} className={styles.select_img} />
-              )}
-              <label>{selectedLabel.label}</label>
-            </>
-          ) : (
-            <>{props.placeholder ?? "Select an option..."}</>
-          )}
-        </div>
-      );
-    }
-  };
-
-  const lowerSearchTerm = searchTerm.toLowerCase();
-  const filteredOptions = props.options.filter((opt) =>
-    String(opt.label).toLowerCase().includes(lowerSearchTerm),
-  );
-
-  const rowVirtualizer = useVirtualizer({
-    count: filteredOptions.length,
-    getScrollElement: () => scrollContainerRef.current,
-    estimateSize: () => 44,
-    overscan: 5,
-  });
+export function Select<V extends Value>({
+  value,
+  onChange,
+  ...common
+}: CommonProps<V> & {
+  value: V | undefined;
+  onChange: (value: V) => void;
+}) {
+  const selected = common.options.find((opt) => opt.value === value);
 
   return (
-    <div className={styles.select_container} ref={containerRef}>
-      <div
-        onClick={handleToggle}
-        className={styles.select_display}
-        style={{
-          backgroundColor: props.bgColor.active,
-          color: props.labelColor.active,
-          borderColor: props.bgColor.passive,
-        }}
-      >
-        {renderDisplay()}
+    <SelectBase
+      {...common}
+      isSelected={(v) => v === value}
+      onPick={(v) => {
+        onChange(v);
+        return true;
+      }}
+      display={
+        selected ? (
+          <span className={styles.select_label}>
+            {selected.img && (
+              <img src={selected.img} className={styles.select_img} />
+            )}
+            {selected.label}
+          </span>
+        ) : null
+      }
+    />
+  );
+}
 
-        <div className={styles.select_icon}>
-          <FiChevronDown
-            size={16}
-            style={{
-              transition: "transform 0.2s",
-              transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
-            }}
-          />
-        </div>
+export function MultiSelect<V extends Value>({
+  value,
+  onChange,
+  ...common
+}: CommonProps<V> & {
+  value: V[];
+  onChange: (value: V[]) => void;
+}) {
+  const selected = new Set(value);
+  const chips = common.options.filter((opt) => selected.has(opt.value));
+
+  return (
+    <SelectBase
+      {...common}
+      isSelected={(v) => selected.has(v)}
+      onPick={(v) => {
+        onChange(
+          selected.has(v) ? value.filter((item) => item !== v) : [...value, v],
+        );
+        return false;
+      }}
+      display={
+        chips.length > 0 ? (
+          <span className={styles.select_chips}>
+            {chips.map((chip) => (
+              <span key={chip.value} className={styles.select_chip}>
+                {chip.img && (
+                  <img src={chip.img} className={styles.select_img} />
+                )}
+                {chip.label}
+                <button
+                  type="button"
+                  className={styles.select_chip_remove}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChange(value.filter((item) => item !== chip.value));
+                  }}
+                >
+                  <VscClose size={18} />
+                </button>
+              </span>
+            ))}
+          </span>
+        ) : null
+      }
+    />
+  );
+}
+
+type BaseProps<V extends Value> = CommonProps<V> & {
+  // What the closed select shows, null for the placeholder
+  display: ReactNode;
+  isSelected: (value: V) => boolean;
+  // Returns whether to close the list
+  onPick: (value: V) => boolean;
+};
+
+function SelectBase<V extends Value>({
+  options,
+  searchable,
+  placeholder = "Select an option...",
+  className,
+  display,
+  isSelected,
+  onPick,
+}: BaseProps<V>) {
+  const { open, toggle, close, position, anchorRef, popoverRef } = usePopover();
+
+  return (
+    <div ref={anchorRef} className={className}>
+      <div className={styles.select_display} onClick={toggle}>
+        {display ?? (
+          <span className={styles.select_placeholder}>{placeholder}</span>
+        )}
+        <FiChevronDown
+          size={16}
+          className={cx(
+            styles.select_chevron,
+            open && styles.select_chevron_open,
+          )}
+        />
       </div>
 
-      {isOpen &&
+      {open &&
         createPortal(
           <div
             ref={popoverRef}
-            className={styles.select_area}
+            className={styles.popover}
             style={{
-              backgroundColor: props.bgColor.passive,
-              top: coords.top,
-              left: coords.left,
-              width: coords.width,
+              top: position.top,
+              left: position.left,
+              width: position.width,
             }}
           >
-            {props.searchable && (
-              <div
-                className={styles.search_container}
-                style={{ backgroundColor: props.bgColor.passive }}
-              >
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                  className={styles.search_input}
-                  style={{
-                    backgroundColor: props.bgColor.active,
-                    color: props.labelColor.active,
-                    borderBottomColor: props.labelColor.passive,
-                  }}
-                />
-              </div>
-            )}
-
-            <div
-              ref={scrollContainerRef}
-              style={{
-                maxHeight: "220px",
-                overflowY: "auto",
+            <SelectMenu
+              options={options}
+              searchable={searchable}
+              isSelected={isSelected}
+              onPick={(v) => {
+                if (onPick(v)) close();
               }}
-            >
-              {filteredOptions.length > 0 ? (
-                <div
-                  style={{
-                    height: `${rowVirtualizer.getTotalSize()}px`,
-                    width: "100%",
-                    position: "relative",
-                  }}
-                >
-                  {rowVirtualizer.getVirtualItems().map((virtualItem) => {
-                    const opt = filteredOptions[virtualItem.index];
-                    const isActive = props.multiple
-                      ? new Set(arrayValue).has(opt.value)
-                      : props.value === opt.value;
-
-                    return (
-                      <div
-                        key={virtualItem.key}
-                        onClick={() => {
-                          if (props.multiple) {
-                            const data = new Set(arrayValue);
-                            if (data.has(opt.value)) {
-                              data.delete(opt.value);
-                            } else {
-                              data.add(opt.value);
-                            }
-                            props.onChange(Array.from(data) as any);
-                          } else {
-                            props.onChange(opt.value as any, opt.label);
-                            setIsOpen(false);
-                          }
-                        }}
-                        className={styles.select_item}
-                        onMouseEnter={(e) => {
-                          if (isActive) return;
-                          e.currentTarget.style.backgroundColor =
-                            props.bgColor.active;
-                        }}
-                        onMouseLeave={(e) => {
-                          if (isActive) return;
-                          e.currentTarget.style.backgroundColor =
-                            props.bgColor.passive;
-                        }}
-                        style={{
-                          position: "absolute",
-                          top: 0,
-                          left: 0,
-                          width: "100%",
-                          margin: 0,
-                          height: `${virtualItem.size - 4}px`,
-                          transform: `translateY(${virtualItem.start + 2}px)`,
-                          color: isActive
-                            ? props.labelColor.active
-                            : props.labelColor.passive,
-                          backgroundColor: isActive
-                            ? props.bgColor.active
-                            : props.bgColor.passive,
-                        }}
-                      >
-                        {opt.img && (
-                          <img src={opt.img} className={styles.select_img} />
-                        )}
-                        <label>{opt.label}</label>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div
-                  className={styles.select_item}
-                  style={{ color: props.labelColor.passive }}
-                >
-                  No options found
-                </div>
-              )}
-            </div>
+            />
           </div>,
           document.body,
         )}
     </div>
+  );
+}
+
+type Row<V extends Value> =
+  | { kind: "group"; label: string }
+  | { kind: "option"; option: SelectOption<V> };
+
+function buildRows<V extends Value>(
+  options: SelectOption<V>[],
+  search: string,
+): Row<V>[] {
+  const needle = search.trim().toLowerCase();
+  const rows: Row<V>[] = [];
+  let group: string | undefined;
+
+  for (const option of options) {
+    const matches =
+      String(option.label).toLowerCase().includes(needle) ||
+      (option.group?.toLowerCase().includes(needle) ?? false);
+    if (!matches) continue;
+
+    if (option.group !== undefined && option.group !== group) {
+      group = option.group;
+      rows.push({ kind: "group", label: group });
+    }
+    rows.push({ kind: "option", option });
+  }
+
+  return rows;
+}
+
+// Mounted only while open, so the search starts empty every time.
+function SelectMenu<V extends Value>({
+  options,
+  searchable,
+  isSelected,
+  onPick,
+}: {
+  options: SelectOption<V>[];
+  searchable?: boolean;
+  isSelected: (value: V) => boolean;
+  onPick: (value: V) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const rows = useMemo(() => buildRows(options, search), [options, search]);
+
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => listRef.current,
+    estimateSize: (index) =>
+      rows[index].kind === "group" ? GROUP_HEIGHT : OPTION_HEIGHT,
+    overscan: 5,
+  });
+
+  return (
+    <>
+      {searchable && (
+        <div className={styles.select_search}>
+          <input
+            type="text"
+            placeholder="Search..."
+            className={styles.select_search_input}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            autoFocus
+          />
+        </div>
+      )}
+
+      <div ref={listRef} className={styles.select_list}>
+        {rows.length === 0 ? (
+          <div className={styles.select_empty}>No options found</div>
+        ) : (
+          <div
+            className={styles.select_rows}
+            style={{ height: virtualizer.getTotalSize() }}
+          >
+            {virtualizer.getVirtualItems().map((item) => {
+              const row = rows[item.index];
+              return (
+                <div
+                  key={item.key}
+                  className={styles.select_row}
+                  style={{
+                    height: item.size,
+                    transform: `translateY(${item.start}px)`,
+                  }}
+                >
+                  {row.kind === "group" ? (
+                    <div className={styles.select_group}>{row.label}</div>
+                  ) : (
+                    <div
+                      className={cx(
+                        styles.select_item,
+                        isSelected(row.option.value) &&
+                          styles.select_item_active,
+                      )}
+                      onClick={() => onPick(row.option.value)}
+                    >
+                      {row.option.img && (
+                        <img
+                          src={row.option.img}
+                          className={styles.select_img}
+                        />
+                      )}
+                      {row.option.label}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </>
   );
 }

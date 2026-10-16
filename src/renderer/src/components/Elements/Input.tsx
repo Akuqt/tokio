@@ -1,25 +1,25 @@
-import { InputHTMLAttributes } from "react";
+import { cx } from "@/helper/cx";
+import { InputHTMLAttributes, TextareaHTMLAttributes } from "react";
 import styles from "./elements.module.css";
 
-type Props = {
-  bgColor: {
-    primary: string;
-    secondary: string;
-  };
-  textColor: string;
-} & InputHTMLAttributes<HTMLInputElement>;
-
-export function Input({ bgColor, textColor, ...rest }: Props) {
+export function Input({
+  className,
+  type = "text",
+  ...rest
+}: InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <div className={styles.input_container}>
-      <input
-        {...rest}
-        className={styles.input_style}
-        style={{
-          color: textColor,
-          borderColor: bgColor.secondary,
-        }}
-      />
-    </div>
+    <input type={type} className={cx(styles.input, className)} {...rest} />
+  );
+}
+
+export function Textarea({
+  className,
+  ...rest
+}: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return (
+    <textarea
+      className={cx(styles.input, styles.textarea, className)}
+      {...rest}
+    />
   );
 }

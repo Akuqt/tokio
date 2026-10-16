@@ -5,6 +5,7 @@ import { FaRegCopy } from "react-icons/fa";
 import { GoUnverified, GoVerified } from "react-icons/go";
 import { PiShootingStarThin } from "react-icons/pi";
 import { VscPackage, VscSettings } from "react-icons/vsc";
+import { Btn, Input } from "../Elements";
 import { Iframe } from "../Iframe";
 import styles from "./overlayview.module.css";
 
@@ -23,6 +24,8 @@ export function OverlayView({
   width,
   height,
 }: Props) {
+  const url = getOverlayURL(overlay.id);
+
   return (
     <div className={styles.container}>
       <div className={styles.info}>
@@ -39,49 +42,34 @@ export function OverlayView({
             </span>
           ) : (
             <span className={styles.tag}>
-              <GoVerified size={16} color="green" />
+              <GoVerified size={16} color="var(--success)" />
               Verified
             </span>
           )}
         </div>
       </div>
-      <div className={styles.header_controls}>
+
+      <div className={styles.controls}>
         <div className={styles.url_group}>
-          <input
-            type="url"
-            className={styles.input_style}
-            disabled
-            value={getOverlayURL(overlay.id)}
-          />
-          <button
-            className={styles.action_btn}
-            style={{ padding: "2px 8px" }}
-            onClick={() => {
-              copy(getOverlayURL(overlay.id));
-            }}
-          >
+          <Input type="url" readOnly value={url} className={styles.url} />
+          <Btn title="Copy URL" onClick={() => copy(url)}>
             <FaRegCopy size={18} />
-          </button>
+          </Btn>
         </div>
-        <div className={styles.button_group}>
-          <button
-            className={styles.action_btn}
-            onClick={() => onTest(overlay.id)}
-          >
+        <div className={styles.buttons}>
+          <Btn onClick={() => onTest(overlay.id)}>
             <PiShootingStarThin size={20} />
             Test
-          </button>
+          </Btn>
           {overlay.config && (
-            <button
-              className={styles.action_btn}
-              onClick={() => onCustomize(overlay.id)}
-            >
+            <Btn onClick={() => onCustomize(overlay.id)}>
               <VscSettings size={20} />
               Customize
-            </button>
+            </Btn>
           )}
         </div>
       </div>
+
       <div className={styles.frame} style={{ width, height }}>
         <Iframe name={overlay.id} source={overlay.path} />
       </div>

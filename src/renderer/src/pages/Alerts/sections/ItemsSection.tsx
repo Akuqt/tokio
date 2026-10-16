@@ -1,10 +1,10 @@
-import { Alert } from "@/common/schemas";
+import { Alert, Profile } from "@/common/schemas";
 import { CustomGift } from "@/common/types";
-import { AlertItem } from "@/components";
-import { AlertTestRequest } from "@renderer/hooks";
-import { Dispatch } from "react";
+import { AlertItem, EmptyState } from "@/components";
+import { AlertTestRequest, Updater } from "@/hooks";
 import styles from "../alerts.module.css";
-import { AlertsAction } from "../helper";
+
+const COLUMNS = ["Actions", "Enabled", "Trigger", "", "Sound", "Volume"];
 
 type Props = {
   items: Alert[];
@@ -12,7 +12,8 @@ type Props = {
   // Id of the sound test loading or playing
   testing: string | null;
   onTest: (req: AlertTestRequest) => void;
-  dispatch: Dispatch<AlertsAction>;
+  update: Updater<Profile["alerts"]>;
+  onPickSound: (id: string) => void;
 };
 
 export function ItemsSection({
@@ -20,33 +21,23 @@ export function ItemsSection({
   gifts,
   testing,
   onTest,
-  dispatch,
+  update,
+  onPickSound,
 }: Props) {
   return (
-    <div className={styles.section}>
-      <div className={styles.alerts_row_info}>
-        <div className={styles.column_item_info}>
-          <p>Actions</p>
-        </div>
-        <div className={styles.column_item_info}>
-          <p>Enabled</p>
-        </div>
-        <div className={styles.column_item_info}>
-          <p>Trigger</p>
-        </div>
-        <div></div>
-        <div className={styles.column_item_info}>
-          <p>Sound</p>
-        </div>
-        <div className={styles.column_item_info}>
-          <p>Volume</p>
-        </div>
+    <div className={styles.items}>
+      <div className={styles.columns}>
+        {COLUMNS.map((column, index) => (
+          <span key={index} className={styles.column}>
+            {column}
+          </span>
+        ))}
       </div>
 
       {items.length === 0 ? (
-        <p className={styles.empty}>
+        <EmptyState>
           No alerts yet. Use the add button to create one.
-        </p>
+        </EmptyState>
       ) : (
         items.map((alert) => (
           <AlertItem
@@ -55,13 +46,18 @@ export function ItemsSection({
             gifts={gifts}
             testing={testing === alert.id}
             onTest={onTest}
-            onChange={(a) => dispatch({ type: "updateAlert", payload: a })}
+            onChange={(changed) =>
+              update((s) => {
+                const index = s.items.findIndex((a) => a.id === changed.id);
+                if (index !== -1) s.items[index] = changed;
+              })
+            }
             onRemove={() =>
-              dispatch({ type: "removeAlert", payload: alert.id })
+              update((s) => {
+                s.items = s.items.filter((a) => a.id !== alert.id);
+              })
             }
-            onPickSound={() =>
-              dispatch({ type: "setPickerFor", payload: alert.id })
-            }
+            onPickSound={() => onPickSound(alert.id)}
           />
         ))
       )}

@@ -1,134 +1,75 @@
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
-import { PermissionsSection } from "@/components";
-import isEqual from "fast-deep-equal";
-import { useEffect, useMemo, useReducer, useRef } from "react";
-import { FiSave } from "react-icons/fi";
-import { defaultState, reducer } from "./helper";
-import styles from "./music.module.css";
+import {
+  FloatingSave,
+  Page,
+  PermissionsSection,
+  ProtectionSection,
+} from "@/components";
+import {
+  scopeUpdater,
+  useEditableSettings,
+  useIpcListener,
+  useIpcRequest,
+} from "@/hooks";
+import { useState } from "react";
 import { ControlsSection } from "./sections/ControlsSection";
-import { ProtectionSection } from "./sections/ProtectionSection";
 import { ProviderSection } from "./sections/ProviderSection";
 
 export function Music() {
-  const isInitialMount = useRef(true);
+  const [connected, setConnected] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [
-    {
-      settings,
-      blacklistTemp,
-      settingsTemp,
-      whitelistTemp,
-      connected,
-      loading,
-    },
-    dispatch,
-  ] = useReducer(reducer, defaultState);
+  const { draft, update, hasChanges, save } = useEditableSettings(
+    "music",
+    "Music",
+  );
 
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      window.api.emit(APP_EVENTS.GET_PROFILE);
-      window.api.emit(APP_EVENTS.IS_MUSIC_CONNECTED);
-    }
+  useIpcRequest(APP_EVENTS.IS_MUSIC_CONNECTED);
 
-    const removeGetProfile = window.api.on(
-      APP_EVENTS_RESPONSE.GET_PROFILE,
-      (res) => {
-        if (res?.success) {
-          dispatch({ type: "initSettings", payload: res.profile!["music"] });
-        }
-      },
-    );
-
-    const removeUpdateMusicSettings = window.api.on(
-      APP_EVENTS_RESPONSE.UPDATE_MUSIC_SETTINGS,
-      (res) => {
-        if (res?.success) {
-          window.api.emit(APP_EVENTS.GET_PROFILE);
-        }
-      },
-    );
-
-    const removeMusicConnected = window.api.on(
-      APP_EVENTS_RESPONSE.MUSIC_CONNECTED,
-      (res) => {
-        dispatch({ type: "setConnected", payload: res?.success ?? false });
-        dispatch({ type: "setLoading", payload: false });
-      },
-    );
-
-    return () => {
-      removeGetProfile();
-      removeUpdateMusicSettings();
-      removeMusicConnected();
-    };
-  }, []);
-
-  const hasChanges = useMemo(() => {
-    return !isEqual(settings, settingsTemp);
-  }, [settings, settingsTemp]);
+  useIpcListener(APP_EVENTS_RESPONSE.MUSIC_CONNECTED, (res) => {
+    setConnected(res?.success ?? false);
+    setLoading(false);
+  });
 
   return (
     <>
-      <div className={styles.floating_save}>
-        <button
-          className={styles.floating_save_btn}
-          onClick={() => {
-            window.api.emit(APP_EVENTS.UPDATE_MUSIC_SETTINGS, {
-              settings,
-            });
-          }}
-          style={{
-            opacity: hasChanges ? 1 : 0,
-            pointerEvents: hasChanges ? "all" : "none",
-            cursor: hasChanges ? "pointer" : "none",
-          }}
-          disabled={!hasChanges}
-        >
-          <FiSave size={30} />
-        </button>
-      </div>
+      <FloatingSave visible={hasChanges} onSave={save} />
 
-      <div className={styles.container}>
+      <Page>
         <ProviderSection
-          dispatch={dispatch}
-          provider={settings.provider}
+          provider={draft.provider}
+          update={scopeUpdater(update, "provider")}
           connected={connected}
           loading={loading}
           onConnect={() => {
-            dispatch({ type: "setLoading", payload: true });
-            window.api.emit(APP_EVENTS.UPDATE_MUSIC_SETTINGS, { settings });
-            if (!connected) {
-              window.api.emit(APP_EVENTS.CONNECT_MUSIC, {
-                ...settings.provider,
-              });
-            } else {
+            setLoading(true);
+            // The provider connects with what is shown, so save it first.
+            save();
+            if (connected) {
               window.api.emit(APP_EVENTS.DISCONNECT_MUSIC);
+            } else {
+              window.api.emit(APP_EVENTS.CONNECT_MUSIC, { ...draft.provider });
             }
           }}
         />
 
-        <span className={styles.section_delimiter} />
-
-        <ControlsSection dispatch={dispatch} controls={settings.constrols} />
-
-        <span className={styles.section_delimiter} />
+        <ControlsSection
+          controls={draft.controls}
+          update={scopeUpdater(update, "controls")}
+        />
 
         <PermissionsSection
           feature="Music"
-          permissions={settings.permissions}
-          whitelistTemp={whitelistTemp}
-          blacklistTemp={blacklistTemp}
-          dispatch={dispatch}
+          permissions={draft.permissions}
+          update={scopeUpdater(update, "permissions")}
         />
-
-        <span className={styles.section_delimiter} />
 
         <ProtectionSection
-          protection={settings.protection}
-          dispatch={dispatch}
+          feature="Music"
+          protection={draft.protection}
+          update={scopeUpdater(update, "protection")}
         />
-      </div>
+      </Page>
     </>
   );
 }

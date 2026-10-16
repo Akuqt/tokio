@@ -2,24 +2,35 @@ import Logo from "@/assets/logo.png";
 import { EntityMetadata } from "@/common/schemas";
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
 import { ProfileDropdown } from "@/components";
-import { useAudio } from "@/hooks";
-import { Link, Outlet } from "@tanstack/react-router";
+import {
+  useAudio,
+  useIpcListener,
+  useIpcRequest,
+  useUnsavedChanges,
+} from "@/hooks";
+import { TitleBar } from "@/ui/TitleBar";
+import { Link, Outlet, useBlocker } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BsLightningCharge } from "react-icons/bs";
 import { FiHome, FiMusic, FiSettings, FiTool, FiVolume2 } from "react-icons/fi";
 import { LuMonitorCog } from "react-icons/lu";
-import {
-  VscChromeClose,
-  VscChromeMaximize,
-  VscChromeMinimize,
-  VscChromeRestore,
-} from "react-icons/vsc";
 import styles from "./layout.module.css";
+
+const NAV_ITEMS = [
+  { to: "/", label: "Home", icon: <FiHome size={22} /> },
+  { to: "/overlays", label: "Overlays", icon: <LuMonitorCog size={22} /> },
+  { to: "/tts", label: "TTS", icon: <FiVolume2 size={22} /> },
+  { to: "/alerts", label: "Alerts", icon: <BsLightningCharge size={24} /> },
+  { to: "/music", label: "Music", icon: <FiMusic size={22} /> },
+  // Pinned to the bottom of the sidebar from here on
+  { to: "/tools", label: "Tools", icon: <FiTool size={22} />, bottom: true },
+  { to: "/settings", label: "Settings", icon: <FiSettings size={22} /> },
+] as const;
 
 export function Layout() {
   const { resumeContext } = useAudio();
+  const { confirmDiscard } = useUnsavedChanges();
 
-  const [isMaximized, setIsMaximized] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [profiles, setProfiles] = useState<EntityMetadata[]>([]);
   const [activeProfile, setActiveProfile] = useState<EntityMetadata>({
@@ -27,200 +38,62 @@ export function Layout() {
     name: "",
   });
 
-  const handleMinimize = () => window.api.emit(APP_EVENTS.MINIMIZE_WINDOW);
-  const handleClose = () => window.api.emit(APP_EVENTS.CLOSE_WINDOW);
-  const handleMaximize = () => window.api.emit(APP_EVENTS.MAXIMIZE_WINDOW);
+  useIpcRequest(APP_EVENTS.GET_SETTINGS);
+
+  useIpcListener(APP_EVENTS_RESPONSE.GET_SETTINGS, (res) => {
+    if (!res?.success) return;
+    setProfiles(res.data!.profiles);
+    setActiveProfile(res.data!.settings.activeProfile);
+  });
+
+  useIpcListener(APP_EVENTS_RESPONSE.CONNECTED, (res) => {
+    if (res) setIsConnected(res.success);
+  });
 
   useEffect(() => {
-    const removeResize = window.api.on(
-      APP_EVENTS_RESPONSE.RESIZE_WINDOW,
-      (res) => {
-        if (!res) return;
-        if (res.state === "normal") {
-          setIsMaximized(false);
-        } else {
-          setIsMaximized(true);
-        }
-      },
-    );
-    const removeGetSettings = window.api.on(
-      APP_EVENTS_RESPONSE.GET_SETTINGS,
-      (res) => {
-        if (!res?.success) return;
-        setProfiles(res.data!.profiles);
-        setActiveProfile(res.data!.settings.activeProfile);
-      },
-    );
-
-    const removeConnected = window.api.on(
-      APP_EVENTS_RESPONSE.CONNECTED,
-      (res) => {
-        if (res) {
-          setIsConnected(res.success); // TODO: Add new app connection state: connected, connecting, disconnected.
-        }
-      },
-    );
-
-    window.api.emit(APP_EVENTS.GET_SETTINGS);
     resumeContext();
-    return () => {
-      removeGetSettings();
-      removeConnected();
-      removeResize();
-    };
-  }, []);
+  }, [resumeContext]);
+
+  // Leaving a page with unsaved settings asks first. Only in-app navigation:
+  // blocking beforeunload makes Electron refuse to close or reload the window.
+  useBlocker({
+    shouldBlockFn: async () => !(await confirmDiscard()),
+    enableBeforeUnload: false,
+  });
 
   return (
     <div className={styles.container}>
-      <header className={styles.nav}>
-        <div className={styles.logo}>
-          <img src={Logo} alt="都" />
-        </div>
-        <div className={styles.nav_top_items_container}>
-          <ProfileDropdown
-            disabled={isConnected}
-            profiles={profiles}
-            active={activeProfile}
-            onProfileSelected={(val) => {
-              window.api.emit(APP_EVENTS.SET_PROFILE, { file: val });
-            }}
-          />
+      <TitleBar target="main" logo={Logo}>
+        <ProfileDropdown
+          disabled={isConnected}
+          profiles={profiles}
+          active={activeProfile}
+          onProfileSelected={async (file) => {
+            if (await confirmDiscard()) {
+              window.api.emit(APP_EVENTS.SET_PROFILE, { file });
+            }
+          }}
+        />
+      </TitleBar>
 
-          <div className={styles.window_controls_container}>
-            <button
-              onClick={handleMinimize}
-              className={styles.window_control_min}
-              title="Minimize"
-            >
-              <VscChromeMinimize size={14} />
-            </button>
-
-            <button
-              onClick={handleMaximize}
-              className={styles.window_control_max}
-              title={isMaximized ? "Restore" : "Maximize"}
-            >
-              {isMaximized ? (
-                <VscChromeRestore size={18} />
-              ) : (
-                <VscChromeMaximize size={14} />
-              )}
-            </button>
-
-            <button
-              onClick={handleClose}
-              className={styles.window_control_close}
-              title="Close"
-            >
-              <VscChromeClose size={14} />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <div className={styles.main_area_container}>
+      <div className={styles.main_area}>
         <nav className={styles.sidebar}>
-          <Link
-            to="/"
-            className={styles.sidebar_item}
-            activeProps={{
-              style: {
-                color: "var(--accent-primary)",
-                fontWeight: "bold",
-              },
-            }}
-          >
-            <FiHome size={22} />
-            Home
-          </Link>
-
-          <Link
-            to="/overlays"
-            className={styles.sidebar_item}
-            activeProps={{
-              style: {
-                color: "var(--accent-primary)",
-                fontWeight: "bold",
-              },
-            }}
-          >
-            <LuMonitorCog size={22} />
-            Overlays
-          </Link>
-
-          <Link
-            to="/tts"
-            className={styles.sidebar_item}
-            activeProps={{
-              style: {
-                color: "var(--accent-primary)",
-                fontWeight: "bold",
-              },
-            }}
-          >
-            <FiVolume2 size={22} />
-            TTS
-          </Link>
-
-          <Link
-            to="/alerts"
-            className={styles.sidebar_item}
-            activeProps={{
-              style: {
-                color: "var(--accent-primary)",
-                fontWeight: "bold",
-              },
-            }}
-          >
-            <BsLightningCharge size={24} />
-            Alerts
-          </Link>
-
-          <Link
-            to="/music"
-            className={styles.sidebar_item}
-            activeProps={{
-              style: {
-                color: "var(--accent-primary)",
-                fontWeight: "bold",
-              },
-            }}
-          >
-            <FiMusic size={22} />
-            Music
-          </Link>
-
-          <Link
-            to="/tools"
-            className={styles.sidebar_item}
-            style={{ marginTop: "auto" }}
-            activeProps={{
-              style: {
-                color: "var(--accent-primary)",
-                fontWeight: "bold",
-              },
-            }}
-          >
-            <FiTool size={22} />
-            Tools
-          </Link>
-
-          <Link
-            to="/settings"
-            className={styles.sidebar_item}
-            activeProps={{
-              style: {
-                color: "var(--accent-primary)",
-                fontWeight: "bold",
-              },
-            }}
-          >
-            <FiSettings size={22} />
-            Settings
-          </Link>
+          {NAV_ITEMS.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className={`${styles.sidebar_item} ${
+                "bottom" in item ? styles.sidebar_item_bottom : ""
+              }`}
+              activeProps={{ className: styles.sidebar_item_active }}
+            >
+              {item.icon}
+              {item.label}
+            </Link>
+          ))}
         </nav>
 
-        <main className={styles.main_content_container}>
+        <main className={styles.content}>
           <Outlet />
         </main>
       </div>

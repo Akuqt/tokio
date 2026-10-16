@@ -1,68 +1,62 @@
-import { Btn, Toggle } from "@/components";
-import { Dispatch } from "react";
+import { Profile } from "@/common/schemas";
+import { Btn, Input, Section, Toggle } from "@/components";
+import { Updater } from "@/hooks";
 import { MdOutlineAddAlert } from "react-icons/md";
 import styles from "../alerts.module.css";
-import { AlertsAction, createAlert } from "../helper";
+import { createAlert } from "../helper";
 
 type Props = {
   simultaneous: boolean;
   queueLength: number;
-  dispatch: Dispatch<AlertsAction>;
+  update: Updater<Profile["alerts"]>;
 };
 
-export function HeaderSection({ simultaneous, queueLength, dispatch }: Props) {
+export function HeaderSection({ simultaneous, queueLength, update }: Props) {
   return (
-    <div className={styles.section}>
-      <div className={styles.section_header_main_container}>
-        <div className={styles.section_header_container}>
-          <h2 className={styles.section_header}>Alerts</h2>
-          <p className={styles.section_description}>
-            Enhance your stream with custom alerts.
-          </p>
-        </div>
-        <div className={styles.section_header_btns}>
-          <Btn
-            title="Add alert"
-            onClick={() =>
-              dispatch({ type: "addAlert", payload: createAlert() })
-            }
-            textColor="var(--font-primary)"
-            bgColor={{
-              primary: "var(--background-primary)",
-              secondary: "var(--background-secondary)",
-            }}
-          >
-            <MdOutlineAddAlert size={20} />
-          </Btn>
-        </div>
-      </div>
-      <div className={styles.settings_row}>
-        <label className={styles.toggle_label}>
-          <Toggle
-            bgColor="var(--background-secondary)"
-            checked={simultaneous}
-            onChange={(e) =>
-              dispatch({ type: "setSimultaneous", payload: e.target.checked })
-            }
-          />
-          Play alerts simultaneously
-        </label>
-        <label className={styles.toggle_label}>
+    <Section
+      title="Alerts"
+      description="Enhance your stream with custom alerts."
+      actions={
+        <Btn
+          title="Add alert"
+          onClick={() =>
+            update((s) => {
+              s.items.push(createAlert());
+            })
+          }
+        >
+          <MdOutlineAddAlert size={20} />
+        </Btn>
+      }
+    >
+      <div className={styles.settings}>
+        <Toggle
+          label="Play alerts simultaneously"
+          checked={simultaneous}
+          onChange={(e) =>
+            update((s) => {
+              s.simultaneous = e.target.checked;
+            })
+          }
+        />
+        <label className={styles.queue_length}>
           Max queue length
-          <input
+          <Input
             type="number"
             min={1}
             className={styles.number_input}
             value={queueLength}
             onChange={(e) =>
-              dispatch({
-                type: "setQueueLength",
-                payload: Math.max(1, Math.floor(Number(e.target.value)) || 1),
+              update((s) => {
+                s.queue_length = Math.max(
+                  1,
+                  Math.floor(Number(e.target.value)) || 1,
+                );
               })
             }
           />
         </label>
       </div>
-    </div>
+    </Section>
   );
 }

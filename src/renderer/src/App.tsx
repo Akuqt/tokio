@@ -1,5 +1,5 @@
 import { RouterProvider } from "@tanstack/react-router";
-import { AppProvider, AudioProvider } from "./context";
+import { AppProvider, AudioProvider, UnsavedProvider } from "./context";
 import { router } from "./router";
 
 declare module "@tanstack/react-router" {
@@ -12,7 +12,9 @@ export default function App() {
   return (
     <AudioProvider>
       <AppProvider>
-        <RouterProvider router={router} />
+        <UnsavedProvider>
+          <RouterProvider router={router} />
+        </UnsavedProvider>
       </AppProvider>
     </AudioProvider>
   );

@@ -1,209 +1,102 @@
 import { Permissions } from "@/common/schemas";
-import { PermissionsAction } from "@/helper";
+import { Updater } from "@/hooks/useImmerState";
+import { Check, Input, ListTextarea } from "../Elements";
+import { Field, Section } from "../Page";
 import styles from "./permissionssection.module.css";
 
 interface Props {
   permissions: Permissions;
-  whitelistTemp: string;
-  blacklistTemp: string;
+  update: Updater<Permissions>;
   // Feature name shown in the description
   feature: "TTS" | "Music";
-  dispatch: React.Dispatch<PermissionsAction>;
 }
 
-export function PermissionsSection({
-  permissions,
-  whitelistTemp,
-  blacklistTemp,
-  feature,
-  dispatch,
-}: Props) {
+const ROLES = [
+  { key: "all", label: "Allow Everyone" },
+  { key: "followers", label: "Followers Only" },
+  { key: "superfans", label: "Superfans Only" },
+  { key: "moderators", label: "Moderators Only" },
+] as const;
+
+export function PermissionsSection({ permissions, update, feature }: Props) {
   return (
-    <div className={styles.section}>
-      <div>
-        <h2 className={styles.section_header}>Permissions</h2>
-        <p className={styles.section_description}>
-          Control exactly who has permission to use the {feature} system.
-        </p>
+    <Section
+      title="Permissions"
+      description={`Control exactly who has permission to use the ${feature} system.`}
+    >
+      <div className={styles.grid}>
+        {ROLES.map(({ key, label }) => (
+          <Check
+            key={key}
+            label={label}
+            checked={permissions[key]}
+            onChange={(e) =>
+              update((p) => {
+                p[key] = e.target.checked;
+              })
+            }
+          />
+        ))}
+
+        <Check
+          label="Minimum Fan Level"
+          checked={permissions.level.enabled}
+          onChange={(e) =>
+            update((p) => {
+              p.level.enabled = e.target.checked;
+            })
+          }
+        />
+        <Input
+          type="number"
+          min={0}
+          className={styles.level}
+          value={permissions.level.value}
+          disabled={!permissions.level.enabled}
+          onChange={(e) =>
+            update((p) => {
+              p.level.value = Number(e.target.value);
+            })
+          }
+        />
       </div>
 
-      <div className={styles.check_input_container}>
-        <label className={styles.check_label}>
-          <input
-            type="checkbox"
-            checked={permissions.all}
-            className={styles.check_input}
-            onChange={(e) =>
-              dispatch({
-                type: "setPermissionsAll",
-                payload: e.target.checked,
-              })
-            }
-          />
-          Allow Everyone
-        </label>
-        <label className={styles.check_label}>
-          <input
-            type="checkbox"
-            checked={permissions.followers}
-            className={styles.check_input}
-            onChange={(e) =>
-              dispatch({
-                type: "setPermissionsFollowers",
-                payload: e.target.checked,
-              })
-            }
-          />
-          Followers Only
-        </label>
+      <Check
+        label="Enable Whitelist / Blacklist"
+        checked={permissions.list.enabled}
+        onChange={(e) =>
+          update((p) => {
+            p.list.enabled = e.target.checked;
+          })
+        }
+      />
 
-        <label className={styles.check_label}>
-          <input
-            type="checkbox"
-            checked={permissions.superfans}
-            className={styles.check_input}
-            onChange={(e) =>
-              dispatch({
-                type: "setPermissionsSuperfans",
-                payload: e.target.checked,
-              })
-            }
-          />
-          Superfans Only
-        </label>
-        <label className={styles.check_label}>
-          <input
-            type="checkbox"
-            checked={permissions.moderators}
-            className={styles.check_input}
-            onChange={(e) =>
-              dispatch({
-                type: "setPermissionsModerators",
-                payload: e.target.checked,
-              })
-            }
-          />
-          Moderators Only
-        </label>
-
-        <div style={{ display: "flex", alignItems: "center", height: "38px" }}>
-          <label className={styles.check_label}>
-            <input
-              type="checkbox"
-              checked={permissions.level.enabled}
-              className={styles.check_input}
-              onChange={(e) =>
-                dispatch({
-                  type: "setPermissionsLevelEnabled",
-                  payload: e.target.checked,
+      {permissions.list.enabled && (
+        <>
+          <Field label="Whitelist" hint="(comma separated)">
+            <ListTextarea
+              placeholder="Nickname1, Nickname2, Nickname3, ..."
+              value={permissions.list.white}
+              onChange={(white) =>
+                update((p) => {
+                  p.list.white = white;
                 })
               }
             />
-            Minimum Fan Level
-          </label>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <input
-            type="number"
-            min="0"
-            className={`${styles.input_style} ${styles.check_input_number}`}
-            style={{
-              opacity: permissions.level.enabled ? 1 : 0,
-              pointerEvents: permissions.level.enabled ? "auto" : "none",
-            }}
-            value={permissions.level.value}
-            onChange={(e) =>
-              dispatch({
-                type: "setPermissionsLevelValue",
-                payload: Number(e.target.value),
-              })
-            }
-            disabled={!permissions.level.enabled}
-          />
-        </div>
-      </div>
-
-      <div style={{ marginTop: "16px" }}>
-        <label className={styles.check_label}>
-          <input
-            type="checkbox"
-            checked={permissions.list.enabled}
-            className={styles.check_input}
-            onChange={(e) =>
-              dispatch({
-                type: "setPermissionsListEnabled",
-                payload: e.target.checked,
-              })
-            }
-          />
-          Enable Whitelist / Blacklist
-        </label>
-
-        {permissions.list.enabled && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "24px",
-              marginTop: "24px",
-            }}
-          >
-            <div>
-              <label className={styles.label_title}>
-                Whitelist{" "}
-                <span className={styles.secondary_text}>(comma separated)</span>
-              </label>
-              <textarea
-                className={`${styles.input_style} ${styles.text_area_input}`}
-                placeholder="Nickname1, Nickname2, Nickname3, ..."
-                value={whitelistTemp}
-                onChange={(e) => {
-                  dispatch({
-                    type: "setPermissionsListWhiteTemp",
-                    payload: e.target.value,
-                  });
-                  const cleanedArray = e.target.value
-                    .split(",")
-                    .map((v) => v.trim())
-                    .filter((v) => v !== "");
-
-                  dispatch({
-                    type: "setPermissionsListWhite",
-                    payload: cleanedArray,
-                  });
-                }}
-              />
-            </div>
-            <div>
-              <label className={styles.label_title}>
-                Blacklist{" "}
-                <span className={styles.secondary_text}>(comma separated)</span>
-              </label>
-              <textarea
-                className={`${styles.input_style} ${styles.text_area_input}`}
-                placeholder="Nickname1, Nickname2, Nickname3, ..."
-                value={blacklistTemp}
-                onChange={(e) => {
-                  dispatch({
-                    type: "setPermissionsListBlackTemp",
-                    payload: e.target.value,
-                  });
-                  const cleanedArray = e.target.value
-                    .split(",")
-                    .map((v) => v.trim())
-                    .filter((v) => v !== "");
-
-                  dispatch({
-                    type: "setPermissionsListBlack",
-                    payload: cleanedArray,
-                  });
-                }}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+          </Field>
+          <Field label="Blacklist" hint="(comma separated)">
+            <ListTextarea
+              placeholder="Nickname1, Nickname2, Nickname3, ..."
+              value={permissions.list.black}
+              onChange={(black) =>
+                update((p) => {
+                  p.list.black = black;
+                })
+              }
+            />
+          </Field>
+        </>
+      )}
+    </Section>
   );
 }

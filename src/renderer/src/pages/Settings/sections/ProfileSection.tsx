@@ -1,84 +1,66 @@
+import { EntityMetadata } from "@/common/schemas";
 import { APP_EVENTS } from "@/common/types";
-import { CustomSelect } from "@/components";
-import React from "react";
+import { Btn, Field, Section, Select } from "@/components";
+import { useUnsavedChanges } from "@/hooks";
 import { FiCopy, FiDownload, FiPlus, FiUpload, FiUsers } from "react-icons/fi";
-import { SettingsAction, SettingsState } from "../helper";
 import styles from "../settings.module.css";
 
 interface Props {
-  store: SettingsState["store"];
-  dispatch: React.Dispatch<SettingsAction>;
+  profiles: EntityMetadata[];
+  active: EntityMetadata;
+  onNew: () => void;
+  onClone: () => void;
 }
 
-export function ProfileSection({ store, dispatch }: Props) {
+export function ProfileSection({ profiles, active, onNew, onClone }: Props) {
+  const { confirmDiscard } = useUnsavedChanges();
+
   return (
-    <div className={styles.section}>
-      <div>
-        <h2 className={styles.section_header}>
-          <FiUsers style={{ marginRight: "8px", verticalAlign: "middle" }} />{" "}
-          Live Profiles
-        </h2>
-        <p className={styles.section_description}>
-          Manage settings for different lives.
-        </p>
-      </div>
-
-      <div className={styles.selects_container}>
-        <div style={{ flex: 1 }}>
-          <label className={styles.label_title}>Active Profile</label>
-          <CustomSelect
-            value={store.settings.activeProfile.name}
-            onChange={(val) => {
-              dispatch({ type: "setActiveProfile", payload: val });
-              window.api.emit(APP_EVENTS.SET_PROFILE, { file: val });
+    <Section
+      icon={<FiUsers />}
+      title="Live Profiles"
+      description="Manage settings for different lives."
+    >
+      <div className={styles.profiles}>
+        <Field label="Active Profile" className={styles.profile_select}>
+          <Select
+            options={profiles.map((p) => ({ label: p.name, value: p.file }))}
+            value={active.file}
+            onChange={async (file) => {
+              // Main answers with the new settings, which updates the page.
+              if (await confirmDiscard()) {
+                window.api.emit(APP_EVENTS.SET_PROFILE, { file });
+              }
             }}
-            options={store.profiles.map((p: any) => ({
-              label: p.name,
-              value: p.file,
-            }))}
           />
-        </div>
+        </Field>
 
-        <div style={{ display: "flex", gap: "8px" }}>
-          <button
-            onClick={() =>
-              dispatch({ type: "setNewProfileModal", payload: true })
-            }
-            className={styles.action_btn}
-            title="Create New Profile"
-          >
+        <div className={styles.buttons}>
+          <Btn title="Create New Profile" onClick={onNew}>
             <FiPlus /> New
-          </button>
-          <button
-            onClick={() =>
-              dispatch({ type: "setCloneProfileModal", payload: true })
-            }
-            className={styles.action_btn}
-            title="Clone Current Profile"
-          >
+          </Btn>
+          <Btn title="Clone a Profile" onClick={onClone}>
             <FiCopy /> Clone
-          </button>
-          <button
-            className={styles.action_btn}
+          </Btn>
+          <Btn
             onClick={() =>
               window.api.emit(APP_EVENTS.IMPORT_ENTITY, { type: "profile" })
             }
           >
             <FiDownload /> Import
-          </button>
-          <button
-            className={styles.action_btn}
-            onClick={() => {
+          </Btn>
+          <Btn
+            onClick={() =>
               window.api.emit(APP_EVENTS.EXPORT_ENTITY, {
                 type: "profile",
-                file: store.settings.activeProfile.file,
-              });
-            }}
+                file: active.file,
+              })
+            }
           >
             <FiUpload /> Export
-          </button>
+          </Btn>
         </div>
       </div>
-    </div>
+    </Section>
   );
 }

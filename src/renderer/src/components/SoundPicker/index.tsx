@@ -1,13 +1,21 @@
 import { AlertSound } from "@/common/schemas";
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
-import { AlertTestRequest } from "@renderer/hooks";
-import { useEffect, useState } from "react";
+import { AlertTestRequest } from "@/hooks/useAlertTest";
+import { useIpcListener } from "@/hooks/useIpcListener";
+import { useIpcRequest } from "@/hooks/useIpcRequest";
+import { useState } from "react";
+import { Tabs } from "../Elements";
 import { Modal } from "../Modal";
 import { LibraryTab } from "./LibraryTab";
 import { MyInstantsTab } from "./MyInstantsTab";
 import styles from "./soundpicker.module.css";
 
 type Tab = "library" | "myinstants";
+
+const TABS: { value: Tab; label: string }[] = [
+  { value: "library", label: "My sounds" },
+  { value: "myinstants", label: "MyInstants" },
+];
 
 type Props = {
   // Id of the alert the picked sound is for
@@ -26,34 +34,18 @@ export function SoundPicker({ id, testing, onTest, onSelect, onClose }: Props) {
   const [library, setLibrary] = useState<AlertSound[]>([]);
   const [saveFailed, setSaveFailed] = useState(false);
 
-  useEffect(() => {
-    const removeGetSounds = window.api.on(
-      APP_EVENTS_RESPONSE.GET_SOUNDS,
-      (res) => {
-        if (!res) return;
-        setLibrary(res.data);
-        setTab((t) => t ?? (res.data.length > 0 ? "library" : "myinstants"));
-      },
-    );
+  useIpcRequest(APP_EVENTS.GET_SOUNDS);
 
-    // Downloads and browsed files both report here.
-    const removeSetAlertSound = window.api.on(
-      APP_EVENTS_RESPONSE.SET_ALERT_SOUND,
-      (res) => {
-        if (res?.id === id) setSaveFailed(!res.success);
-      },
-    );
+  useIpcListener(APP_EVENTS_RESPONSE.GET_SOUNDS, (res) => {
+    if (!res) return;
+    setLibrary(res.data);
+    setTab((t) => t ?? (res.data.length > 0 ? "library" : "myinstants"));
+  });
 
-    window.api.emit(APP_EVENTS.GET_SOUNDS);
-
-    return () => {
-      removeGetSounds();
-      removeSetAlertSound();
-    };
-  }, [id]);
-
-  const tabClass = (t: Tab) =>
-    `${styles.tab} ${tab === t ? styles.tab_active : ""}`;
+  // Downloads and browsed files both report here.
+  useIpcListener(APP_EVENTS_RESPONSE.SET_ALERT_SOUND, (res) => {
+    if (res?.id === id) setSaveFailed(!res.success);
+  });
 
   return (
     <Modal
@@ -64,20 +56,7 @@ export function SoundPicker({ id, testing, onTest, onSelect, onClose }: Props) {
       onClose={onClose}
       onConfirm={() => window.api.emit(APP_EVENTS.IMPORT_SOUND, { id })}
     >
-      <div className={styles.tabs}>
-        <button
-          className={tabClass("library")}
-          onClick={() => setTab("library")}
-        >
-          My sounds
-        </button>
-        <button
-          className={tabClass("myinstants")}
-          onClick={() => setTab("myinstants")}
-        >
-          MyInstants
-        </button>
-      </div>
+      <Tabs tabs={TABS} value={tab} onChange={setTab} />
 
       {tab === "library" && (
         <LibraryTab

@@ -1,62 +1,37 @@
 import { TestOverlay } from "@/common/schemas";
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
-import { useEffect, useRef, useState } from "react";
-import {
-  TestOverlaysSection,
-  TestStatus,
-} from "./sections/TestOverlaysSection";
-import styles from "./tools.module.css";
+import { Page } from "@/components";
+import { useIpcListener, useIpcRequest } from "@/hooks";
+import { useState } from "react";
+import { TestStatus } from "./helper";
+import { TestOverlaysSection } from "./sections/TestOverlaysSection";
 
 export function Tools() {
   const [testOverlays, setTestOverlays] = useState<TestOverlay[]>([]);
   const [statuses, setStatuses] = useState<Record<string, TestStatus>>({});
   const [serverEnabled, setServerEnabled] = useState(true);
-  const isInitialMount = useRef(true);
 
-  useEffect(() => {
-    const removeGetTestOverlays = window.api.on(
-      APP_EVENTS_RESPONSE.GET_TEST_OVERLAYS,
-      (res) => {
-        if (res?.success) {
-          setTestOverlays(res.data!);
-        }
-      },
-    );
-    const removeSendTestEvents = window.api.on(
-      APP_EVENTS_RESPONSE.SEND_TEST_EVENTS,
-      (res) => {
-        if (res) {
-          setStatuses((s) => ({
-            ...s,
-            [res.id]: res.success ? "sent" : "no-client",
-          }));
-        }
-      },
-    );
-    const removeGetSettings = window.api.on(
-      APP_EVENTS_RESPONSE.GET_SETTINGS,
-      (res) => {
-        if (res?.success) {
-          setServerEnabled(res.data!.settings.server.enabled);
-        }
-      },
-    );
+  useIpcRequest(APP_EVENTS.GET_TEST_OVERLAYS);
+  useIpcRequest(APP_EVENTS.GET_SETTINGS);
 
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      window.api.emit(APP_EVENTS.GET_TEST_OVERLAYS);
-      window.api.emit(APP_EVENTS.GET_SETTINGS);
-    }
+  useIpcListener(APP_EVENTS_RESPONSE.GET_TEST_OVERLAYS, (res) => {
+    if (res?.success) setTestOverlays(res.data!);
+  });
 
-    return () => {
-      removeGetTestOverlays();
-      removeSendTestEvents();
-      removeGetSettings();
-    };
-  }, []);
+  useIpcListener(APP_EVENTS_RESPONSE.SEND_TEST_EVENTS, (res) => {
+    if (!res) return;
+    setStatuses((s) => ({
+      ...s,
+      [res.id]: res.success ? "sent" : "no-client",
+    }));
+  });
+
+  useIpcListener(APP_EVENTS_RESPONSE.GET_SETTINGS, (res) => {
+    if (res?.success) setServerEnabled(res.data!.settings.server.enabled);
+  });
 
   return (
-    <div className={styles.container}>
+    <Page>
       <TestOverlaysSection
         overlays={testOverlays}
         statuses={statuses}
@@ -71,6 +46,6 @@ export function Tools() {
           window.api.emit(APP_EVENTS.SEND_TEST_EVENTS, { id });
         }}
       />
-    </div>
+    </Page>
   );
 }

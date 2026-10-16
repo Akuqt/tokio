@@ -1,9 +1,9 @@
 import { AlertSound } from "@/common/schemas";
-import { AlertTestRequest } from "@renderer/hooks";
+import { AlertTestRequest } from "@/hooks/useAlertTest";
 import { useState } from "react";
 import { FiCheck } from "react-icons/fi";
-import { Input } from "../Elements";
-import { PREVIEW_VOLUME, PreviewButton } from "./PreviewButton";
+import { Btn, Input } from "../Elements";
+import { PlayButton, PREVIEW_VOLUME } from "../PlayButton";
 import styles from "./soundpicker.module.css";
 
 type Props = {
@@ -30,11 +30,6 @@ export function LibraryTab({ library, testing, onTest, onSelect }: Props) {
         placeholder="Filter your sounds..."
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
-        textColor="var(--font-primary)"
-        bgColor={{
-          primary: "var(--background-primary)",
-          secondary: "var(--background-secondary)",
-        }}
       />
 
       <div className={styles.list}>
@@ -43,7 +38,7 @@ export function LibraryTab({ library, testing, onTest, onSelect }: Props) {
             <span className={styles.name} title={sound.name}>
               {sound.name}
             </span>
-            <PreviewButton
+            <PlayButton
               playing={testing === sound.file}
               onClick={() =>
                 onTest({
@@ -53,13 +48,13 @@ export function LibraryTab({ library, testing, onTest, onSelect }: Props) {
                 })
               }
             />
-            <button
-              className={styles.icon_btn}
+            <Btn
+              variant="icon"
               title="Use this sound"
               onClick={() => onSelect(sound)}
             >
               <FiCheck size={20} />
-            </button>
+            </Btn>
           </div>
         ))}
 

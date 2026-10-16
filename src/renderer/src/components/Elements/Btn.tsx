@@ -1,35 +1,47 @@
-import { ButtonHTMLAttributes, PropsWithChildren } from "react";
+import { cx } from "@/helper/cx";
+import { ButtonHTMLAttributes } from "react";
 import styles from "./elements.module.css";
+import { Spinner } from "./Spinner";
 
 type Props = {
-  bgColor: {
-    primary: string;
-    secondary: string;
-  };
-  textColor: string;
-  width?: string;
-} & PropsWithChildren &
-  ButtonHTMLAttributes<HTMLButtonElement>;
+  // default: outlined, accent: filled call to action, icon: bare icon
+  variant?: "default" | "accent" | "icon";
+  size?: "md" | "lg";
+  // Highlighted, e.g. a sound that is playing
+  active?: boolean;
+  // Pulses while active
+  pulse?: boolean;
+  // Shows a spinner and ignores clicks
+  loading?: boolean;
+} & ButtonHTMLAttributes<HTMLButtonElement>;
 
-export function Btn({ children, bgColor, textColor, width, ...rest }: Props) {
+export function Btn({
+  variant = "default",
+  size = "md",
+  active,
+  pulse,
+  loading,
+  className,
+  children,
+  type = "button",
+  ...rest
+}: Props) {
   return (
     <button
-      className={styles.btn}
+      type={type}
+      aria-busy={loading || undefined}
+      className={cx(
+        styles.btn,
+        variant === "accent" && styles.btn_accent,
+        variant === "icon" && styles.btn_icon,
+        size === "lg" && styles.btn_lg,
+        active && styles.btn_active,
+        active && pulse && styles.btn_pulse,
+        className,
+      )}
       {...rest}
-      style={{
-        backgroundColor: bgColor.primary,
-        color: textColor,
-        borderColor: bgColor.secondary,
-        width,
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = bgColor.secondary;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = bgColor.primary;
-      }}
     >
-      {children}
+      {loading ? <Spinner /> : children}
     </button>
   );
 }

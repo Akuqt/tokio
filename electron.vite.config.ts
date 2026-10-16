@@ -1,5 +1,6 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "electron-vite";
+import { readFileSync } from "fs";
 import { resolve } from "path";
 import type { Plugin } from "vite";
 
@@ -29,6 +30,8 @@ function licenseBanner(banner: string): Plugin {
   };
 }
 
+const { version } = JSON.parse(readFileSync("package.json", "utf8"));
+
 export default defineConfig({
   main: {
     resolve: {
@@ -45,8 +48,12 @@ export default defineConfig({
       alias: {
         "@renderer": resolve("src/renderer/src"),
         "@/common": resolve("src/common"),
+        "@/ui": resolve("src/ui"),
         "@": resolve("src/renderer/src"),
       },
+    },
+    define: {
+      __APP_VERSION__: JSON.stringify(version),
     },
     plugins: [react()],
   },

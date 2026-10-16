@@ -1,150 +1,141 @@
-import { APP_EVENTS } from "@/common/types";
-import { VoiceDropdown } from "@renderer/components/VoiceDropdown";
-import { ClipLoader } from "react-spinners";
-import { TTSAction, TTSState } from "../helper";
+import { Profile } from "@/common/schemas";
+import { VoiceData } from "@/common/types";
+import {
+  Btn,
+  Field,
+  FormGrid,
+  Input,
+  Section,
+  Select,
+  SelectOption,
+  Slider,
+} from "@/components";
+import { AudioQueue } from "@/helper";
+import { Updater } from "@/hooks";
+import { useMemo, useState } from "react";
 import styles from "../tts.module.css";
 
+type Settings = Profile["tts"];
+
 interface Props {
-  settings: TTSState["settings"];
-  voices: TTSState["voices"];
-  testMSG: string;
+  settings: Settings;
+  voices: VoiceData[];
   testLoading: boolean;
-  dispatch: React.Dispatch<TTSAction>;
-  ttsTestQueue: any;
+  testQueue: AudioQueue;
+  update: Updater<Settings>;
+  onTest: (text: string) => void;
+}
+
+const voiceKey = (voice: VoiceData) => `${voice.lang}|${voice.name}`;
+
+// Voices grouped by language, in the order the languages first appear.
+function voiceOptions(voices: VoiceData[]): SelectOption<string>[] {
+  const groups = new Map<string, VoiceData[]>();
+  for (const voice of voices) {
+    groups.set(voice.lang, [...(groups.get(voice.lang) ?? []), voice]);
+  }
+  return [...groups.values()].flat().map((voice) => ({
+    value: voiceKey(voice),
+    label: voice.name,
+    group: voice.lang,
+  }));
 }
 
 export function VoiceSection({
   settings,
   voices,
-  testMSG,
   testLoading,
-  dispatch,
-  ttsTestQueue,
+  testQueue,
+  update,
+  onTest,
 }: Props) {
+  const [testMessage, setTestMessage] = useState("");
+  const options = useMemo(() => voiceOptions(voices), [voices]);
+  const { filters } = settings;
+
   return (
-    <div className={styles.section}>
-      <div>
-        <h2 className={styles.section_header}>Voice</h2>
-        <p className={styles.section_description}>
-          Configure the primary Text-to-Speech voice for your stream.
-        </p>
-      </div>
-
-      <div className={styles.voice_container}>
-        <VoiceDropdown
-          voices={voices}
-          current={settings.voice}
-          onChange={(v) => {
-            dispatch({ type: "setVoice", payload: v });
-          }}
-        />
-
-        <div>
-          <label className={styles.label_title}>
-            Speed ({settings.filters.speed}x)
-          </label>
-          <input
-            type="range"
-            min="0.5"
-            max="2.0"
-            step="0.1"
-            value={settings.filters.speed}
-            onChange={(e) => {
-              dispatch({
-                type: "setSpeed",
-                payload: parseFloat(e.target.value),
-              });
-              ttsTestQueue.setFilters({
-                speed: settings.filters.speed,
-              });
+    <Section
+      title="Voice"
+      description="Configure the primary Text-to-Speech voice for your stream."
+    >
+      <FormGrid>
+        <Field label="Voice Selection">
+          <Select
+            searchable
+            options={options}
+            value={voiceKey(settings.voice)}
+            placeholder={`${settings.voice.lang} - ${settings.voice.name}`}
+            onChange={(key) => {
+              const voice = voices.find((v) => voiceKey(v) === key);
+              if (voice)
+                update((s) => {
+                  s.voice = voice;
+                });
             }}
           />
-        </div>
+        </Field>
 
-        <div>
-          <label className={styles.label_title}>
-            Pitch ({settings.filters.pitch})
-          </label>
-          <input
-            type="range"
-            min="0.5"
-            max="2.0"
-            step="0.1"
-            value={settings.filters.pitch}
-            onChange={(e) => {
-              dispatch({
-                type: "setPitch",
-                payload: parseFloat(e.target.value),
+        <Field label={`Speed (${filters.speed}x)`}>
+          <Slider
+            min={0.5}
+            max={2}
+            step={0.1}
+            value={filters.speed}
+            onChange={(speed) => {
+              update((s) => {
+                s.filters.speed = speed;
               });
-              ttsTestQueue.setFilters({
-                pitch: settings.filters.pitch,
-              });
+              testQueue.setFilters({ speed });
             }}
           />
-        </div>
+        </Field>
 
-        <div>
-          <label className={styles.label_title}>
-            Volume ({settings.filters.volume}%)
-          </label>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            step="1"
-            value={settings.filters.volume}
-            onChange={(e) => {
-              dispatch({
-                type: "setVolume",
-                payload: parseFloat(e.target.value),
+        <Field label={`Pitch (${filters.pitch})`}>
+          <Slider
+            min={0.5}
+            max={2}
+            step={0.1}
+            value={filters.pitch}
+            onChange={(pitch) => {
+              update((s) => {
+                s.filters.pitch = pitch;
               });
-
-              ttsTestQueue.setFilters({
-                volume: settings.filters.volume / 100,
-              });
+              testQueue.setFilters({ pitch });
             }}
           />
-        </div>
-      </div>
+        </Field>
 
-      <div className={styles.tester_container}>
-        <button
+        <Field label={`Volume (${filters.volume}%)`}>
+          <Slider
+            min={0}
+            max={100}
+            value={filters.volume}
+            onChange={(volume) => {
+              update((s) => {
+                s.filters.volume = volume;
+              });
+              testQueue.setFilters({ volume: volume / 100 });
+            }}
+          />
+        </Field>
+      </FormGrid>
+
+      <div className={styles.tester}>
+        <Btn
+          variant="accent"
           className={styles.tester_btn}
-          disabled={testMSG === "" || testLoading}
-          style={{
-            cursor: testMSG !== "" && !testLoading ? "pointer" : "not-allowed",
-          }}
-          onClick={() => {
-            dispatch({ type: "setTestLoading", payload: true });
-            window.api.emit(APP_EVENTS.GET_TTS_TEST, {
-              text: testMSG,
-              voice: settings.voice,
-            });
-          }}
+          loading={testLoading}
+          disabled={testMessage === ""}
+          onClick={() => onTest(testMessage)}
         >
-          {testLoading ? (
-            <ClipLoader
-              size={16}
-              color="var(--font-primary)"
-              cssOverride={{
-                margin: 4,
-                padding: 0,
-              }}
-            />
-          ) : (
-            <>Test Voice</>
-          )}
-        </button>
-        <input
-          type="text"
+          Test Voice
+        </Btn>
+        <Input
           placeholder="Type a message to test how the TTS sounds..."
-          className={styles.input_style}
-          value={testMSG}
-          onChange={(e) =>
-            dispatch({ type: "setTestMSG", payload: e.target.value })
-          }
+          value={testMessage}
+          onChange={(e) => setTestMessage(e.target.value)}
         />
       </div>
-    </div>
+    </Section>
   );
 }

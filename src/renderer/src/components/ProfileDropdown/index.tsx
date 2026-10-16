@@ -1,5 +1,7 @@
 import { EntityMetadata } from "@/common/schemas";
-import { useEffect, useRef, useState } from "react";
+import { cx } from "@/helper/cx";
+import { useClickOutside } from "@/hooks/useClickOutside";
+import { useRef, useState } from "react";
 import { FiCheck, FiChevronDown } from "react-icons/fi";
 import styles from "./profiledropdown.module.css";
 
@@ -16,87 +18,51 @@ export function ProfileDropdown({
   active,
   disabled,
 }: Props) {
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [activeProfile, setActiveProfile] = useState(active);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsProfileOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  useEffect(() => {
-    setActiveProfile(active);
-  }, [active]);
+  useClickOutside([ref], () => setOpen(false), open);
 
   return (
-    <div className={styles.container} ref={dropdownRef}>
+    <div className={styles.container} ref={ref}>
       <div
         onClick={() => {
-          if (!disabled) setIsProfileOpen((c) => !c);
+          if (!disabled) setOpen((o) => !o);
         }}
-        className={styles.toggle}
-        style={{
-          color: isProfileOpen
-            ? "var(--font-primary)"
-            : "var(--font-secondary)",
-          backgroundColor:
-            isProfileOpen || disabled
-              ? "var(--background-secondary-hover)"
-              : "transparent",
-        }}
+        className={cx(
+          styles.toggle,
+          open && styles.toggle_open,
+          disabled && styles.toggle_disabled,
+        )}
       >
-        <div className={styles.profile}>🌹</div>
-        <span>{activeProfile?.name}</span>
+        <div className={styles.avatar}>🌹</div>
+        <span>{active.name}</span>
         <FiChevronDown
           size={14}
-          style={{
-            transform: isProfileOpen ? "rotate(180deg)" : "rotate(0deg)",
-            transition: "transform 0.2s",
-          }}
+          className={cx(styles.chevron, open && styles.chevron_open)}
         />
       </div>
 
-      {isProfileOpen && (
-        <div className={styles.profiles_container}>
-          {profiles.map((profile, key) => (
-            <div
-              key={key}
-              className={styles.profiles_item}
-              onClick={() => {
-                setIsProfileOpen(false);
-                if (profile.file !== activeProfile?.file) {
-                  onProfileSelected(profile.file);
-                  setActiveProfile(profile);
-                }
-              }}
-              style={{
-                color:
-                  activeProfile?.file === profile.file
-                    ? "var(--font-primary)"
-                    : "var(--font-secondary)",
-                backgroundColor:
-                  activeProfile?.file === profile.file
-                    ? "var(--background-secondary-hover)"
-                    : "transparent",
-              }}
-            >
-              {profile.name}
-              {activeProfile?.file === profile.file && (
-                <FiCheck size={14} color="var(--accent-primary)" />
-              )}
-            </div>
-          ))}
+      {open && (
+        <div className={styles.menu}>
+          {profiles.map((profile) => {
+            const isActive = profile.file === active.file;
+            return (
+              <div
+                key={profile.file}
+                className={cx(styles.item, isActive && styles.item_active)}
+                onClick={() => {
+                  setOpen(false);
+                  if (!isActive) onProfileSelected(profile.file);
+                }}
+              >
+                {profile.name}
+                {isActive && (
+                  <FiCheck size={14} color="var(--accent-primary)" />
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

@@ -1,129 +1,110 @@
+import { Profile } from "@/common/schemas";
+import { Btn, Field, Input, Section, Tabs } from "@/components";
+import { cx } from "@/helper";
+import { Updater } from "@/hooks";
 import { FaSpotify, FaYoutube } from "react-icons/fa";
-import { ClipLoader } from "react-spinners";
-import { MusicAction, MusicState } from "../helper";
 import styles from "../music.module.css";
 
+type Provider = Profile["music"]["provider"];
+
+const PROVIDER_TABS: {
+  value: Provider["name"];
+  label: string;
+  icon: React.ReactNode;
+  accent: string;
+}[] = [
+  {
+    value: "YouTube",
+    label: "YouTube",
+    icon: <FaYoutube size={20} />,
+    accent: "#ff0000",
+  },
+  {
+    value: "Spotify",
+    label: "Spotify",
+    icon: <FaSpotify size={20} />,
+    accent: "#1db954",
+  },
+];
+
 interface Props {
-  provider: MusicState["settings"]["provider"];
+  provider: Provider;
+  update: Updater<Provider>;
   connected: boolean;
   loading: boolean;
   onConnect: () => void;
-  dispatch: React.Dispatch<MusicAction>;
 }
 
 export function ProviderSection({
-  dispatch,
   provider,
+  update,
   connected,
   loading,
   onConnect,
 }: Props) {
-  return (
-    <div className={styles.section}>
-      <div>
-        <h2 className={styles.section_header}>Provider</h2>
-        <p className={styles.section_description}>
-          Select and connect to your preferred music source.
-        </p>
-      </div>
+  const isSpotify = provider.name === "Spotify";
+  const missingKey = isSpotify && provider.key === "";
 
-      <div className={styles.provider_status}>
+  return (
+    <Section
+      title="Provider"
+      description="Select and connect to your preferred music source."
+    >
+      <div className={styles.status}>
         Status:{" "}
-        <span className={connected ? styles.provider_status_connected : ""}>
+        <span className={cx(connected && styles.status_connected)}>
           {connected ? "Connected" : "Disconnected"}
         </span>
       </div>
 
-      <div
-        className={`${styles.tab_container} ${
-          connected ? styles.locked_state : ""
-        }`}
-      >
-        <button
-          onClick={() => {
-            dispatch({ type: "setProvider", payload: "YouTube" });
-          }}
-          className={`${styles.tab_btn} ${
-            provider.name === "YouTube"
-              ? styles.tab_btn_active
-              : styles.tab_btn_inactive
-          }`}
-        >
-          <FaYoutube
-            size={20}
-            color={provider.name === "YouTube" ? "#ff0000" : "currentColor"}
-          />
-          YouTube
-        </button>
-
-        <button
-          onClick={() => {
-            dispatch({ type: "setProvider", payload: "Spotify" });
-          }}
-          className={`${styles.tab_btn} ${
-            provider.name === "Spotify"
-              ? styles.tab_btn_active
-              : styles.tab_btn_inactive
-          }`}
-        >
-          <FaSpotify
-            size={20}
-            color={provider.name === "Spotify" ? "#1DB954" : "currentColor"}
-          />
-          Spotify
-        </button>
-      </div>
+      <Tabs
+        variant="pill"
+        tabs={PROVIDER_TABS}
+        value={provider.name}
+        disabled={connected}
+        onChange={(name) =>
+          update((p) => {
+            p.name = name;
+          })
+        }
+      />
 
       <div
-        className={`${styles.expandable_container} ${
-          provider.name === "Spotify" ? styles.open : ""
-        } ${connected ? styles.locked_state : ""}`}
+        className={cx(
+          styles.expandable,
+          isSpotify && styles.expandable_open,
+          connected && styles.locked,
+        )}
       >
         <div className={styles.expandable_content}>
-          <label className={styles.label_title}>Spotify Client ID</label>
-          <input
-            type="password"
-            className={`${styles.input_style} ${styles.input_constrained}`}
-            value={provider.key}
-            onChange={(e) =>
-              dispatch({ type: "setProviderKey", payload: e.target.value })
-            }
-            disabled={connected}
-            placeholder="Enter your Spotify Client ID..."
-          />
+          <Field label="Spotify Client ID">
+            <Input
+              type="password"
+              className={styles.key_input}
+              placeholder="Enter your Spotify Client ID..."
+              value={provider.key}
+              disabled={connected}
+              onChange={(e) =>
+                update((p) => {
+                  p.key = e.target.value;
+                })
+              }
+            />
+          </Field>
         </div>
       </div>
 
       <div>
-        <button
+        <Btn
+          variant={connected ? "default" : "accent"}
+          className={styles.connect_btn}
+          loading={loading}
+          disabled={missingKey}
           onClick={onConnect}
-          style={{
-            cursor:
-              provider.name === "Spotify" && provider.key === ""
-                ? "not-allowed"
-                : "pointer",
-          }}
-          disabled={provider.name === "Spotify" && provider.key === ""}
-          className={`${styles.tester_btn} ${styles.connect_btn} ${
-            connected || (provider.name === "Spotify" && provider.key === "")
-              ? styles.connect_btn_connected
-              : ""
-          }`}
         >
-          {loading ? (
-            <ClipLoader
-              size={16}
-              color="var(--font-primary)"
-              cssOverride={{
-                margin: 4,
-                padding: 0,
-              }}
-            />
-          ) : (
-            <>{connected ? "Disconnect" : "Connect"}</>
-          )}
-        </button>
+          {connected ? "Disconnect" : "Connect"}
+        </Btn>
       </div>
-    </div>
+    </Section>
   );
 }

@@ -16,14 +16,14 @@ export function SplashScreen() {
           </div>
 
           <div className={styles.loading}>
-            <BarLoader color="#a0a0a0" width={150} height={3} />
+            <BarLoader color="var(--font-secondary)" width={150} height={3} />
             <span className={styles.status_text}>Starting up...</span>
           </div>
         </div>
       </div>
 
       <div className={styles.footer}>
-        <span className={styles.version}>v0.0.1</span>
+        <span className={styles.version}>v{__APP_VERSION__}</span>
         <span className={styles.disclaimer}>
           Not affiliated with, endorsed by, or associated with TikTok or
           ByteDance Ltd.

@@ -40,6 +40,7 @@ Verify changes with `yarn test`, `yarn typecheck` and `yarn lint`. For changes t
 | `src/renderer/`                       | Main React UI (pages, components, contexts, router)                                                                   |
 | `src/music/`                          | Separate music window UI, built as a single file into `music-out/`                                                    |
 | `src/common/`                         | Code shared by both processes: Zod schemas, event types, constants, utils                                             |
+| `src/ui/`                             | Web-only code shared by the main and music windows: design tokens, base CSS, `TitleBar`                               |
 | `src/installer/`                      | Custom Windows installer (C# / .NET + Photino) with a React UI. Leave it alone unless the task is about the installer |
 | `scripts/`                            | Repo maintenance scripts (`clean`, `todos`, `edge-tts`)                                                               |
 | `LICENSES/`, `THIRD_PARTY_NOTICES.md` | Third-party license texts and notices, shipped to the app's `resources/licenses`. See Licensing below                 |
@@ -49,7 +50,8 @@ Verify changes with `yarn test`, `yarn typecheck` and `yarn lint`. For changes t
 ## Path aliases
 
 - Main process: `@/*` → `src/main/*`, `@/common/*` → `src/common/*`
-- Renderer: `@/*` and `@renderer/*` → `src/renderer/src/*`, `@/common/*` → `src/common/*`
+- Renderer: `@/*` and `@renderer/*` → `src/renderer/src/*`, `@/common/*` → `src/common/*`, `@/ui/*` → `src/ui/*`. Prefer `@/` over `@renderer/`.
+- Music window: `@/common/*` and `@/ui/*` only.
 
 `@/` means a different directory on each side of the process boundary. Code in `src/common/` must not import from `src/main` or `src/renderer`, and must stay free of Node/Electron-only APIs if the renderer uses it.
 
@@ -99,10 +101,16 @@ Live stream events (`TOKIO_EVENTS` / `TokioEventMap`) come from the connector se
 
 ### Renderer
 
-- Each page is a folder in `src/renderer/src/pages/<Page>/` containing `index.tsx`, `<page>.module.css`, an optional `helper.ts`, and `sections/*Section.tsx`. Pages are exported from `pages/index.tsx` and routed in `src/renderer/src/router/index.tsx` (hash history).
-- Reusable UI is in `src/renderer/src/components/`. Each component is a folder with `index.tsx` and `<name>.module.css`, re-exported from `components/index.tsx`. Use the primitives in `components/Elements` (`Btn`, `Input`, `Select`, `Toggle`, `Slider`, `Check`, `Color`) before creating new ones.
-- Styling uses CSS Modules only.
-- Global state lives in `src/renderer/src/context` (`app`, `audio`), and shared hooks live in `src/renderer/src/hooks` (`useAudio`, `useAlertTest`).
+- Each page is a folder in `src/renderer/src/pages/<Page>/` containing `index.tsx`, `<page>.module.css`, an optional `helper.ts`, and `sections/*Section.tsx`. Pages are exported from `pages/index.tsx` and routed in `src/renderer/src/router/index.tsx` (hash history). Sidebar links are the `NAV_ITEMS` list in `router/Layout`.
+- Build pages from `components/Page`: `<Page>` (adds the dividers between sections), `<Section title description icon actions>`, `<Field label hint>`, `<FormGrid>` and `<EmptyState>`. A page module only holds layout specific to that page.
+- Reusable UI is in `src/renderer/src/components/`. Each component is a folder with `index.tsx` and `<name>.module.css`, re-exported from `components/index.tsx`. Use the primitives in `components/Elements` before creating new ones: `Btn` (`variant` default/accent/icon, `loading`, `active`), `Input`, `Textarea`, `ListTextarea` (comma separated lists), `Check`, `Toggle`, `RadioGroup`, `Slider`, `Select`/`MultiSelect` (searchable, grouped options), `Color`, `Tabs`, `Spinner`. Primitives take their colors from the tokens; they don't take color props.
+- `Modal` is the only modal shell (default Cancel/confirm footer, or a custom `footer`). `PlayButton` plays sound tests; `PermissionsSection` and `ProtectionSection` are shared by TTS and Music.
+- Styling uses CSS Modules only. Use the tokens in `src/ui/styles/tokens.css` (colors, `--space-*`, `--font-*`, `--radius-*`, `--z-*`) instead of raw values.
+- Global state lives in `src/renderer/src/context` (`app`, `audio`, `unsaved`), and shared hooks live in `src/renderer/src/hooks`:
+  - `useIpcRequest(event, data?)` sends a request once on mount, and `useIpcListener(event, cb)` subscribes for the component's lifetime. Use them instead of `window.api.on` in a `useEffect`.
+  - `useImmerState` returns an `Updater` that takes an immer recipe; `scopeUpdater(update, key)` hands a section one field of it.
+  - `useEditableSettings(section, label)` loads a profile section as a draft and saves it by hand. It registers with `UnsavedProvider`, so switching profile or leaving the page asks to save or discard. Call `confirmDiscard()` from `useUnsavedChanges` before anything else that reloads the profile.
+  - `useClickOutside` and `usePopover` back dropdowns and popovers; also `useAudio` and `useAlertTest`.
 - Audio plays through `AudioQueue` (`src/renderer/src/helper/audio.ts`). Get a named queue with `useAudio().getQueue(name)`.
   - `enqueue(input, autoplay, { gain, key, onEnded })` sets an item's own volume and an end callback. `onEnded` doesn't run when the queue is stopped.
   - `setItemGain(key, gain)` changes the volume of matching items while they wait or play.

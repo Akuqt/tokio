@@ -1,128 +1,88 @@
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
-import { useEffect, useReducer, useRef } from "react";
-import { defaultState, reducer } from "./helper";
-import { ModalsSection } from "./sections/ModalsSection";
+import { defaultStoreData } from "@/common/util";
+import { Modal, Page } from "@/components";
+import { useImmerState, useIpcListener, useIpcRequest } from "@/hooks";
+import { useState } from "react";
+import { CloneProfileModal, NewProfileModal } from "./sections/ProfileModals";
 import { ProfileSection } from "./sections/ProfileSection";
 import { ProvidersSection } from "./sections/ProvidersSection";
 import { ServerSection } from "./sections/ServerSection";
 import { SoundsSection } from "./sections/SoundsSection";
-import styles from "./settings.module.css";
+
+type ModalType = "newProfile" | "cloneProfile" | "confirmServer";
 
 export function Settings() {
-  const isInitialMount = useRef(true);
-  const [
-    {
-      store,
-      modal,
-      cloneProfile,
-      newTTSProvider,
-      newProfileName,
-      newConnProvider,
-    },
-    dispatch,
-  ] = useReducer(reducer, defaultState);
+  const [store, updateStore, setStore] = useImmerState(defaultStoreData);
+  const [modal, setModal] = useState<ModalType | null>(null);
 
-  useEffect(() => {
-    const removeGetSettings = window.api.on(
-      APP_EVENTS_RESPONSE.GET_SETTINGS,
-      (res) => {
-        if (res?.success) {
-          dispatch({ type: "initSettings", payload: res.data! });
-        }
-      },
-    );
-    const removeCreateProfile = window.api.on(
-      APP_EVENTS_RESPONSE.CREATE_PROFILE,
-      (res) => {
-        if (res?.success) console.log("PROFILE CREATED");
-      },
-    );
-    const removeCloneProfile = window.api.on(
-      APP_EVENTS_RESPONSE.CLONE_PROFILE,
-      (res) => {
-        if (res?.success) console.log("PROFILE CLONED");
-      },
-    );
-    const removeImportEntity = window.api.on(
-      APP_EVENTS_RESPONSE.IMPORT_ENTITY,
-      (res) => {
-        if (res?.success) console.log("IMPORT COMPLETED", res.type);
-      },
-    );
-    const removeExportEntity = window.api.on(
-      APP_EVENTS_RESPONSE.EXPORT_ENTITY,
-      (res) => {
-        if (res?.success) console.log("EXPORT COMPLETED", res.type);
-      },
-    );
-    const removeSetProvider = window.api.on(
-      APP_EVENTS_RESPONSE.SET_PROVIDER,
-      (res) => {
-        if (res?.success) console.log("SET PROVIDER", res.type);
-      },
-    );
-    const removeEnableServer = window.api.on(
-      APP_EVENTS_RESPONSE.SET_SERVER,
-      (res) => {
-        if (res?.success) console.log("SET SERVER");
-      },
-    );
-    const removeFQDN = window.api.on(APP_EVENTS_RESPONSE.REQ_FQDN, (res) => {
-      dispatch({ type: "setServerEnabled", payload: res?.success || false });
-      if (res?.success) {
-        window.api.emit(APP_EVENTS.SET_SERVER, {
-          enabled: true,
-        });
-      }
+  const setServerEnabled = (enabled: boolean) =>
+    updateStore((s) => {
+      s.settings.server.enabled = enabled;
     });
 
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      window.api.emit(APP_EVENTS.GET_SETTINGS);
-    }
+  useIpcRequest(APP_EVENTS.GET_SETTINGS);
 
-    return () => {
-      removeGetSettings();
-      removeCreateProfile();
-      removeCloneProfile();
-      removeImportEntity();
-      removeExportEntity();
-      removeSetProvider();
-      removeEnableServer();
-      removeFQDN();
-    };
-  }, []);
+  useIpcListener(APP_EVENTS_RESPONSE.GET_SETTINGS, (res) => {
+    if (res?.success) setStore(res.data!);
+  });
+
+  useIpcListener(APP_EVENTS_RESPONSE.REQ_FQDN, (res) => {
+    setServerEnabled(res?.success ?? false);
+    if (res?.success) window.api.emit(APP_EVENTS.SET_SERVER, { enabled: true });
+  });
+
+  const closeModal = () => setModal(null);
 
   return (
     <>
-      <ModalsSection
-        modal={modal}
-        newProfileName={newProfileName}
-        cloneProfile={cloneProfile}
-        store={store}
-        dispatch={dispatch}
-      />
+      {modal === "confirmServer" && (
+        <Modal
+          title="Enable Overlay Server?"
+          description="Starting the local overlay server will open the specified port on your network to allow OBS and other browser sources to connect. Are you sure you want to proceed?"
+          confirmText="Enable Server"
+          onClose={closeModal}
+          onConfirm={() => {
+            setServerEnabled(true);
+            closeModal();
+            window.api.emit(APP_EVENTS.REQ_FQDN);
+          }}
+        />
+      )}
 
-      <div className={styles.container}>
-        <ServerSection store={store} dispatch={dispatch} />
+      {modal === "newProfile" && <NewProfileModal onClose={closeModal} />}
 
-        <span className={styles.section_delimiter} />
+      {modal === "cloneProfile" && (
+        <CloneProfileModal
+          profiles={store.profiles}
+          active={store.settings.activeProfile}
+          onClose={closeModal}
+        />
+      )}
 
-        <ProvidersSection
-          store={store}
-          newTTSProvider={newTTSProvider}
-          newConnProvider={newConnProvider}
-          dispatch={dispatch}
+      <Page>
+        <ServerSection
+          enabled={store.settings.server.enabled}
+          onChange={(enabled) => {
+            if (enabled) {
+              setModal("confirmServer");
+            } else {
+              setServerEnabled(false);
+              window.api.emit(APP_EVENTS.SET_SERVER, { enabled: false });
+            }
+          }}
         />
 
-        <span className={styles.section_delimiter} />
+        <ProvidersSection settings={store.settings} />
 
-        <ProfileSection store={store} dispatch={dispatch} />
-
-        <span className={styles.section_delimiter} />
+        <ProfileSection
+          profiles={store.profiles}
+          active={store.settings.activeProfile}
+          onNew={() => setModal("newProfile")}
+          onClone={() => setModal("cloneProfile")}
+        />
 
         <SoundsSection />
-      </div>
+      </Page>
     </>
   );
 }

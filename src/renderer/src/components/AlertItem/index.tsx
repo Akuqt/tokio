@@ -1,14 +1,25 @@
 import { Alert, ALERT_TRIGGERS } from "@/common/schemas";
 import { ALERT_TRIGGER_LABELS, CustomGift, TOKIO_EVENTS } from "@/common/types";
-import { Btn, Select, Slider, Toggle } from "../Elements";
-import { AlertTestRequest } from "@renderer/hooks";
-import { FiPlayCircle, FiStopCircle, FiTrash2 } from "react-icons/fi";
+import { AlertTestRequest } from "@/hooks/useAlertTest";
+import { FiTrash2 } from "react-icons/fi";
+import {
+  Btn,
+  MultiSelect,
+  Select,
+  SelectOption,
+  Slider,
+  Toggle,
+} from "../Elements";
+import { PlayButton } from "../PlayButton";
 import styles from "./alertitem.module.css";
 
+type Trigger = Alert["trigger"]["type"];
+
+// zod types the options as any live event, but they are the triggers.
 const TRIGGER_OPTIONS = ALERT_TRIGGERS.map((value) => ({
   value,
   label: ALERT_TRIGGER_LABELS[value],
-}));
+})) as SelectOption<Trigger>[];
 
 type Props = {
   alert: Alert;
@@ -33,106 +44,72 @@ export function AlertItem({
   const { sound } = alert;
 
   return (
-    <div className={styles.alerts_row}>
-      <div className={styles.column_item}>
-        <button
-          className={`${styles.action_btn} ${testing ? styles.playing : ""}`}
-          title={testing ? "Stop" : "Play"}
+    <div className={styles.row}>
+      <div className={styles.cell}>
+        <PlayButton
+          playing={testing}
+          size={24}
           disabled={!sound}
           onClick={() => {
             if (!sound) return;
             onTest({ id: alert.id, file: sound.file, volume: alert.volume });
           }}
-        >
-          {testing ? <FiStopCircle size={24} /> : <FiPlayCircle size={24} />}
-        </button>
-        <button className={styles.action_btn} title="Remove" onClick={onRemove}>
+        />
+        <Btn variant="icon" title="Remove" onClick={onRemove}>
           <FiTrash2 size={24} />
-        </button>
+        </Btn>
       </div>
 
-      <div className={styles.column_item}>
+      <div className={styles.cell}>
         <Toggle
-          bgColor="var(--background-secondary)"
           checked={alert.enabled}
           onChange={(e) => onChange({ ...alert, enabled: e.target.checked })}
         />
       </div>
 
-      <div className={styles.column_item}>
+      <div className={styles.cell}>
         <Select
-          bgColor={{
-            active: "var(--background-primary)",
-            passive: "var(--background-secondary)",
-          }}
-          labelColor={{
-            active: "var(--font-primary)",
-            passive: "var(--font-secondary)",
-          }}
+          className={styles.fill}
           placeholder="Select a trigger..."
-          onChange={(val) => {
-            const type = ALERT_TRIGGERS.find((t) => t === val);
-            if (type)
-              onChange({ ...alert, trigger: { ...alert.trigger, type } });
-          }}
           options={TRIGGER_OPTIONS}
           value={alert.trigger.type}
+          onChange={(type) =>
+            onChange({ ...alert, trigger: { ...alert.trigger, type } })
+          }
         />
       </div>
 
-      {alert.trigger.type === TOKIO_EVENTS.GIFT ? (
-        <div className={styles.column_item}>
-          <Select
+      <div className={styles.cell}>
+        {alert.trigger.type === TOKIO_EVENTS.GIFT ? (
+          <MultiSelect
+            className={styles.fill}
             searchable
-            multiple
             placeholder="Any gift"
-            bgColor={{
-              active: "var(--background-primary)",
-              passive: "var(--background-secondary)",
-            }}
-            labelColor={{
-              active: "var(--font-primary)",
-              passive: "var(--font-secondary)",
-            }}
-            value={alert.trigger.gifts}
-            onChange={(val) =>
-              onChange({
-                ...alert,
-                trigger: { ...alert.trigger, gifts: val.map(Number) },
-              })
-            }
             options={gifts}
+            value={alert.trigger.gifts}
+            onChange={(ids) =>
+              onChange({ ...alert, trigger: { ...alert.trigger, gifts: ids } })
+            }
           />
-        </div>
-      ) : (
-        <div className={styles.column_item}>
+        ) : (
           <div className={styles.delimiter} />
-        </div>
-      )}
+        )}
+      </div>
 
-      <div className={styles.column_item}>
-        <Btn
-          width="200px"
-          title={sound?.name}
-          onClick={onPickSound}
-          bgColor={{
-            primary: "var(--background-primary)",
-            secondary: "var(--background-secondary)",
-          }}
-          textColor="var(--font-primary)"
-        >
+      <div className={styles.cell}>
+        <Btn className={styles.sound} title={sound?.name} onClick={onPickSound}>
           <span className={styles.sound_name}>
             {sound?.name ?? "Select a sound..."}
           </span>
         </Btn>
       </div>
-      <div className={styles.column_item}>
+
+      <div className={styles.cell}>
         <Slider
-          bgColor="var(--background-secondary)"
-          max={100}
           min={0}
-          onChange={(volume) => onChange({ ...alert, volume })}
+          max={100}
           value={alert.volume}
+          onChange={(volume) => onChange({ ...alert, volume })}
         />
       </div>
     </div>

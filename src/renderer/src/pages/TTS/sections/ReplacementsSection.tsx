@@ -1,91 +1,75 @@
+import { Profile } from "@/common/schemas";
+import { Btn, EmptyState, Input, Section } from "@/components";
+import { Updater } from "@/hooks";
 import { FiArrowRight, FiPlus, FiTrash2 } from "react-icons/fi";
-import { TTSAction, TTSState } from "../helper";
 import styles from "../tts.module.css";
 
+type Replacements = Profile["tts"]["replacements"];
+
 interface Props {
-  replacements: TTSState["settings"]["replacements"];
-  dispatch: React.Dispatch<TTSAction>;
+  replacements: Replacements;
+  update: Updater<Replacements>;
 }
 
-export function ReplacementsSection({ replacements, dispatch }: Props) {
+export function ReplacementsSection({ replacements, update }: Props) {
   return (
-    <div className={styles.replacement_container}>
-      <div className={styles.replacement_header}>
-        <div>
-          <h2 className={styles.section_header}>Replacements</h2>
-          <p className={styles.section_description}>
-            Force the engine to pronounce acronyms or slang correctly.
-          </p>
-        </div>
-        <button
+    <Section
+      title="Replacements"
+      description="Force the engine to pronounce acronyms or slang correctly."
+      actions={
+        <Btn
+          variant="icon"
+          title="Add Replacement"
           onClick={() =>
-            dispatch({
-              type: "AddReplacements",
-              payload: { old: "", new: "" },
+            update((r) => {
+              r.push({ old: "", new: "" });
             })
           }
-          className={styles.replacement_add_btn}
-          title="Add Replacement"
         >
           <FiPlus size={24} />
-        </button>
-      </div>
-
-      <div className={styles.replacement_section}>
+        </Btn>
+      }
+    >
+      <div className={styles.replacements}>
         {replacements.map((replacement, index) => (
-          <div key={index} className={styles.replacement_section_item}>
-            <input
-              type="text"
-              className={styles.input_style}
+          <div key={index} className={styles.replacement}>
+            <Input
               placeholder="Word to replace (e.g. 'brb')"
-              style={{ flex: 1 }}
               value={replacement.old}
-              onChange={(e) => {
-                const newCustom = [...replacements];
-                newCustom[index] = {
-                  ...newCustom[index],
-                  old: e.target.value,
-                };
-                dispatch({ type: "setReplacements", payload: newCustom });
-              }}
+              onChange={(e) =>
+                update((r) => {
+                  r[index].old = e.target.value;
+                })
+              }
             />
-            <span className={styles.replacement_section_item_sep}>
-              <FiArrowRight size={16} />
-            </span>
-            <input
-              type="text"
-              className={styles.input_style}
+            <FiArrowRight size={16} className={styles.replacement_arrow} />
+            <Input
               placeholder="How it sounds (e.g. 'be right back')"
-              style={{ flex: 1 }}
               value={replacement.new}
-              onChange={(e) => {
-                const newCustom = [...replacements];
-                newCustom[index] = {
-                  ...newCustom[index],
-                  new: e.target.value,
-                };
-                dispatch({ type: "setReplacements", payload: newCustom });
-              }}
+              onChange={(e) =>
+                update((r) => {
+                  r[index].new = e.target.value;
+                })
+              }
             />
-            <button
-              onClick={() => {
-                const newCustom = replacements.filter((_, i) => i !== index);
-                dispatch({ type: "setReplacements", payload: newCustom });
-              }}
-              className={styles.replacement_remove_btn}
+            <Btn
+              variant="icon"
               title="Remove"
+              onClick={() =>
+                update((r) => {
+                  r.splice(index, 1);
+                })
+              }
             >
               <FiTrash2 size={18} />
-            </button>
+            </Btn>
           </div>
         ))}
 
         {replacements.length === 0 && (
-          <div className={styles.replacement_empty_list}>
-            No custom replacements added.
-          </div>
+          <EmptyState>No custom replacements added.</EmptyState>
         )}
       </div>
-    </div>
+    </Section>
   );
 }

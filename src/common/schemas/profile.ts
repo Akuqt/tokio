@@ -59,7 +59,7 @@ export const ProfileSchema = z.object({
       cooldown: z.number(),
       queue_length: z.number(),
     }),
-    constrols: z.object({
+    controls: z.object({
       play: MusicControl,
       next: MusicControl,
       last: MusicControl,

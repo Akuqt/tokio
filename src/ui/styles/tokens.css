@@ -1,0 +1,53 @@
+/* Design tokens shared by the main window and the music window. */
+
+:root {
+  /* Colors */
+  --background-primary: #121212;
+  --background-secondary: #1e1e1e;
+  --background-secondary-hover: #3f3f46;
+  --accent-primary: #f43f5e;
+  --accent-primary-hover: #fb7185;
+  --font-primary: #f1f5f9;
+  --font-secondary: #a1a1aa;
+  --modal-background: rgba(0, 0, 0, 0.7);
+  --danger: #e81c3e;
+  --success: #22c55e;
+  --offline: #ef4444;
+
+  /* Radii */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-full: 999px;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Typography */
+  --font-xs: 12px;
+  --font-sm: 13px;
+  --font-md: 14px;
+  --font-lg: 16px;
+  --font-xl: 20px;
+
+  /* Controls */
+  --control-height: 40px;
+
+  /* Elevation */
+  --shadow-popover: 0 8px 16px rgba(0, 0, 0, 0.5);
+  --shadow-modal: 0 10px 25px rgba(0, 0, 0, 0.5);
+  --z-sidebar: 10;
+  --z-sticky: 100;
+  --z-modal: 1000;
+  --z-popover: 1100;
+
+  /* Motion */
+  --transition-fast: 0.2s ease;
+}

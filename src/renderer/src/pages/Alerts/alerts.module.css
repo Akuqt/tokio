@@ -1,128 +1,45 @@
-.container {
+/* HEADER */
+
+.settings {
   display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
-  /* Shared with AlertItem rows */
-  --alerts-columns: 100px 50px 200px 200px 200px 200px;
-  padding-top: 2rem;
-  padding-bottom: 4rem;
-}
-
-.section {
-  display: flex;
-  flex-direction: column;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--background-primary);
-}
-
-.section_header_container {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.section_header_main_container {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-  justify-content: space-between;
-}
-
-.section_header_btns {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-}
-
-.section_delimiter {
-  display: block;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(
-    to right,
-    var(--background-secondary),
-    transparent
-  );
-  margin: 0px 0px 32px 0;
-}
-
-.section_header {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--font-primary);
-  margin: 0 0 4px 0;
-}
-
-.section_description {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--font-secondary);
-  margin: 0 0 16px 0;
-}
-
-.toggle_label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 14px;
-  color: var(--font-primary);
-  cursor: pointer;
-  width: fit-content;
-}
-
-.settings_row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
   flex-wrap: wrap;
-  gap: 32px;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.queue_length {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--font-md);
+  color: var(--font-primary);
 }
 
 .number_input {
   width: 72px;
-  background-color: var(--background-secondary);
-  color: var(--font-primary);
-  border: 1px solid var(--background-primary);
-  border-radius: 4px;
-  padding: 8px 10px;
-  font-size: 14px;
-  outline: none;
-  box-sizing: border-box;
 }
 
-.alerts_row_info {
+/* ITEMS */
+
+.items {
+  /* Shared with AlertItem rows */
+  --alerts-columns: 100px 50px 200px 200px 200px 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.columns {
   display: grid;
   grid-template-columns: var(--alerts-columns);
+  align-items: center;
   gap: 10px;
-  align-items: center;
-  height: 40px;
-  width: 100%;
-  border: none;
-  border-radius: 10px;
-  border-bottom: 1px solid var(--background-secondary);
+  height: var(--control-height);
   margin-bottom: 10px;
+  border-bottom: 1px solid var(--background-secondary);
 }
 
-.column_item_info {
-  width: 100%;
-  height: 40px;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-
-  p {
-    font-size: 14px;
-    font-weight: 500;
-  }
-}
-
-.empty {
-  font-size: 14px;
-  color: var(--font-secondary);
+.column {
   text-align: center;
-  margin: 16px 0;
+  font-size: var(--font-md);
+  font-weight: 500;
 }

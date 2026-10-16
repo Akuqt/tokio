@@ -1,12 +1,22 @@
-import { InputHTMLAttributes } from "react";
+import { cx } from "@/helper/cx";
+import { InputHTMLAttributes, ReactNode } from "react";
 import styles from "./elements.module.css";
 
-type Props = InputHTMLAttributes<HTMLInputElement>;
+export type ChoiceProps = {
+  label?: ReactNode;
+} & Omit<InputHTMLAttributes<HTMLInputElement>, "type">;
 
-export function Check({ ...rest }: Props) {
+export function Check({ label, className, ...rest }: ChoiceProps) {
+  const input = (
+    <input {...rest} type="checkbox" className={cx(styles.check, className)} />
+  );
+
+  if (label === undefined) return input;
+
   return (
-    <div className={styles.check_container}>
-      <input {...rest} type="checkbox" className={styles.check_style} />
-    </div>
+    <label className={styles.choice_label}>
+      {input}
+      {label}
+    </label>
   );
 }

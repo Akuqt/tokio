@@ -1,6 +1,6 @@
 import { StoreSchema } from "@/common/schemas";
 
-export const defaultEntity = {
+const defaultEntity = {
   file: "default.json",
   name: "Default",
 };

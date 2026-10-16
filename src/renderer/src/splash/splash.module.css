@@ -36,7 +36,6 @@
 
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-sizing: border-box;
 }
 
 .glow_wrapper {
@@ -89,9 +88,9 @@
   color: #ffffff;
 }
 
-.accent_red {
-  color: #f43f5e !important;
-  margin-left: 2px !important;
+.app_name .accent_red {
+  color: var(--accent-primary);
+  margin-left: 2px;
   text-shadow: 0 0 10px rgba(255, 51, 102, 0.4);
 }
 
@@ -119,7 +118,6 @@
   gap: 8px;
   width: 100%;
   padding: 0 30px;
-  box-sizing: border-box;
   text-align: center;
 }
 
@@ -140,12 +138,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 400;
   position: absolute;
-  font-size: 16px;
   right: 14px;
   top: 38px;
-  color: #f43f5e;
 }
 
 .logo img {

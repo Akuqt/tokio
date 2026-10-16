@@ -1,22 +1,15 @@
-import { CSSProperties, InputHTMLAttributes } from "react";
+import { cx } from "@/helper/cx";
+import { ChoiceProps } from "./Check";
 import styles from "./elements.module.css";
 
-type Props = {
-  bgColor: string;
-} & InputHTMLAttributes<HTMLInputElement>;
-
-export function Toggle({ bgColor, ...rest }: Props) {
+export function Toggle({ label, className, ...rest }: ChoiceProps) {
   return (
-    <label className={styles.toggle_container}>
-      <input {...rest} type="checkbox" className={styles.toggle_style} />
-      <span
-        className={styles.toggle_slider}
-        style={
-          {
-            "--toggle-bg": bgColor,
-          } as CSSProperties
-        }
-      ></span>
+    <label className={cx(styles.choice_label, className)}>
+      <span className={styles.toggle}>
+        <input {...rest} type="checkbox" className={styles.toggle_input} />
+        <span className={styles.toggle_track} />
+      </span>
+      {label}
     </label>
   );
 }

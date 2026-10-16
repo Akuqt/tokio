@@ -1,42 +1,41 @@
-import { CSSProperties } from "react";
+import { cx } from "@/helper/cx";
 import styles from "./elements.module.css";
 
 type Props = {
-  bgColor: string;
-  showValue?: boolean;
   value: number;
-  onChange: (v: number) => void;
+  onChange: (value: number) => void;
   min: number;
   max: number;
+  step?: number;
+  disabled?: boolean;
+  // Shows the value above the right end of the track
+  showValue?: boolean;
+  className?: string;
 };
 
 export function Slider({
-  bgColor,
-  showValue,
   value,
   onChange,
-  max,
   min,
+  max,
+  step = 1,
+  disabled,
+  showValue,
+  className,
 }: Props) {
   return (
-    <div className={styles.slider_container}>
+    <div className={cx(styles.slider_container, className)}>
       <input
+        type="range"
+        className={styles.slider}
         min={min}
         max={max}
-        step={1}
+        step={step}
         value={value}
-        onChange={(e) => {
-          onChange(Number(e.target.value));
-        }}
-        type="range"
-        className={styles.slider_style}
-        style={
-          {
-            "--dynamic-bg": bgColor,
-          } as CSSProperties
-        }
+        disabled={disabled}
+        onChange={(e) => onChange(Number(e.target.value))}
       />
-      {showValue && <h3 className={styles.slider_value}>{value}</h3>}
+      {showValue && <span className={styles.slider_value}>{value}</span>}
     </div>
   );
 }

@@ -1,0 +1,62 @@
+.bar {
+  flex-shrink: 0;
+  height: 56px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--background-secondary);
+  border-bottom: 1px solid var(--background-primary);
+  -webkit-app-region: drag;
+}
+
+.compact {
+  height: 40px;
+}
+
+.logo {
+  width: 32px;
+  height: 32px;
+  margin-left: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo img {
+  width: 28px;
+  height: 28px;
+}
+
+.items {
+  display: flex;
+  height: 100%;
+  align-items: center;
+}
+
+.controls {
+  display: flex;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 100%;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  color: var(--font-primary);
+  cursor: pointer;
+}
+
+.control:hover {
+  background-color: var(--background-secondary-hover);
+}
+
+.close:hover {
+  background-color: var(--danger);
+}

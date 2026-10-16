@@ -11,6 +11,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@/common": resolve(__dirname, "../common"),
+      "@/ui": resolve(__dirname, "../ui"),
     },
   },
   plugins: [react()],

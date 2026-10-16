@@ -1,11 +1,16 @@
 import { Profile } from "@/common/schemas";
-import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
-import { SoundPicker } from "@/components";
-import { useAlertTest, useAudio } from "@renderer/hooks";
+import { APP_EVENTS, APP_EVENTS_RESPONSE, CustomGift } from "@/common/types";
+import { defaultProfile } from "@/common/util";
+import { Page, SoundPicker } from "@/components";
+import {
+  useAlertTest,
+  useAudio,
+  useImmerState,
+  useIpcListener,
+  useIpcRequest,
+} from "@/hooks";
 import isEqual from "fast-deep-equal";
-import { useEffect, useReducer, useRef } from "react";
-import styles from "./alerts.module.css";
-import { defaultState, reducer } from "./helper";
+import { useEffect, useRef, useState } from "react";
 import { HeaderSection } from "./sections/HeaderSection";
 import { ItemsSection } from "./sections/ItemsSection";
 
@@ -13,131 +18,112 @@ import { ItemsSection } from "./sections/ItemsSection";
 const SAVE_DELAY = 300;
 
 export function Alerts() {
-  const isInitialMount = useRef(true);
+  const [settings, update, setSettings] = useImmerState(
+    defaultProfile["alerts"],
+  );
+  // Last settings sent to main
+  const [saved, setSaved] = useState(defaultProfile["alerts"]);
+  const [gifts, setGifts] = useState<CustomGift[]>([]);
+  // Id of the alert whose sound is being picked
+  const [pickerFor, setPickerFor] = useState<string | null>(null);
   // Settings changed but not sent to main yet
   const pendingSave = useRef<Profile["alerts"] | null>(null);
-
-  const [state, dispatch] = useReducer(reducer, defaultState);
 
   const { setItemGain } = useAudio();
   const test = useAlertTest();
 
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      window.api.emit(APP_EVENTS.GET_PROFILE);
-      window.api.emit(APP_EVENTS.GET_GIFTS);
-    }
+  useIpcRequest(APP_EVENTS.GET_PROFILE);
+  useIpcRequest(APP_EVENTS.GET_GIFTS);
 
-    const removeGetProfile = window.api.on(
-      APP_EVENTS_RESPONSE.GET_PROFILE,
-      (res) => {
-        if (res?.success) {
-          dispatch({ type: "initSettings", payload: res.profile!["alerts"] });
-        }
-      },
-    );
+  useIpcListener(APP_EVENTS_RESPONSE.GET_PROFILE, (res) => {
+    if (!res?.success) return;
+    setSettings(res.profile!.alerts);
+    setSaved(res.profile!.alerts);
+  });
 
-    const removeGetGifts = window.api.on(
-      APP_EVENTS_RESPONSE.GET_GIFTS,
-      (res) => {
-        if (res) dispatch({ type: "setGifts", payload: res.data });
-      },
-    );
+  useIpcListener(APP_EVENTS_RESPONSE.GET_GIFTS, (res) => {
+    if (res) setGifts(res.data);
+  });
 
-    const removeUpdateAlertsSettings = window.api.on(
-      APP_EVENTS_RESPONSE.UPDATE_ALERTS_SETTINGS,
-      (res) => {
-        // Resync with what is actually saved
-        if (res && !res.success) window.api.emit(APP_EVENTS.GET_PROFILE);
-      },
-    );
+  useIpcListener(APP_EVENTS_RESPONSE.UPDATE_ALERTS_SETTINGS, (res) => {
+    // Resync with what is actually saved
+    if (res && !res.success) window.api.emit(APP_EVENTS.GET_PROFILE);
+  });
 
-    const removeSetAlertSound = window.api.on(
-      APP_EVENTS_RESPONSE.SET_ALERT_SOUND,
-      (res) => {
-        if (res?.success && res.sound) {
-          dispatch({
-            type: "setAlertSound",
-            payload: { id: res.id, sound: res.sound },
-          });
-          dispatch({ type: "setPickerFor", payload: null });
-        }
-      },
-    );
-
-    return () => {
-      removeGetProfile();
-      removeGetGifts();
-      removeUpdateAlertsSettings();
-      removeSetAlertSound();
-    };
-  }, []);
+  useIpcListener(APP_EVENTS_RESPONSE.SET_ALERT_SOUND, (res) => {
+    if (!res?.success || !res.sound) return;
+    const sound = res.sound;
+    update((s) => {
+      const alert = s.items.find((a) => a.id === res.id);
+      if (alert) alert.sound = sound;
+    });
+    setPickerFor(null);
+  });
 
   useEffect(() => {
-    if (isEqual(state.settings, state.settingsTemp)) return undefined;
+    if (isEqual(settings, saved)) return undefined;
 
-    const settings = state.settings;
     pendingSave.current = settings;
     const timer = setTimeout(() => {
       window.api.emit(APP_EVENTS.UPDATE_ALERTS_SETTINGS, { settings });
       pendingSave.current = null;
-      dispatch({ type: "setSettingsTemp", payload: settings });
+      setSaved(settings);
     }, SAVE_DELAY);
 
     return () => clearTimeout(timer);
-  }, [state.settings, state.settingsTemp]);
+  }, [settings, saved]);
 
   // Apply volume changes to sounds that are already waiting or playing.
   useEffect(() => {
-    state.settings.items.forEach((alert) => {
+    settings.items.forEach((alert) => {
       setItemGain(alert.id, alert.volume / 100);
     });
-  }, [state.settings.items]);
+  }, [settings.items, setItemGain]);
 
   // Don't lose a change made right before leaving the page.
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       if (pendingSave.current) {
         window.api.emit(APP_EVENTS.UPDATE_ALERTS_SETTINGS, {
           settings: pendingSave.current,
         });
       }
-    };
-  }, []);
+    },
+    [],
+  );
 
   return (
     <>
-      <div className={styles.container}>
+      <Page width="wide">
         <HeaderSection
-          simultaneous={state.settings.simultaneous}
-          queueLength={state.settings.queue_length}
-          dispatch={dispatch}
+          simultaneous={settings.simultaneous}
+          queueLength={settings.queue_length}
+          update={update}
         />
-        <span className={styles.section_delimiter} />
 
         <ItemsSection
-          items={state.settings.items}
-          gifts={state.gifts}
+          items={settings.items}
+          gifts={gifts}
           testing={test.testing}
           onTest={test.toggle}
-          dispatch={dispatch}
+          update={update}
+          onPickSound={setPickerFor}
         />
-      </div>
+      </Page>
 
-      {state.pickerFor && (
+      {pickerFor && (
         <SoundPicker
-          id={state.pickerFor}
+          id={pickerFor}
           testing={test.testing}
           onTest={test.toggle}
           onSelect={(sound) => {
-            dispatch({
-              type: "setAlertSound",
-              payload: { id: state.pickerFor!, sound },
+            update((s) => {
+              const alert = s.items.find((a) => a.id === pickerFor);
+              if (alert) alert.sound = sound;
             });
-            dispatch({ type: "setPickerFor", payload: null });
+            setPickerFor(null);
           }}
-          onClose={() => dispatch({ type: "setPickerFor", payload: null })}
+          onClose={() => setPickerFor(null)}
         />
       )}
     </>

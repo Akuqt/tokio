@@ -84,22 +84,22 @@ export class MusicService extends ProviderService<MusicProvider> {
 
     this._music_queue.setMaxSize(settings.protection.queue_length);
 
-    if (parsed.command === settings.constrols.play.command) {
+    if (parsed.command === settings.controls.play.command) {
       this._queue.enqueue(async () => {
         this.play(parsed.args);
       });
     }
-    if (parsed.command === settings.constrols.next.command) {
+    if (parsed.command === settings.controls.next.command) {
       this._queue.enqueue(async () => {
         this.next();
       });
     }
-    if (parsed.command === settings.constrols.last.command) {
+    if (parsed.command === settings.controls.last.command) {
       this._queue.enqueue(async () => {
         this.previous();
       });
     }
-    if (parsed.command === settings.constrols.revoke.command) {
+    if (parsed.command === settings.controls.revoke.command) {
       this._queue.enqueue(async () => {
         this.revoke(parsed.args);
       });
@@ -145,7 +145,7 @@ export class MusicService extends ProviderService<MusicProvider> {
   }
 
   private _parseText(settings: Profile["music"], chat: ChatEvent) {
-    const matchedControl = Object.values(settings.constrols).find((c) =>
+    const matchedControl = Object.values(settings.controls).find((c) =>
       chat.comment.content.startsWith(c.command),
     );
 
@@ -162,7 +162,7 @@ export class MusicService extends ProviderService<MusicProvider> {
   private _valid(settings: Profile["music"], chat: ChatEvent) {
     if (chat.comment.content === "") return false;
 
-    const matchedControl = Object.values(settings.constrols).find((c) =>
+    const matchedControl = Object.values(settings.controls).find((c) =>
       chat.comment.content.startsWith(c.command),
     );
 

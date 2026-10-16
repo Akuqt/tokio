@@ -1,9 +1,10 @@
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
-import { AlertTestRequest } from "@renderer/hooks";
-import { useEffect, useState } from "react";
+import { AlertTestRequest } from "@/hooks/useAlertTest";
+import { useIpcListener } from "@/hooks/useIpcListener";
+import { useState } from "react";
 import { FiCheckCircle, FiDownload } from "react-icons/fi";
-import { Input } from "../Elements";
-import { PREVIEW_VOLUME, PreviewButton } from "./PreviewButton";
+import { Btn, Input } from "../Elements";
+import { PlayButton, PREVIEW_VOLUME } from "../PlayButton";
 import styles from "./soundpicker.module.css";
 import { useSoundSearch } from "./useSoundSearch";
 
@@ -24,21 +25,12 @@ export function MyInstantsTab({ id, hidden, testing, onTest }: Props) {
   const { sounds, loading, failed, search, listRef, sentinelRef } =
     useSoundSearch(!hidden);
 
-  useEffect(() => {
-    const removeSetAlertSound = window.api.on(
-      APP_EVENTS_RESPONSE.SET_ALERT_SOUND,
-      (res) => {
-        if (res?.id === id) setDownloading(null);
-      },
-    );
-
-    return () => {
-      removeSetAlertSound();
-    };
-  }, [id]);
+  useIpcListener(APP_EVENTS_RESPONSE.SET_ALERT_SOUND, (res) => {
+    if (res?.id === id) setDownloading(null);
+  });
 
   return (
-    <div style={{ display: hidden ? "none" : "contents" }}>
+    <div className={hidden ? styles.hidden : styles.contents}>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -49,11 +41,6 @@ export function MyInstantsTab({ id, hidden, testing, onTest }: Props) {
           placeholder="Search sounds... (Enter)"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          textColor="var(--font-primary)"
-          bgColor={{
-            primary: "var(--background-primary)",
-            secondary: "var(--background-secondary)",
-          }}
         />
       </form>
 
@@ -63,7 +50,7 @@ export function MyInstantsTab({ id, hidden, testing, onTest }: Props) {
             <span className={styles.name} title={sound.name}>
               {sound.name}
             </span>
-            <PreviewButton
+            <PlayButton
               playing={testing === sound.url}
               onClick={() =>
                 onTest({
@@ -73,8 +60,9 @@ export function MyInstantsTab({ id, hidden, testing, onTest }: Props) {
                 })
               }
             />
-            <button
-              className={`${styles.icon_btn} ${sound.saved ? styles.saved : ""}`}
+            <Btn
+              variant="icon"
+              active={sound.saved}
               title={
                 sound.saved ? "Already saved, use this sound" : "Use this sound"
               }
@@ -93,7 +81,7 @@ export function MyInstantsTab({ id, hidden, testing, onTest }: Props) {
               ) : (
                 <FiDownload size={20} />
               )}
-            </button>
+            </Btn>
           </div>
         ))}
 

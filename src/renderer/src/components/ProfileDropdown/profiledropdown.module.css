@@ -1,59 +1,81 @@
 .container {
-  -webkit-app-region: no-drag;
   position: relative;
+  -webkit-app-region: no-drag;
 }
 
 .toggle {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  gap: var(--space-2);
+  padding: 6px var(--space-4);
+  border-radius: var(--radius-md);
+  color: var(--font-secondary);
+  font-size: var(--font-md);
   cursor: pointer;
-  padding: 6px 16px;
-  border-radius: 6px;
 }
 
-.toggle:hover {
-  background-color: var(--background-secondary-hover) !important;
+.toggle:hover,
+.toggle_open,
+.toggle_disabled {
+  background-color: var(--background-secondary-hover);
 }
 
-.profile {
+.toggle_open {
+  color: var(--font-primary);
+}
+
+.toggle_disabled {
+  cursor: not-allowed;
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 24px;
   height: 24px;
   border-radius: 50%;
   background-color: var(--background-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
+  font-size: var(--font-xs);
 }
 
-.profiles_container {
+.chevron {
+  transition: transform var(--transition-fast);
+}
+
+.chevron_open {
+  transform: rotate(180deg);
+}
+
+.menu {
   position: absolute;
   top: calc(100% + 4px);
-  right: 16px;
-  width: 200px;
-  background-color: var(--background-secondary);
-  border: 1px solid var(--background-primary);
-  border-radius: 6px;
-  padding: 4px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-  z-index: 50;
+  right: var(--space-4);
+  z-index: var(--z-popover);
   display: flex;
   flex-direction: column;
   gap: 2px;
+  width: 200px;
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--background-primary);
+  background-color: var(--background-secondary);
+  box-shadow: var(--shadow-popover);
 }
 
-.profiles_item {
+.item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  font-size: 13px;
-  border-radius: 4px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--font-secondary);
+  font-size: var(--font-sm);
   cursor: pointer;
 }
 
-.profiles_item:hover {
-  background-color: var(--background-secondary-hover) !important;
+.item:hover,
+.item_active {
+  background-color: var(--background-secondary-hover);
+  color: var(--font-primary);
 }

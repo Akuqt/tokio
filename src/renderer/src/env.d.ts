@@ -10,6 +10,9 @@ import {
 } from "@/common/types";
 
 declare global {
+  // The version in package.json, set at build time
+  const __APP_VERSION__: string;
+
   interface Window {
     api: {
       on: <T extends APP_EVENTS_RESPONSE>(
