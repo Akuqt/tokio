@@ -9,7 +9,7 @@
   </p>
 </div>
 
-Tokio is a Windows desktop app that connects to your TikTok LIVE and reacts to what happens in it. It reads chat aloud, takes song requests, plays sounds when someone follows or sends a gift, and drives overlays you add to **OBS**, **TikTok LIVE Studio** or any streaming app that can show a web page.
+Tokio is a desktop app for Windows, macOS and Linux that connects to your TikTok LIVE and reacts to what happens in it. It reads chat aloud, takes song requests, plays sounds when someone follows or sends a gift, and drives overlays you add to **OBS**, **TikTok LIVE Studio** or any streaming app that can show a web page.
 
 ## Features
 
@@ -21,7 +21,7 @@ Enter your TikTok username to connect to your LIVE. Turn each feature on or off 
 
 Chat messages are read aloud as they come in.
 
-- **Voices** from three engines: TikTok's own voices, Microsoft Edge voices, and the voices installed on Windows (SAPI and OneCore, including older 32-bit voices). Adjust speed, pitch and volume.
+- **Voices** from three engines: TikTok's own voices, Microsoft Edge voices, and, on Windows, the voices installed on the system (SAPI and OneCore, including older 32-bit voices). Adjust speed, pitch and volume.
 - **Format**: choose which messages get read and how, for example `{username} {comment}` or only messages that start with a command.
 - **Replacements**: teach the voice how to say acronyms, slang and names.
 - **Permissions**: let everyone talk, or only followers, superfans or moderators. You can also set a minimum fan level, a whitelist and a blacklist.
@@ -74,10 +74,13 @@ Download the installer for your system from the [latest release](https://github.
 | Platform | Status    |
 | -------- | --------- |
 | Windows  | Supported |
-| macOS    | Planned   |
-| Linux    | Planned   |
+| macOS    | Supported |
+| Linux    | Supported |
 
-Only Windows builds are released for now. Most of Tokio already works on other systems, but there are no macOS or Linux builds yet and they haven't been tested.
+Every release has builds for Windows (x64), macOS (Apple Silicon and Intel) and Linux (x64). The voices installed on the system are only available on Windows; TikTok and Edge voices work everywhere.
+
+- **macOS**: Tokio and its installer aren't notarized yet, so macOS may block them the first time. Open it from Finder with right-click → **Open**, or allow it in **System Settings → Privacy & Security**.
+- **Linux**: the AppImage needs FUSE to run.
 
 ### Connect to your LIVE
 
@@ -89,7 +92,7 @@ Only Windows builds are released for now. Most of Tokio already works on other s
 
 Overlays are served by Tokio's overlay server. Turn it on first in **Settings → Overlay Server**, then copy the overlay's URL from the **Overlays** page.
 
-TikTok LIVE Studio doesn't accept `localhost` links, so overlays use their own address, `tokio-app.local`. The first time you turn on the server, Windows asks for administrator rights so Tokio can add this address to your hosts file, pointing to your own computer. Accept the prompt, or the server stays off. You won't be asked again while the entry is there.
+TikTok LIVE Studio doesn't accept `localhost` links, so overlays use their own address, `tokio-app.local`. The first time you turn on the server, your system asks for administrator rights (your password on macOS and Linux) so Tokio can add this address to your hosts file, pointing to your own computer. Accept the prompt, or the server stays off. You won't be asked again while the entry is there.
 
 **OBS Studio**
 
@@ -105,15 +108,17 @@ Tokio has to stay open while you stream so the overlays keep getting events.
 
 ## Building from source
 
-Requires Node.js 24+, Yarn 1 and Windows.
+Requires Node.js 24+ and Yarn 1.
 
 ```sh
 yarn install
-yarn dev        # run in development
-yarn test       # unit tests
-yarn typecheck  # type-check every process
-yarn lint       # lint
-yarn build:win  # build the Windows installer into dist/
+yarn dev          # run in development
+yarn test         # unit tests
+yarn typecheck    # type-check every process
+yarn lint         # lint
+yarn build:win    # build the Windows setup into dist/
+yarn build:mac    # build the macOS zips into dist/ (on macOS)
+yarn build:linux  # build the Linux AppImage into dist/
 ```
 
 The small download-and-install program in `src/installer/` is written in Rust and runs on Windows, macOS and Linux. Building it needs a [Rust toolchain](https://rustup.rs) (1.85+); on Linux also `libwebkit2gtk-4.1-dev`, `libssl-dev` and `libdbus-1-dev`.
@@ -122,7 +127,7 @@ The small download-and-install program in `src/installer/` is written in Rust an
 yarn build:installer  # build the installer for this system into installer-out/
 ```
 
-The installer doesn't need rebuilding for new versions: when it runs, it downloads the app from the latest GitHub release, picking the `yarn build:win`, `build:mac` or `build:linux` artifact for its system by name. Set `INSTALLER_URL` at build time to download from a fixed URL instead. On Linux the AppImage needs FUSE to run.
+The installer doesn't need rebuilding for new versions: when it runs, it downloads the app from the latest GitHub release, picking the `yarn build:win`, `build:mac` or `build:linux` artifact for its system by name. Set `INSTALLER_URL` at build time to download from a fixed URL instead.
 
 Want to help? Read [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
 
