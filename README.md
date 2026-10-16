@@ -1,16 +1,122 @@
-# Tokio
+<div align="center">
+  <img src="resources/icon.png" alt="Tokio logo" width="96" />
+  <h1>Tokio</h1>
+  <p>Make your TikTok LIVE react to chat, gifts and follows: text-to-speech, music requests, sound alerts and overlays.</p>
+  <p>
+    <a href="https://tokio.ialfaro.com">Website</a> ·
+    <a href="https://github.com/Akuqt/tokio/releases">Download</a> ·
+    <a href="https://github.com/Akuqt/tokio/issues">Report a bug</a>
+  </p>
+</div>
 
-Tiktok live integrator app.
+Tokio is a Windows desktop app that connects to your TikTok LIVE and reacts to what happens in it. It reads chat aloud, takes song requests, plays sounds when someone follows or sends a gift, and drives overlays you add to **OBS**, **TikTok LIVE Studio** or any streaming app that can show a web page.
 
-## Build
+## Features
+
+### Dashboard
+
+Enter your TikTok username to connect to your LIVE. Turn each feature on or off for the session and watch the live stats as viewers join, like and send gifts.
+
+### Text-to-speech
+
+Chat messages are read aloud as they come in.
+
+- **Voices** from three engines: TikTok's own voices, Microsoft Edge voices, and the voices installed on Windows (SAPI and OneCore, including older 32-bit voices). Adjust speed, pitch and volume.
+- **Format**: choose which messages get read and how, for example `{username} {comment}` or only messages that start with a command.
+- **Replacements**: teach the voice how to say acronyms, slang and names.
+- **Permissions**: let everyone talk, or only followers, superfans or moderators. You can also set a minimum fan level, a whitelist and a blacklist.
+- **Protection**: a cooldown per viewer and a maximum queue length keep the chat from flooding the voice.
+
+### Music requests
+
+Viewers request songs from chat, played from **YouTube** or **Spotify** in a separate player window. The chat commands can be renamed or turned off:
+
+| Command   | Action                             |
+| --------- | ---------------------------------- |
+| `!play`   | Request a song                     |
+| `!next`   | Skip to the next song              |
+| `!last`   | Go back to the last song           |
+| `!revoke` | Remove your request from the queue |
+
+Music requests use the same permissions and protection settings as text-to-speech.
+
+### Alerts
+
+Play a sound for any LIVE event: chat messages, follows, shares, likes, gifts, envelopes, Super Fan events, new members, viewer counts and song changes.
+
+- Upload your own sounds or search [MyInstants](https://www.myinstants.com) from inside the app. Your sound library is shared by all your profiles.
+- Set each alert's volume. Gift alerts can react to any gift or only to the ones you pick, and fire once per combo.
+- Play alerts one after another in a queue, or let different events play at the same time.
+
+### Overlays
+
+Import overlays and set them up from the gallery: colors, text, the gifts they react to, and anything else an overlay offers. Each overlay gets its own URL on your computer (`http://tokio-app.local:37891/...`). Copy it from the gallery and add it to your streaming app (see [Adding an overlay](#adding-an-overlay)).
+
+### Profiles and settings
+
+- **Profiles**: keep separate settings for different streams. Create a blank profile or clone an existing one, and switch between them from the title bar.
+- **Providers**: choose the engine used for text-to-speech and for TikTok events.
+- **Overlay server**: turn the local server for overlays on or off.
+- **Notifications**: when something fails, such as a voice that can't be generated or a sound that's missing, Tokio tells you what went wrong. The bell in the title bar keeps the session's history.
+
+### Tools for overlay developers
+
+Building your own overlay? Create a test ID on the **Tools** page and send your overlay sample LIVE events without importing it.
+
+## Getting started
+
+### Install
+
+Download the Windows installer from the [latest release](https://github.com/Akuqt/tokio/releases/latest) and run it.
+
+### Platforms
+
+| Platform | Status    |
+| -------- | --------- |
+| Windows  | Supported |
+| macOS    | Planned   |
+| Linux    | Planned   |
+
+Only Windows builds are released for now. Most of Tokio already works on other systems, but there are no macOS or Linux builds yet and they haven't been tested.
+
+### Connect to your LIVE
+
+1. Start your LIVE on TikTok.
+2. Open Tokio, enter your `@username` on the **Home** page and connect.
+3. Turn on the features you want for this stream: text-to-speech, music, alerts.
+
+### Adding an overlay
+
+Overlays are served by Tokio's overlay server. Turn it on first in **Settings → Overlay Server**, then copy the overlay's URL from the **Overlays** page.
+
+TikTok LIVE Studio doesn't accept `localhost` links, so overlays use their own address, `tokio-app.local`. The first time you turn on the server, Windows asks for administrator rights so Tokio can add this address to your hosts file, pointing to your own computer. Accept the prompt, or the server stays off. You won't be asked again while the entry is there.
+
+**OBS Studio**
+
+1. In **Sources**, click **+** and choose **Browser**.
+2. Paste the overlay URL and set the width and height to your canvas size.
+
+**TikTok LIVE Studio**
+
+1. Click **Add source** and choose **Link**.
+2. Paste the overlay URL and place the overlay on your scene.
+
+Tokio has to stay open while you stream so the overlays keep getting events.
+
+## Building from source
 
 Requires Node.js 24+, Yarn 1 and Windows.
 
 ```sh
 yarn install
 yarn dev        # run in development
+yarn test       # unit tests
+yarn typecheck  # type-check every process
+yarn lint       # lint
 yarn build:win  # build the Windows installer into dist/
 ```
+
+Want to help? Read [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## License
 
@@ -18,4 +124,6 @@ Tokio's source code is licensed under the [MIT License](LICENSE). One file is an
 
 The **distributed application** includes [tiktok-live-connector](https://github.com/zerodytrash/TikTok-Live-Connector) and its protocol package, which are licensed under the [GNU AGPL v3.0](LICENSES/AGPL-3.0.txt). So the application as a whole is distributed under the AGPL-3.0-only.
 
-See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for details.
+See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for details. The **About** page in the app shows the same notices.
+
+Tokio is not affiliated with or endorsed by TikTok or ByteDance.
