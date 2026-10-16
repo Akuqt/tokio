@@ -10,6 +10,7 @@ import { EventEmitter } from "node:events";
 import { ConnectionResponse, createWindow, MusicProvider } from "../../common";
 import {
   AfterSearchJSCode,
+  confirmLoggedOut,
   LoginJSCode,
   parseSongRenderer,
   PlayerStateJSCode,
@@ -116,24 +117,54 @@ export class YouTubeMusic extends MusicProvider {
 
       let isInitializing = true;
       let hasAttemptedLoginRedirect = false;
+      let checkGeneration = 0;
+
+      const markReady = () => {
+        if (!isInitializing) return;
+        isInitializing = false;
+        this._shellWindow!.off("close", handleAuthAbort);
+        this._isActive = true;
+        res({ success: true });
+      };
 
       const handleNavigation = async () => {
+        // A newer page load cancels any login check still retrying.
+        const generation = ++checkGeneration;
+
         if (!this._ytView || this._shellWindow?.isDestroyed()) return;
 
         const currentUrl = this._ytView.webContents.getURL();
         if (currentUrl.includes("accounts.google.com")) return;
 
-        try {
-          const loggedIn = await this.checkIsLoggedIn();
+        if (!isInitializing) return;
 
-          if (loggedIn || !requireAuth) {
-            if (isInitializing) {
-              isInitializing = false;
-              this._shellWindow!.off("close", handleAuthAbort);
-              this._isActive = true;
-              res({ success: true });
-            }
-          } else if (isInitializing) {
+        try {
+          if (!requireAuth) {
+            markReady();
+            return;
+          }
+
+          const isStale = () =>
+            generation !== checkGeneration ||
+            !isInitializing ||
+            !this._ytView ||
+            this._ytView.webContents.isDestroyed() ||
+            !!this._shellWindow?.isDestroyed() ||
+            this._ytView.webContents.getURL().includes("accounts.google.com");
+
+          // A logged-in user resolves on the first check; only a run of
+          // failed checks counts as logged out.
+          const status = await confirmLoggedOut(() => this.checkIsLoggedIn(), {
+            attempts: config.LOGIN_CHECK_ATTEMPTS,
+            intervalMs: config.LOGIN_CHECK_INTERVAL_MS,
+            isStale,
+          });
+
+          if (status === "stale") return;
+
+          if (status === "logged-in") {
+            markReady();
+          } else {
             if (hasAttemptedLoginRedirect) {
               this._shellWindow!.off("close", handleAuthAbort);
               this._isActive = false;

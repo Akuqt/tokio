@@ -1,4 +1,5 @@
 import { SongInfo } from "@/common/types";
+import { delay } from "@/common/util";
 
 export const PlayerStateJSCode = `
 (() => {
@@ -86,6 +87,41 @@ export const LoginJSCode = `
   return signInBtn === null;
 })();
 `;
+
+export type LoginConfirmation = "logged-in" | "logged-out" | "stale";
+
+/**
+ * Runs `check` up to `attempts` times, spaced `intervalMs` apart, and reports
+ * "logged-out" only when every attempt said so. A rejected check counts as a
+ * failed attempt. Returns "stale" as soon as `isStale()` is true.
+ */
+export async function confirmLoggedOut(
+  check: () => Promise<boolean>,
+  opts: { attempts: number; intervalMs: number; isStale: () => boolean },
+): Promise<LoginConfirmation> {
+  const { attempts, intervalMs, isStale } = opts;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    if (isStale()) return "stale";
+
+    let loggedIn = false;
+    try {
+      loggedIn = await check();
+    } catch {
+      loggedIn = false;
+    }
+
+    if (isStale()) return "stale";
+    if (loggedIn) return "logged-in";
+
+    if (attempt < attempts) {
+      await delay(intervalMs);
+      if (isStale()) return "stale";
+    }
+  }
+
+  return "logged-out";
+}
 
 export const YT_MUSIC_CONFIG = {
   ENDPOINT: "https://music.youtube.com/youtubei/v1/search?prettyPrint=false",
