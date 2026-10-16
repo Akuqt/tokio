@@ -105,8 +105,8 @@ export class TikTokLiveConnector extends ConnectorProvider {
         await delay(1000);
         this.registerEvents();
         this._connector.on(WebcastEvent.STREAM_END, async () => {
-          await this.disconnect();
-          this.emit(TOKIO_EVENTS.DISCONNECTED);
+          await this._close();
+          this.emit(TOKIO_EVENTS.DISCONNECTED, { reason: "ended" });
         });
         return {
           success: true,
@@ -133,14 +133,18 @@ export class TikTokLiveConnector extends ConnectorProvider {
   }
 
   public async disconnect(): Promise<void> {
-    if (this.isConnected()) {
-      try {
-        await this._connector?.disconnect();
-      } catch {
-        // Next
-      }
-      this.emit(TOKIO_EVENTS.DISCONNECTED);
+    if (await this._close()) this.emit(TOKIO_EVENTS.DISCONNECTED);
+  }
+
+  // Closes the connection, true when there was one.
+  private async _close(): Promise<boolean> {
+    if (!this.isConnected()) return false;
+    try {
+      await this._connector?.disconnect();
+    } catch {
+      // Next
     }
+    return true;
   }
 
   public isConnected(): boolean {

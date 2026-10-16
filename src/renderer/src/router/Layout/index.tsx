@@ -1,11 +1,12 @@
 import Logo from "@/assets/logo.png";
 import { EntityMetadata } from "@/common/schemas";
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
-import { ProfileDropdown } from "@/components";
+import { NotificationBell, ProfileDropdown } from "@/components";
 import {
   useAudio,
   useIpcListener,
   useIpcRequest,
+  useNotifications,
   useUnsavedChanges,
 } from "@/hooks";
 import { TitleBar } from "@/ui/TitleBar";
@@ -30,6 +31,7 @@ const NAV_ITEMS = [
 export function Layout() {
   const { resumeContext } = useAudio();
   const { confirmDiscard } = useUnsavedChanges();
+  const notifications = useNotifications();
 
   const [isConnected, setIsConnected] = useState(false);
   const [profiles, setProfiles] = useState<EntityMetadata[]>([]);
@@ -73,6 +75,13 @@ export function Layout() {
               window.api.emit(APP_EVENTS.SET_PROFILE, { file });
             }
           }}
+        />
+        <NotificationBell
+          history={notifications.history}
+          unread={notifications.unread}
+          unreadError={notifications.unreadError}
+          onSeen={notifications.markSeen}
+          onClear={notifications.clear}
         />
       </TitleBar>
 

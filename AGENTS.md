@@ -98,12 +98,33 @@ All renderer ↔ main communication is typed. To add an event:
 
 1. Add the request enum value to `APP_EVENTS` and its payload to `AppEventsMap` in `src/common/types/events/req.ts`. Names follow `app:<area>:<action>`.
 2. If it replies, add the response to `APP_EVENTS_RESPONSE` and `AppEventsResponseMap` in `src/common/types/events/res.ts`.
-3. Register the handler in the matching page stack in `src/main/events/pages/<page>.ts` with `events.push(APP_EVENTS.X, async (services, e, data) => { ... e.reply(...) })`. A new page stack must be added to `mergeStacks` in `src/main/events/index.ts`.
+3. Register the handler in the matching page stack in `src/main/events/pages/<page>.ts` with `events.push(APP_EVENTS.X, async (services, e, data) => { ... e.reply(...) }, options)`. Don't wrap it in try/catch; throw on failure and let `options` handle it (see Feedback below). A new page stack must be added to `mergeStacks` in `src/main/events/index.ts`.
 4. In the renderer, call `window.api.emit(APP_EVENTS.X, data)` and subscribe with `window.api.on(APP_EVENTS_RESPONSE.Y, cb)`. `on` returns an unsubscribe function, so call it in the `useEffect` cleanup.
 
 To push from main without a request, use `win.webContents.send(APP_EVENTS_RESPONSE.Y, data)`. It's typed, so a `void` response still needs `undefined` as its payload.
 
 Live stream events (`TOKIO_EVENTS` / `TokioEventMap`) come from the connector service. `ServerService` forwards them to overlays over WebSocket, and they also drive TTS, music requests and alerts.
+
+### Feedback
+
+Main tells the renderer what failed and why, so the UI can show notifications. Types live in `src/common/types/feedback.ts`, helpers in `src/main/helper/feedback.ts` and `src/main/helper/events.ts`.
+
+- Responses that report success use `Reply<{ ... }>`, which adds `error?: AppError` (`{ code: FEEDBACK_CODES, message }`). The message is plain English for the user; details only go to the logs.
+- `createStack(source)` sets the `FeedbackSource` of a page's handlers. It's also the log file their failures go to.
+- `push` options:
+  - `failure`: the `AppError` reported when the handler throws anything other than an `AppFailure`.
+  - `onError(e, error, data, services)`: sends the page's failure reply. Use `replyFailure(APP_EVENTS_RESPONSE.X)` when the reply is just `{ success: false, error }`.
+  - `notify: false`: when the page already shows the failure, or for status probes.
+  - `source`: overrides the stack's source.
+- Throw `new AppFailure(code, message, { level: "warning", cause })` for an expected failure that needs its own message or level. Plain errors get the `failure` message. A canceled dialog is not a failure: just `return`.
+- Failures are logged once. When a service already logged the error (for example `AlertsService` results or the connector), throw `new LoggedError(res.error)`, or pass `{ logged: true }` to `AppFailure`. It's reported to the user without a second log line.
+- `notifier` (in the services passed to handlers) pushes `APP_EVENTS_RESPONSE.NOTIFY` (`AppNotification`) to the main window.
+  - Use `notifier.report({ source, error, fallback })` to log and notify in one call.
+  - Use `notifier.error/warn/info/success(source, code, message, { key, windowMs })` for notices.
+  - Repeats of a warning or error are dropped within the window (5s by default). Pass a longer `windowMs` for failures that can repeat on every live event. Success and info notices aren't deduped unless a `windowMs` is given.
+- User actions that change something send a success or info notice once they finish. Call `notifier.success(...)` right where the handler succeeds, after its reply, so canceled dialogs and early returns stay silent. Keep notices quiet: reads, status checks, tests, autosaves (alerts) and controls whose new state the UI already shows (the feature switches on Home) send none. Codes for these are past tense (`PROFILE_SAVED`); failures end in `_FAILED`.
+- Background failures (TTS generation, music playback, missing alert sounds, gifts, the server port, the LIVE ending) are reported from `src/main/events/init.ts`, through callbacks on the services. Services don't know about the notifier.
+- The renderer shows them with `NotificationsProvider` (`context/notifications`), mounted above `AppProvider` because load-time notices arrive before the splash closes. It renders the `Toasts` (bottom right, above modals; errors stay until closed), and `NotificationBell` in the title bar lists the session's history through `useNotifications`. Pages don't show notices themselves.
 
 ### Renderer
 
@@ -112,11 +133,11 @@ Live stream events (`TOKIO_EVENTS` / `TokioEventMap`) come from the connector se
 - Reusable UI is in `src/renderer/src/components/`. Each component is a folder with `index.tsx` and `<name>.module.css`, re-exported from `components/index.tsx`. Use the primitives in `components/Elements` before creating new ones: `Btn` (`variant` default/accent/icon, `loading`, `active`), `Input`, `Textarea`, `ListTextarea` (comma separated lists), `Check`, `Toggle`, `RadioGroup`, `Slider`, `Select`/`MultiSelect` (searchable, grouped options), `Color`, `Tabs`, `Spinner`. Primitives take their colors from the tokens; they don't take color props.
 - `Modal` is the only modal shell (default Cancel/confirm footer, or a custom `footer`). `PlayButton` plays sound tests; `PermissionsSection` and `ProtectionSection` are shared by TTS and Music.
 - Styling uses CSS Modules only. Use the tokens in `src/ui/styles/tokens.css` (colors, `--space-*`, `--font-*`, `--radius-*`, `--z-*`) instead of raw values.
-- Global state lives in `src/renderer/src/context` (`app`, `audio`, `unsaved`), and shared hooks live in `src/renderer/src/hooks`:
+- Global state lives in `src/renderer/src/context` (`app`, `audio`, `notifications`, `unsaved`), and shared hooks live in `src/renderer/src/hooks`:
   - `useIpcRequest(event, data?)` sends a request once on mount, and `useIpcListener(event, cb)` subscribes for the component's lifetime. Use them instead of `window.api.on` in a `useEffect`.
   - `useImmerState` returns an `Updater` that takes an immer recipe; `scopeUpdater(update, key)` hands a section one field of it.
   - `useEditableSettings(section, label)` loads a profile section as a draft and saves it by hand. It registers with `UnsavedProvider`, so switching profile or leaving the page asks to save or discard. Call `confirmDiscard()` from `useUnsavedChanges` before anything else that reloads the profile.
-  - `useClickOutside` and `usePopover` back dropdowns and popovers; also `useAudio` and `useAlertTest`.
+  - `useClickOutside` and `usePopover` back dropdowns and popovers; also `useAudio`, `useAlertTest` and `useNotifications` (notice history for the bell).
 - Audio plays through `AudioQueue` (`src/renderer/src/helper/audio.ts`). Get a named queue with `useAudio().getQueue(name)`.
   - `enqueue(input, autoplay, { gain, key, onEnded })` sets an item's own volume and an end callback. `onEnded` doesn't run when the queue is stopped.
   - `setItemGain(key, gain)` changes the volume of matching items while they wait or play.

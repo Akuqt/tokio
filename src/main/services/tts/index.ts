@@ -156,6 +156,8 @@ export class TTSService extends ProviderService<TTSProvider> {
         maxQueueLength: number;
       };
     }) => void,
+    // Called when the audio can't be generated
+    onError?: (error?: Error) => void,
   ) {
     if (!this._valid(settings, chat)) return;
     const text = this._parseText(settings, chat);
@@ -184,6 +186,7 @@ export class TTSService extends ProviderService<TTSProvider> {
           this._logFile,
           res.error,
         );
+        onError?.(res.error);
       }
     });
   }

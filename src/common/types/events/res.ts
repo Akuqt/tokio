@@ -9,6 +9,7 @@ import {
   StoreSchema,
   TestOverlay,
 } from "../../schemas";
+import { AppNotification, Reply } from "../feedback";
 import { OverlayApp } from "../server";
 import { VoiceData } from "../store";
 
@@ -19,7 +20,7 @@ export enum APP_EVENTS_RESPONSE {
   LOAD_APP = "app:load:res:all",
 
   // GLOBAL
-
+  NOTIFY = "app:notify",
   TTS_AUDIO = "app:tts:audio",
 
   // WINDOW
@@ -83,11 +84,11 @@ export enum APP_EVENTS_RESPONSE {
 
 export interface AppEventsResponseMap {
   // INIT
-  [APP_EVENTS_RESPONSE.LOAD_APP]: {
-    success: boolean;
-  };
+  [APP_EVENTS_RESPONSE.LOAD_APP]: Reply;
 
   // GLOBAL
+  // Something the user should know about: failures, warnings, notices
+  [APP_EVENTS_RESPONSE.NOTIFY]: AppNotification;
 
   [APP_EVENTS_RESPONSE.TTS_AUDIO]: {
     data: Uint8Array<ArrayBufferLike>;
@@ -104,84 +105,62 @@ export interface AppEventsResponseMap {
   [APP_EVENTS_RESPONSE.RESIZE_MUSIC_WINDOW]: WindowState;
 
   // PROFILE
-  [APP_EVENTS_RESPONSE.GET_PROFILE]: {
-    success: boolean;
+  [APP_EVENTS_RESPONSE.GET_PROFILE]: Reply<{
     profile?: Profile;
     profiles?: { name: string; file: string }[];
-  };
+  }>;
 
   //VOICES
-  [APP_EVENTS_RESPONSE.GET_VOICES]: {
-    success: boolean;
+  [APP_EVENTS_RESPONSE.GET_VOICES]: Reply<{
     voices?: VoiceData[];
-  };
+  }>;
 
   //TTS PAGE
-  [APP_EVENTS_RESPONSE.UPDATE_TTS_SETTINGS]: {
-    success: boolean;
-  };
+  [APP_EVENTS_RESPONSE.UPDATE_TTS_SETTINGS]: Reply;
 
   //TTS PAGE TESTER
-  [APP_EVENTS_RESPONSE.GET_TTS_TEST]: {
-    success: boolean;
+  [APP_EVENTS_RESPONSE.GET_TTS_TEST]: Reply<{
     data?: Uint8Array<ArrayBufferLike>;
-  };
+  }>;
 
   //MUSIC PAGE
-  [APP_EVENTS_RESPONSE.UPDATE_MUSIC_SETTINGS]: {
-    success: boolean;
-  };
+  [APP_EVENTS_RESPONSE.UPDATE_MUSIC_SETTINGS]: Reply;
 
-  [APP_EVENTS_RESPONSE.MUSIC_CONNECTED]: {
-    success: boolean;
-  };
+  [APP_EVENTS_RESPONSE.MUSIC_CONNECTED]: Reply;
 
   // SETTINGS
-  [APP_EVENTS_RESPONSE.GET_SETTINGS]: {
-    success: boolean;
+  [APP_EVENTS_RESPONSE.GET_SETTINGS]: Reply<{
     data?: StoreSchema;
-  };
+  }>;
 
-  [APP_EVENTS_RESPONSE.CREATE_PROFILE]: {
-    success: boolean;
-  };
+  [APP_EVENTS_RESPONSE.CREATE_PROFILE]: Reply;
 
-  [APP_EVENTS_RESPONSE.CLONE_PROFILE]: {
-    success: boolean;
-  };
+  [APP_EVENTS_RESPONSE.CLONE_PROFILE]: Reply;
 
-  [APP_EVENTS_RESPONSE.IMPORT_ENTITY]: {
-    success: boolean;
+  [APP_EVENTS_RESPONSE.IMPORT_ENTITY]: Reply<{
     type: "profile";
-  };
+  }>;
 
-  [APP_EVENTS_RESPONSE.EXPORT_ENTITY]: {
-    success: boolean;
+  [APP_EVENTS_RESPONSE.EXPORT_ENTITY]: Reply<{
     type: "profile";
-  };
+  }>;
 
-  [APP_EVENTS_RESPONSE.SET_PROVIDER]: {
+  [APP_EVENTS_RESPONSE.SET_PROVIDER]: Reply<{
     type: "tts" | "connector";
-    success: boolean;
-  };
+  }>;
 
-  [APP_EVENTS_RESPONSE.SET_SERVER]: {
-    success: boolean;
-  };
+  [APP_EVENTS_RESPONSE.SET_SERVER]: Reply;
 
-  [APP_EVENTS_RESPONSE.REQ_FQDN]: {
-    success: boolean;
-  };
+  [APP_EVENTS_RESPONSE.REQ_FQDN]: Reply;
 
   // HOME
-  [APP_EVENTS_RESPONSE.CONNECTED]: {
-    success: boolean;
+  [APP_EVENTS_RESPONSE.CONNECTED]: Reply<{
     stats: {
       views: number;
       viewers: number;
       likes: number;
     };
-  };
+  }>;
 
   [APP_EVENTS_RESPONSE.VIEWS]: {
     data: {
@@ -194,25 +173,20 @@ export interface AppEventsResponseMap {
   };
 
   // OVERLAYS
-  [APP_EVENTS_RESPONSE.IMPORT_OVERLAY]: {
-    success: boolean;
-  };
-  [APP_EVENTS_RESPONSE.GET_OVERLAYS]: {
-    success: boolean;
+  [APP_EVENTS_RESPONSE.IMPORT_OVERLAY]: Reply;
+  [APP_EVENTS_RESPONSE.GET_OVERLAYS]: Reply<{
     data?: OverlayApp[];
-  };
-  [APP_EVENTS_RESPONSE.GET_OVERLAY_CONFIG]: {
-    success: boolean;
+  }>;
+  [APP_EVENTS_RESPONSE.GET_OVERLAY_CONFIG]: Reply<{
     data?: OverlayConfig;
-  };
+  }>;
   [APP_EVENTS_RESPONSE.GET_GIFTS]: {
     data: CustomGift[];
   };
-  [APP_EVENTS_RESPONSE.SAVE_OVERLAY_CONFIG]: {
-    success: boolean;
+  [APP_EVENTS_RESPONSE.SAVE_OVERLAY_CONFIG]: Reply<{
     data?: OverlayConfigRedux;
     id?: string;
-  };
+  }>;
   [APP_EVENTS_RESPONSE.TEST_OVERLAY]: {
     payloads: TokioPayload[];
     id: string;
@@ -220,15 +194,13 @@ export interface AppEventsResponseMap {
 
   // TOOLS
   // Adding and removing a test overlay also reply with the updated list.
-  [APP_EVENTS_RESPONSE.GET_TEST_OVERLAYS]: {
-    success: boolean;
+  [APP_EVENTS_RESPONSE.GET_TEST_OVERLAYS]: Reply<{
     data?: TestOverlay[];
-  };
+  }>;
   // Fails when no overlay is connected with the id.
-  [APP_EVENTS_RESPONSE.SEND_TEST_EVENTS]: {
+  [APP_EVENTS_RESPONSE.SEND_TEST_EVENTS]: Reply<{
     id: string;
-    success: boolean;
-  };
+  }>;
 
   // ALERTS
   [APP_EVENTS_RESPONSE.ALERT_AUDIO]: {
@@ -242,33 +214,27 @@ export interface AppEventsResponseMap {
   };
   // Drops queued and playing alert sounds
   [APP_EVENTS_RESPONSE.ALERT_CLEAR]: void;
-  [APP_EVENTS_RESPONSE.TEST_ALERT]: {
-    success: boolean;
+  [APP_EVENTS_RESPONSE.TEST_ALERT]: Reply<{
     id: string;
     data?: Uint8Array;
     volume: number;
-  };
-  [APP_EVENTS_RESPONSE.UPDATE_ALERTS_SETTINGS]: {
-    success: boolean;
-  };
-  [APP_EVENTS_RESPONSE.SEARCH_SOUNDS]: {
-    success: boolean;
+  }>;
+  [APP_EVENTS_RESPONSE.UPDATE_ALERTS_SETTINGS]: Reply;
+  [APP_EVENTS_RESPONSE.SEARCH_SOUNDS]: Reply<{
     // Echo of the request, so stale responses can be dropped
     query: string;
     page: number;
     data: MyInstantsSound[];
     hasNextPage: boolean;
-  };
-  [APP_EVENTS_RESPONSE.SET_ALERT_SOUND]: {
-    success: boolean;
+  }>;
+  [APP_EVENTS_RESPONSE.SET_ALERT_SOUND]: Reply<{
     id: string;
     sound?: Alert["sound"];
-  };
+  }>;
 
   // SOUND LIBRARY
-  [APP_EVENTS_RESPONSE.GET_SOUNDS]: {
-    // false when the last upload or removal failed
-    success: boolean;
+  // success is false when the last upload or removal failed
+  [APP_EVENTS_RESPONSE.GET_SOUNDS]: Reply<{
     data: AlertSound[];
-  };
+  }>;
 }

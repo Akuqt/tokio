@@ -1,83 +1,128 @@
-import { APP_EVENTS, APP_EVENTS_RESPONSE, TOKIO_EVENTS } from "@/common/types";
-import { createStack } from "@/helper/events";
+import {
+  APP_EVENTS,
+  APP_EVENTS_RESPONSE,
+  FEEDBACK_CODES,
+  TOKIO_EVENTS,
+} from "@/common/types";
+import { createStack, replyFailure } from "@/helper/events";
+import { AppFailure } from "@/helper/feedback";
 
-const events = createStack();
+const events = createStack("music");
 
 // The listener of the last connect, replaced on every connect.
 let onMusicEnded: (() => void) | null = null;
 
 events.push(
   APP_EVENTS.UPDATE_MUSIC_SETTINGS,
-  async ({ storeManagerService }, e, { settings }) => {
-    try {
-      const res = await storeManagerService.updateProfileData({
-        music: settings,
-      });
-      e.reply(APP_EVENTS_RESPONSE.UPDATE_MUSIC_SETTINGS, {
-        success: res,
-      });
-    } catch {
-      e.reply(APP_EVENTS_RESPONSE.UPDATE_MUSIC_SETTINGS, {
-        success: false,
-      });
-    }
+  async ({ storeManagerService, notifier }, e, { settings }) => {
+    const res = await storeManagerService.updateProfileData({
+      music: settings,
+    });
+    if (!res) throw new Error("The music settings were not saved.");
+    e.reply(APP_EVENTS_RESPONSE.UPDATE_MUSIC_SETTINGS, {
+      success: true,
+    });
+    notifier.success(
+      "system",
+      FEEDBACK_CODES.PROFILE_SAVED,
+      "Music settings saved.",
+    );
+  },
+  {
+    source: "system",
+    failure: {
+      code: FEEDBACK_CODES.PROFILE_SAVE_FAILED,
+      message: "Unable to save the music settings.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.UPDATE_MUSIC_SETTINGS),
   },
 );
 
 events.push(
   APP_EVENTS.CONNECT_MUSIC,
-  async ({ musicService }, e, { name, key }) => {
-    try {
-      if (onMusicEnded) {
-        musicService.off(TOKIO_EVENTS.MUSIC_PROCCESS_ENDED, onMusicEnded);
-      }
-      onMusicEnded = () => {
-        e.reply(APP_EVENTS_RESPONSE.MUSIC_CONNECTED, {
-          success: false,
-        });
-      };
-      musicService.on(TOKIO_EVENTS.MUSIC_PROCCESS_ENDED, onMusicEnded);
+  async ({ musicService, notifier }, e, { name, key }) => {
+    if (onMusicEnded) {
+      musicService.off(TOKIO_EVENTS.MUSIC_PROCCESS_ENDED, onMusicEnded);
+    }
 
-      if (musicService.isActive()) {
-        musicService.disconnect();
-      }
+    if (musicService.isActive()) {
+      musicService.disconnect();
+    }
 
-      musicService.setProvider(name, key);
+    musicService.setProvider(name, key);
 
-      const res = await musicService.connect();
-
-      e.reply(APP_EVENTS_RESPONSE.MUSIC_CONNECTED, {
-        success: res.success,
-      });
-    } catch {
+    // Ends on a disconnect and when the provider's window is closed.
+    let connected = false;
+    onMusicEnded = () => {
       e.reply(APP_EVENTS_RESPONSE.MUSIC_CONNECTED, {
         success: false,
       });
+      if (!connected) return;
+      connected = false;
+      notifier.info(
+        "music",
+        FEEDBACK_CODES.MUSIC_DISCONNECTED,
+        `Disconnected from ${name}.`,
+      );
+    };
+    musicService.on(TOKIO_EVENTS.MUSIC_PROCCESS_ENDED, onMusicEnded);
+
+    const res = await musicService.connect();
+    if (!res.success) {
+      throw new AppFailure(
+        FEEDBACK_CODES.MUSIC_CONNECT_FAILED,
+        `Unable to connect to ${name}.`,
+        { cause: res.error },
+      );
     }
+
+    connected = true;
+    e.reply(APP_EVENTS_RESPONSE.MUSIC_CONNECTED, {
+      success: true,
+    });
+    notifier.success(
+      "music",
+      FEEDBACK_CODES.MUSIC_CONNECTED,
+      `Connected to ${name}.`,
+    );
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.MUSIC_CONNECT_FAILED,
+      message: "Unable to connect the music provider.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.MUSIC_CONNECTED),
   },
 );
 
-events.push(APP_EVENTS.IS_MUSIC_CONNECTED, ({ musicService }, e) => {
-  let conn = false;
-  try {
-    conn = musicService.isActive();
-  } catch {
-    // Next
-  }
-  e.reply(APP_EVENTS_RESPONSE.MUSIC_CONNECTED, {
-    success: conn,
-  });
-});
+events.push(
+  APP_EVENTS.IS_MUSIC_CONNECTED,
+  ({ musicService }, e) => {
+    e.reply(APP_EVENTS_RESPONSE.MUSIC_CONNECTED, {
+      success: musicService.isActive(),
+    });
+  },
+  {
+    notify: false,
+    onError: replyFailure(APP_EVENTS_RESPONSE.MUSIC_CONNECTED),
+  },
+);
 
-events.push(APP_EVENTS.DISCONNECT_MUSIC, ({ musicService }, e) => {
-  try {
+events.push(
+  APP_EVENTS.DISCONNECT_MUSIC,
+  ({ musicService }, e) => {
     musicService.disconnect();
-  } catch {
-    // Next
-  }
-  e.reply(APP_EVENTS_RESPONSE.MUSIC_CONNECTED, {
-    success: false,
-  });
-});
+    e.reply(APP_EVENTS_RESPONSE.MUSIC_CONNECTED, {
+      success: false,
+    });
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.MUSIC_DISCONNECT_FAILED,
+      message: "Unable to disconnect the music provider.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.MUSIC_CONNECTED),
+  },
+);
 
 export default events;

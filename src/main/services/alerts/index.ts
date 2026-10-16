@@ -200,6 +200,8 @@ export class AlertsService extends Service {
     payload: TokioEventMap[K],
     settings: Profile["alerts"],
     send: (audio: AlertAudio) => void,
+    // Called for an alert whose sound can't be read
+    onError?: (alert: Alert, error?: string) => void,
   ) {
     const channel = settings.simultaneous ? `alerts:${type}` : "alerts";
 
@@ -207,7 +209,10 @@ export class AlertsService extends Service {
       if (!this._matches(alert, type, payload) || !alert.sound) continue;
 
       const res = await this.readSound(alert.sound.file);
-      if (!res.success || !res.data) continue;
+      if (!res.success || !res.data) {
+        onError?.(alert, res.error);
+        continue;
+      }
 
       send({
         data: res.data,

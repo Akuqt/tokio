@@ -1,59 +1,75 @@
-import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
-import { createStack } from "@/helper/events";
+import {
+  APP_EVENTS,
+  APP_EVENTS_RESPONSE,
+  FEEDBACK_CODES,
+} from "@/common/types";
+import { createStack, replyFailure } from "@/helper/events";
 
-const events = createStack();
+const events = createStack("tts");
 
-events.push(APP_EVENTS.GET_VOICES, async ({ ttsService }, e) => {
-  try {
+events.push(
+  APP_EVENTS.GET_VOICES,
+  async ({ ttsService }, e) => {
     const voices = await ttsService.getVoices();
     e.reply(APP_EVENTS_RESPONSE.GET_VOICES, {
       voices,
       success: true,
     });
-  } catch {
-    e.reply(APP_EVENTS_RESPONSE.GET_VOICES, { success: false });
-  }
-});
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.TTS_VOICES_FAILED,
+      message: "Unable to load the voices.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.GET_VOICES),
+  },
+);
 
 events.push(
   APP_EVENTS.UPDATE_TTS_SETTINGS,
-  async ({ storeManagerService }, e, { settings }) => {
-    try {
-      const res = await storeManagerService.updateProfileData({
-        tts: settings,
-      });
-      e.reply(APP_EVENTS_RESPONSE.UPDATE_TTS_SETTINGS, {
-        success: res,
-      });
-    } catch {
-      e.reply(APP_EVENTS_RESPONSE.UPDATE_TTS_SETTINGS, {
-        success: false,
-      });
-    }
+  async ({ storeManagerService, notifier }, e, { settings }) => {
+    const res = await storeManagerService.updateProfileData({
+      tts: settings,
+    });
+    if (!res) throw new Error("The TTS settings were not saved.");
+    e.reply(APP_EVENTS_RESPONSE.UPDATE_TTS_SETTINGS, {
+      success: true,
+    });
+    notifier.success(
+      "system",
+      FEEDBACK_CODES.PROFILE_SAVED,
+      "TTS settings saved.",
+    );
+  },
+  {
+    source: "system",
+    failure: {
+      code: FEEDBACK_CODES.PROFILE_SAVE_FAILED,
+      message: "Unable to save the TTS settings.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.UPDATE_TTS_SETTINGS),
   },
 );
 
 events.push(
   APP_EVENTS.GET_TTS_TEST,
   async ({ ttsService }, e, { text, voice }) => {
-    try {
-      const res = await ttsService.generateBuffer(text, voice.lang, voice.name);
-      if (!res.success || !res.buffer) {
-        e.reply(APP_EVENTS_RESPONSE.GET_TTS_TEST, {
-          success: false,
-        });
-        return;
-      }
-      const audio = new Uint8Array(res.buffer);
-      e.reply(APP_EVENTS_RESPONSE.GET_TTS_TEST, {
-        data: audio,
-        success: true,
-      });
-    } catch {
-      e.reply(APP_EVENTS_RESPONSE.GET_TTS_TEST, {
-        success: false,
-      });
+    const res = await ttsService.generateBuffer(text, voice.lang, voice.name);
+    if (!res.success || !res.buffer) {
+      throw res.error ?? new Error("The provider returned no audio.");
     }
+    e.reply(APP_EVENTS_RESPONSE.GET_TTS_TEST, {
+      data: new Uint8Array(res.buffer),
+      success: true,
+    });
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.TTS_GENERATION_FAILED,
+      message:
+        "Unable to generate the test audio. Check the TTS provider in Settings.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.GET_TTS_TEST),
   },
 );
 

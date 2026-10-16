@@ -1,99 +1,144 @@
 import {
   APP_EVENTS,
   APP_EVENTS_RESPONSE,
+  FEEDBACK_CODES,
   TOKIO_EVENTS,
   TokioEventMap,
 } from "@/common/types";
 import { createStack } from "@/helper/events";
+import { AppFailure } from "@/helper/feedback";
 
-const events = createStack();
+const events = createStack("connector");
+
+const EMPTY_STATS = {
+  likes: 0,
+  viewers: 0,
+  views: 0,
+};
 
 events.push(
   APP_EVENTS.CONNECT,
-  async ({ storeManagerService, connectorService }, e, { username }) => {
-    try {
-      await storeManagerService.updateProfileData({
-        connector: {
-          username,
-        },
-      });
-      const stats = storeManagerService.getSettings().liveStats;
-      // Answers this connect only, so connects don't pile up listeners.
-      const onConnected = (d: TokioEventMap[TOKIO_EVENTS.CONNECTED]) => {
-        connectorService.off(TOKIO_EVENTS.CONNECTED, onConnected);
-        e.reply(APP_EVENTS_RESPONSE.CONNECTED, {
-          success: d.success,
-          stats,
-        });
-      };
-      connectorService.on(TOKIO_EVENTS.CONNECTED, onConnected);
-      await connectorService.connect(username);
-    } catch {
+  async (
+    { storeManagerService, connectorService, notifier },
+    e,
+    { username },
+  ) => {
+    const handle = `@${username.replace("@", "")}`;
+    await storeManagerService.updateProfileData({
+      connector: {
+        username,
+      },
+    });
+    const stats = storeManagerService.getSettings().liveStats;
+
+    // The connected event comes before connect() resolves, answer on the first.
+    let answered = false;
+    const answer = () => {
+      if (answered) return;
+      answered = true;
       e.reply(APP_EVENTS_RESPONSE.CONNECTED, {
-        stats: {
-          likes: 0,
-          viewers: 0,
-          views: 0,
-        },
-        success: false,
+        success: true,
+        stats,
       });
+      notifier.success(
+        "connector",
+        FEEDBACK_CODES.CONNECTED,
+        `Connected to ${handle}.`,
+      );
+    };
+    // Answers this connect only, so connects don't pile up listeners.
+    const onConnected = (d: TokioEventMap[TOKIO_EVENTS.CONNECTED]) => {
+      if (d.success) answer();
+    };
+    connectorService.on(TOKIO_EVENTS.CONNECTED, onConnected);
+
+    try {
+      const res = await connectorService.connect(username);
+      if (!res.success) {
+        throw new AppFailure(
+          FEEDBACK_CODES.CONNECT_FAILED,
+          `Unable to connect to ${handle}. Check the username and that they are LIVE.`,
+          { logged: true },
+        );
+      }
+      answer();
+    } finally {
+      connectorService.off(TOKIO_EVENTS.CONNECTED, onConnected);
     }
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.CONNECT_FAILED,
+      message: "Unable to connect to the LIVE.",
+    },
+    onError: (e, error) =>
+      e.reply(APP_EVENTS_RESPONSE.CONNECTED, {
+        success: false,
+        stats: EMPTY_STATS,
+        error,
+      }),
   },
 );
 
-events.push(APP_EVENTS.DISCONNECT, async ({ connectorService }, e) => {
-  try {
+events.push(
+  APP_EVENTS.DISCONNECT,
+  async ({ connectorService }, e) => {
     await connectorService.disconnect();
-  } catch {
-    // NEXT
-  }
-  e.reply(APP_EVENTS_RESPONSE.CONNECTED, {
-    success: false,
-    stats: {
-      likes: 0,
-      viewers: 0,
-      views: 0,
+    e.reply(APP_EVENTS_RESPONSE.CONNECTED, {
+      success: false,
+      stats: EMPTY_STATS,
+    });
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.DISCONNECT_FAILED,
+      message: "Unable to disconnect from the LIVE.",
     },
-  });
-});
+    onError: (e, error) =>
+      e.reply(APP_EVENTS_RESPONSE.CONNECTED, {
+        success: false,
+        stats: EMPTY_STATS,
+        error,
+      }),
+  },
+);
 
 events.push(
   APP_EVENTS.IS_CONNECTED,
   async ({ connectorService, storeManagerService }, e) => {
-    try {
-      const res = connectorService.isConnected();
-      const stats = storeManagerService.getSettings().liveStats;
-
-      e.reply(APP_EVENTS_RESPONSE.CONNECTED, {
-        stats,
-        success: res,
-      });
-    } catch {
+    e.reply(APP_EVENTS_RESPONSE.CONNECTED, {
+      stats: storeManagerService.getSettings().liveStats,
+      success: connectorService.isConnected(),
+    });
+  },
+  {
+    notify: false,
+    onError: (e, error) =>
       e.reply(APP_EVENTS_RESPONSE.CONNECTED, {
         success: false,
-        stats: {
-          likes: 0,
-          viewers: 0,
-          views: 0,
-        },
-      });
-    }
+        stats: EMPTY_STATS,
+        error,
+      }),
   },
 );
 
 events.push(
   APP_EVENTS.ACTIVE_FEATURES,
+  // No notice on success, the switches already show the new state.
   async ({ storeManagerService, win }, _, data) => {
-    try {
-      storeManagerService.updateActiveFeatures({
-        ...data,
-      });
-      if (data.alerts === false) {
-        win.webContents.send(APP_EVENTS_RESPONSE.ALERT_CLEAR, undefined);
-      }
-    } catch {
-      // Next
+    storeManagerService.updateActiveFeatures({
+      ...data,
+    });
+    if (data.alerts === false) {
+      win.webContents.send(APP_EVENTS_RESPONSE.ALERT_CLEAR, undefined);
     }
+  },
+  {
+    source: "system",
+    failure: {
+      code: FEEDBACK_CODES.FEATURES_UPDATE_FAILED,
+      message: "Unable to change the active features.",
+    },
   },
 );
 

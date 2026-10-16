@@ -1,27 +1,29 @@
 import { ALERT_TRIGGERS } from "@/common/schemas";
 import {
+  ALERT_TRIGGER_LABELS,
   APP_EVENTS,
   APP_EVENTS_RESPONSE,
   AppEvents,
+  ChatEvent,
   CustomGift,
+  FEEDBACK_CODES,
   TOKIO_EVENTS,
   TokioEventMap,
 } from "@/common/types";
-import { formatError } from "@/common/util";
+import { SERVER_PORT } from "@/common/util";
 import config from "@/config";
-import { createStack } from "@/helper/events";
-import Logger from "@/logger";
-import { AlertsService } from "@/services/alerts";
+import { createStack, replyFailure } from "@/helper/events";
+import { AppFailure } from "@/helper/feedback";
 import { TikTokConnectorService } from "@/services/connector";
-import { MusicService } from "@/services/music";
-import { StoreManagerService } from "@/services/store";
-import { TTSService } from "@/services/tts";
-import { CustomBrowserWindow } from "@/types";
+import { AppHandlerVariables } from "@/types";
 import { throttle } from "es-toolkit";
 
 const STATS_THROTTLE_MS = 250;
 
-const events = createStack();
+// Failures that repeat on every chat or event are sent at most this often.
+const REPEAT_NOTICE_MS = 30_000;
+
+const events = createStack("system");
 
 // Gifts in the shape overlays use, none when TikTok can't be reached.
 const fetchOverlayGifts = async (
@@ -37,14 +39,17 @@ const fetchOverlayGifts = async (
   }));
 };
 
-const registerConnectorEvents = (
-  conn: TikTokConnectorService,
-  win: CustomBrowserWindow,
-  store: StoreManagerService,
-  tts: TTSService,
-  music: MusicService,
-  alerts: AlertsService,
-) => {
+// Live events reach TTS, music, alerts and the UI from here. No request waits
+// for them, so their failures are reported to the user directly.
+const registerConnectorEvents = ({
+  connectorService: conn,
+  win,
+  storeManagerService: store,
+  ttsService: tts,
+  musicService: music,
+  alertsService: alerts,
+  notifier,
+}: AppHandlerVariables) => {
   const dispatchAlert = async <K extends AppEvents>(
     type: K,
     payload: TokioEventMap[K],
@@ -52,14 +57,37 @@ const registerConnectorEvents = (
     if (!store.getActiveFeatures().alerts) return;
     const profile = await store.getProfileData();
     if (!profile) return;
-    await alerts.handle(type, payload, profile.alerts, (audio) => {
-      win.webContents.send(APP_EVENTS_RESPONSE.ALERT_AUDIO, audio);
-    });
+    await alerts.handle(
+      type,
+      payload,
+      profile.alerts,
+      (audio) => {
+        win.webContents.send(APP_EVENTS_RESPONSE.ALERT_AUDIO, audio);
+      },
+      (alert) => {
+        notifier.warn(
+          "alerts",
+          FEEDBACK_CODES.ALERT_SOUND_MISSING,
+          `The sound of the ${ALERT_TRIGGER_LABELS[alert.trigger.type]} alert is missing. Pick it again in Alerts.`,
+          { key: `alert:${alert.id}`, windowMs: REPEAT_NOTICE_MS },
+        );
+      },
+    );
   };
 
   for (const trigger of ALERT_TRIGGERS) {
     const listener = (d: TokioEventMap[typeof trigger]) => {
-      void dispatchAlert(trigger, d);
+      dispatchAlert(trigger, d).catch((error) => {
+        notifier.report({
+          source: "alerts",
+          error,
+          fallback: {
+            code: FEEDBACK_CODES.ALERT_FAILED,
+            message: `Unable to play the ${ALERT_TRIGGER_LABELS[trigger]} alert.`,
+          },
+          context: trigger,
+        });
+      });
     };
     // MUSIC_CHANGE comes from the music service, the rest from the connector.
     if (trigger === TOKIO_EVENTS.MUSIC_CHANGE) {
@@ -87,7 +115,20 @@ const registerConnectorEvents = (
     store.updateLiveStats({ likes: d.totalLikes });
     sendLikes(d.totalLikes);
   });
-  conn.on(TOKIO_EVENTS.DISCONNECTED, () => {
+  conn.on(TOKIO_EVENTS.DISCONNECTED, (d) => {
+    if (d?.reason === "ended") {
+      notifier.info(
+        "connector",
+        FEEDBACK_CODES.LIVE_ENDED,
+        "The LIVE has ended.",
+      );
+    } else {
+      notifier.info(
+        "connector",
+        FEEDBACK_CODES.DISCONNECTED,
+        "Disconnected from the LIVE.",
+      );
+    }
     // A late stats update would overwrite the reset below.
     sendViews.cancel();
     sendLikes.cancel();
@@ -103,18 +144,30 @@ const registerConnectorEvents = (
       },
     });
   });
-  conn.on(TOKIO_EVENTS.CHAT, async (d) => {
+  const handleChat = async (d: ChatEvent) => {
     const features = store.getActiveFeatures();
     const profile = await store.getProfileData();
     if (features.tts) {
       if (!profile) return;
-      tts.talk(d, profile.tts, (res) => {
-        win.webContents.send(APP_EVENTS_RESPONSE.TTS_AUDIO, {
-          data: res.data!,
-          filters: res.filters,
-          queueOptions: res.queueOptions,
-        });
-      });
+      tts.talk(
+        d,
+        profile.tts,
+        (res) => {
+          win.webContents.send(APP_EVENTS_RESPONSE.TTS_AUDIO, {
+            data: res.data!,
+            filters: res.filters,
+            queueOptions: res.queueOptions,
+          });
+        },
+        () => {
+          notifier.error(
+            "tts",
+            FEEDBACK_CODES.TTS_GENERATION_FAILED,
+            "Unable to generate TTS audio. Check the TTS provider in Settings.",
+            { windowMs: REPEAT_NOTICE_MS },
+          );
+        },
+      );
     } else {
       tts.clearTalk();
     }
@@ -124,37 +177,49 @@ const registerConnectorEvents = (
     } else {
       music.clearHandler();
     }
+  };
+  conn.on(TOKIO_EVENTS.CHAT, (d) => {
+    handleChat(d).catch((error) => {
+      notifier.report({ source: "system", error, context: TOKIO_EVENTS.CHAT });
+    });
+  });
+
+  music.onPlaybackError(() => {
+    notifier.warn(
+      "music",
+      FEEDBACK_CODES.MUSIC_PLAYBACK_FAILED,
+      "A song request couldn't be played and was skipped.",
+    );
   });
 };
 
 events.push(
   APP_EVENTS.GET_PROFILE,
-  async ({ storeManagerService, pathManagerService }, e) => {
-    try {
-      const profile = await storeManagerService.getProfileData();
-      const profiles = storeManagerService.getProfiles();
-      if (!profile || !profiles) throw new Error("Unable to load profile");
+  async ({ storeManagerService }, e) => {
+    const profile = await storeManagerService.getProfileData();
+    const profiles = storeManagerService.getProfiles();
+    if (!profile || !profiles)
+      throw new Error("The active profile is missing.");
 
-      e.reply(APP_EVENTS_RESPONSE.GET_PROFILE, {
-        success: true,
-        profile,
-        profiles,
-      });
-    } catch (error) {
-      Logger.error(
-        `<System> Unable to get the profile -- ${formatError(error)}`,
-        pathManagerService.files?.logs.system,
-        error,
-      );
-      e.reply(APP_EVENTS_RESPONSE.GET_PROFILE, { success: false });
-    }
+    e.reply(APP_EVENTS_RESPONSE.GET_PROFILE, {
+      success: true,
+      profile,
+      profiles,
+    });
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.PROFILE_LOAD_FAILED,
+      message: "Unable to load the profile.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.GET_PROFILE),
   },
 );
 
 events.push(
   APP_EVENTS.LOAD_APP,
-  async (
-    {
+  async (handler, e) => {
+    const {
       app,
       storeManagerService,
       pathManagerService,
@@ -167,110 +232,118 @@ events.push(
       jsonManagerService,
       yamlManagerService,
       alertsService,
+      notifier,
       win,
-    },
-    e,
-  ) => {
-    try {
-      await pathManagerService.initialize(
-        app.getPath("home"),
-        config.APP.folderName,
-        ({ files, folders }) => {
-          connectorService.setLogFile(files.logs.connector);
-          ttsService.setLogFile(files.logs.tts);
-          serverService.setLogFile(files.logs.server);
-          overlayService.setLogFile(files.logs.overlays);
-          urlManagerService.setLogFile(files.logs.system);
-          storeManagerService.setLogFile(files.logs.system);
-          jsonManagerService.setLogFile(files.logs.system);
-          alertsService.setLogFile(files.logs.alerts);
-          musicService.setLogFile(files.logs.music);
-          alertsService.setSoundsFolder(folders.soundsFolder);
-        },
-      );
-      await storeManagerService.initialize(
-        config.DB.name,
-        {
-          connector: connectorService,
-          tts: ttsService,
-        },
-        jsonManagerService,
-        pathManagerService,
-      );
-      overlayService.initialize(
-        {
-          folder: pathManagerService.folders.overlaysFolder,
-          giftsFile: pathManagerService.files.gifts,
-        },
-        {
-          yaml: yamlManagerService,
-          json: jsonManagerService,
-          server: serverService,
-          store: storeManagerService,
-        },
-      );
-      serverService.initEvents(connectorService, musicService);
-      storeManagerService.updateLiveStats({
-        likes: 0,
-        viewers: 0,
-        views: 0,
-      });
-      registerConnectorEvents(
-        connectorService,
-        win,
-        storeManagerService,
-        ttsService,
-        musicService,
-        alertsService,
-      );
+    } = handler;
 
-      const settings = storeManagerService.getSettings();
+    await pathManagerService.initialize(
+      app.getPath("home"),
+      config.APP.folderName,
+      ({ files, folders }) => {
+        connectorService.setLogFile(files.logs.connector);
+        ttsService.setLogFile(files.logs.tts);
+        serverService.setLogFile(files.logs.server);
+        overlayService.setLogFile(files.logs.overlays);
+        urlManagerService.setLogFile(files.logs.system);
+        storeManagerService.setLogFile(files.logs.system);
+        jsonManagerService.setLogFile(files.logs.system);
+        alertsService.setLogFile(files.logs.alerts);
+        musicService.setLogFile(files.logs.music);
+        notifier.setLogFiles(files.logs);
+        alertsService.setSoundsFolder(folders.soundsFolder);
+      },
+    );
+    await storeManagerService.initialize(
+      config.DB.name,
+      {
+        connector: connectorService,
+        tts: ttsService,
+      },
+      jsonManagerService,
+      pathManagerService,
+    );
+    overlayService.initialize(
+      {
+        folder: pathManagerService.folders.overlaysFolder,
+        giftsFile: pathManagerService.files.gifts,
+      },
+      {
+        yaml: yamlManagerService,
+        json: jsonManagerService,
+        server: serverService,
+        store: storeManagerService,
+      },
+    );
+    serverService.initEvents(connectorService, musicService);
+    storeManagerService.updateLiveStats({
+      likes: 0,
+      viewers: 0,
+      views: 0,
+    });
+    registerConnectorEvents(handler);
 
-      // Before the server starts, so it serves the overlays right away. The
-      // gifts saved last time are used when there are any, so startup doesn't
-      // wait for TikTok, and fresh ones replace them once they arrive.
-      const cachedGifts = await overlayService.getGifts();
-      if (cachedGifts.length > 0) {
-        await overlayService.load(cachedGifts);
-        void fetchOverlayGifts(connectorService)
-          .then(async (gifts) => {
-            if (gifts.length > 0) await overlayService.refreshGifts(gifts);
-          })
-          .catch((error) => {
-            Logger.error(
-              `<System> Unable to refresh the gifts -- ${formatError(error)}`,
-              pathManagerService.files.logs.system,
-              error,
-            );
+    const settings = storeManagerService.getSettings();
+
+    // Before the server starts, so it serves the overlays right away. The
+    // gifts saved last time are used when there are any, so startup doesn't
+    // wait for TikTok, and fresh ones replace them once they arrive.
+    const cachedGifts = await overlayService.getGifts();
+    if (cachedGifts.length > 0) {
+      await overlayService.load(cachedGifts);
+      void fetchOverlayGifts(connectorService)
+        .then(async (gifts) => {
+          if (gifts.length > 0) await overlayService.refreshGifts(gifts);
+        })
+        .catch((error) => {
+          notifier.report({
+            source: "overlays",
+            error: new AppFailure(
+              FEEDBACK_CODES.GIFTS_FETCH_FAILED,
+              "Unable to update the gifts from TikTok. Overlays use the ones saved last time.",
+              { level: "warning", cause: error },
+            ),
           });
-      } else {
-        await overlayService.load(await fetchOverlayGifts(connectorService));
-      }
-
-      // A taken port shouldn't stop the app, the server is turned off instead.
-      if (!(await serverService.toggleServer(settings.server.enabled))) {
-        Logger.warn(
-          "<System> Unable to start the overlay server, it has been disabled.",
-          pathManagerService.files.logs.system,
+        });
+    } else {
+      const gifts = await fetchOverlayGifts(connectorService);
+      if (gifts.length === 0) {
+        notifier.warn(
+          "overlays",
+          FEEDBACK_CODES.GIFTS_FETCH_FAILED,
+          "Unable to get the gifts from TikTok. Overlay gift options stay empty until the next start.",
         );
-        await storeManagerService.updateServerSettings(false);
       }
-
-      win.setResizable(true);
-      win.setSize(1200, 800);
-      win.setMinimumSize(1200, 800);
-      win.center();
-      e.reply(APP_EVENTS_RESPONSE.LOAD_APP, {
-        success: true,
-      });
-    } catch (error) {
-      Logger.error(
-        `<System> Unable to load the app -- ${formatError(error)}`,
-        pathManagerService.files?.logs.system,
-        error,
-      );
-      e.reply(APP_EVENTS_RESPONSE.LOAD_APP, { success: false });
+      await overlayService.load(gifts);
     }
+
+    // A taken port shouldn't stop the app, the server is turned off instead.
+    if (!(await serverService.toggleServer(settings.server.enabled))) {
+      notifier.report({
+        source: "server",
+        error: new AppFailure(
+          FEEDBACK_CODES.SERVER_START_FAILED,
+          `The overlay server couldn't start, port ${SERVER_PORT} may be in use. It has been turned off.`,
+          { level: "warning" },
+        ),
+      });
+      await storeManagerService.updateServerSettings(false);
+    }
+
+    win.setResizable(true);
+    win.setSize(1200, 800);
+    win.setMinimumSize(1200, 800);
+    win.center();
+    e.reply(APP_EVENTS_RESPONSE.LOAD_APP, {
+      success: true,
+    });
+    notifier.info("system", FEEDBACK_CODES.APP_LOADED, "Tokio is ready.");
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.APP_LOAD_FAILED,
+      message: "Tokio couldn't start. Check the logs folder for details.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.LOAD_APP),
   },
 );
 

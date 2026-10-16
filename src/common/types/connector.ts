@@ -106,7 +106,8 @@ export type MusicInfo = {
 export interface TokioEventMap {
   // INTERNAL
   [TOKIO_EVENTS.CONNECTED]: { success: boolean; error?: Error };
-  [TOKIO_EVENTS.DISCONNECTED]: void;
+  // reason is "ended" when the LIVE ended, not set when the user disconnected
+  [TOKIO_EVENTS.DISCONNECTED]: { reason?: "ended" } | undefined;
   [TOKIO_EVENTS.MUSIC_PROCCESS_ENDED]: void;
 
   // EXTERNAL - TIKTOK

@@ -10,6 +10,7 @@ import { Spotify, YouTubeMusic } from "./providers";
 export class MusicService extends ProviderService<MusicProvider> {
   private _queue: TaskQueue;
   private _music_queue: MusicQueue;
+  private _onPlaybackError?: (id: string, error: unknown) => void;
   constructor() {
     super();
     this._queue = new TaskQueue();
@@ -19,6 +20,7 @@ export class MusicService extends ProviderService<MusicProvider> {
         this._logFile,
         error,
       );
+      this._onPlaybackError?.(id, error);
     });
     this.addProvider("YouTube", new YouTubeMusic(), true);
     this.addProvider("Spotify", new Spotify());
@@ -65,6 +67,11 @@ export class MusicService extends ProviderService<MusicProvider> {
   ): void {
     this._current?.provider?.off(event, listener);
     this._music_queue.off(event, listener);
+  }
+
+  // Called when a requested track can't be played and is skipped.
+  public onPlaybackError(listener: (id: string, error: unknown) => void) {
+    this._onPlaybackError = listener;
   }
 
   public clearHandler() {

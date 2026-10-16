@@ -1,60 +1,115 @@
-import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
-import { createStack } from "@/helper/events";
+import {
+  APP_EVENTS,
+  APP_EVENTS_RESPONSE,
+  FEEDBACK_CODES,
+} from "@/common/types";
+import { createStack, replyFailure } from "@/helper/events";
 import { dialog } from "electron";
 
-const events = createStack();
+const events = createStack("overlays");
 
 events.push(
   APP_EVENTS.IMPORT_OVERLAY,
-  async ({ win, overlayService }, e, { gifts }) => {
-    try {
-      const diagRes = await dialog.showOpenDialog(win, {
-        title: `Import Overlay`,
-        properties: ["openDirectory"],
-      });
-      if (diagRes.canceled) return;
+  async ({ win, overlayService, notifier }, e, { gifts }) => {
+    const diagRes = await dialog.showOpenDialog(win, {
+      title: `Import Overlay`,
+      properties: ["openDirectory"],
+    });
+    if (diagRes.canceled) return;
 
-      const res = await overlayService.import(diagRes.filePaths[0], gifts);
-
-      e.reply(APP_EVENTS_RESPONSE.IMPORT_OVERLAY, { success: res.success });
-    } catch {
-      e.reply(APP_EVENTS_RESPONSE.IMPORT_OVERLAY, { success: false });
+    const res = await overlayService.import(diagRes.filePaths[0], gifts);
+    if (!res.success) {
+      throw new Error(`${diagRes.filePaths[0]} is not a valid overlay.`);
     }
+
+    e.reply(APP_EVENTS_RESPONSE.IMPORT_OVERLAY, { success: true });
+    notifier.success(
+      "overlays",
+      FEEDBACK_CODES.OVERLAY_IMPORTED,
+      "Overlay imported.",
+    );
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.OVERLAY_IMPORT_FAILED,
+      message:
+        "Unable to import the overlay. Check that the folder has an index.html and an info.yaml.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.IMPORT_OVERLAY),
   },
 );
 
-events.push(APP_EVENTS.GET_OVERLAYS, async ({ overlayService }, e) => {
-  e.reply(APP_EVENTS_RESPONSE.GET_OVERLAYS, {
-    success: true,
-    data: overlayService.getOverlays(),
-  });
-});
+events.push(
+  APP_EVENTS.GET_OVERLAYS,
+  async ({ overlayService }, e) => {
+    e.reply(APP_EVENTS_RESPONSE.GET_OVERLAYS, {
+      success: true,
+      data: overlayService.getOverlays(),
+    });
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.OVERLAYS_LOAD_FAILED,
+      message: "Unable to load the overlays.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.GET_OVERLAYS),
+  },
+);
 
 events.push(
   APP_EVENTS.GET_OVERLAY_CONFIG,
   async ({ overlayService }, e, { id }) => {
-    e.reply(
-      APP_EVENTS_RESPONSE.GET_OVERLAY_CONFIG,
-      await overlayService.getConfig(id),
-    );
+    const res = await overlayService.getConfig(id);
+    if (!res.success) throw new Error(`Unable to read overlay ${id}.`);
+    e.reply(APP_EVENTS_RESPONSE.GET_OVERLAY_CONFIG, res);
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.OVERLAY_CONFIG_FAILED,
+      message: "Unable to load the overlay's settings.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.GET_OVERLAY_CONFIG),
   },
 );
 
-events.push(APP_EVENTS.GET_GIFTS, async ({ overlayService }, e) => {
-  e.reply(APP_EVENTS_RESPONSE.GET_GIFTS, {
-    data: await overlayService.getGifts(),
-  });
-});
+events.push(
+  APP_EVENTS.GET_GIFTS,
+  async ({ overlayService }, e) => {
+    e.reply(APP_EVENTS_RESPONSE.GET_GIFTS, {
+      data: await overlayService.getGifts(),
+    });
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.GIFTS_FETCH_FAILED,
+      message: "Unable to load the gifts.",
+    },
+    onError: (e) => e.reply(APP_EVENTS_RESPONSE.GET_GIFTS, { data: [] }),
+  },
+);
 
 events.push(
   APP_EVENTS.SAVE_OVERLAY_CONFIG,
-  async ({ overlayService }, e, { config, gifts, id }) => {
+  async ({ overlayService, notifier }, e, { config, gifts, id }) => {
     const res = await overlayService.saveConfig(id, config, gifts);
+    if (!res.success) throw new Error(`Unable to save overlay ${id}.`);
     e.reply(APP_EVENTS_RESPONSE.SAVE_OVERLAY_CONFIG, {
-      success: res.success,
+      success: true,
       data: res.data,
-      id: res.success ? id : undefined,
+      id,
     });
+    notifier.success(
+      "overlays",
+      FEEDBACK_CODES.OVERLAY_SAVED,
+      "Overlay settings saved.",
+    );
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.OVERLAY_SAVE_FAILED,
+      message: "Unable to save the overlay's settings.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.SAVE_OVERLAY_CONFIG),
   },
 );
 
@@ -63,13 +118,30 @@ events.push(
   async ({ overlayService }, _, { id, payload }) => {
     overlayService.send(id, payload);
   },
+  {
+    failure: {
+      code: FEEDBACK_CODES.OVERLAY_SEND_FAILED,
+      message: "Unable to send the data to the overlay.",
+    },
+  },
 );
 
-events.push(APP_EVENTS.TEST_OVERLAY, async ({ overlayService }, e, { id }) => {
-  e.reply(APP_EVENTS_RESPONSE.TEST_OVERLAY, {
-    payloads: overlayService.getTestPayloads(),
-    id,
-  });
-});
+events.push(
+  APP_EVENTS.TEST_OVERLAY,
+  async ({ overlayService }, e, { id }) => {
+    e.reply(APP_EVENTS_RESPONSE.TEST_OVERLAY, {
+      payloads: overlayService.getTestPayloads(),
+      id,
+    });
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.TEST_OVERLAY_FAILED,
+      message: "Unable to test the overlay.",
+    },
+    onError: (e, _, { id }) =>
+      e.reply(APP_EVENTS_RESPONSE.TEST_OVERLAY, { payloads: [], id }),
+  },
+);
 
 export default events;

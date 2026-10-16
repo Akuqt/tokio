@@ -135,6 +135,26 @@ describe("AlertsService", () => {
       );
     });
 
+    it("reports the alerts whose sound is missing", async () => {
+      const gone = alert({
+        id: "gone",
+        sound: { name: "Gone", file: "gone.mp3" },
+      });
+      const sent: AlertAudio[] = [];
+      const onError = vi.fn();
+
+      await service.handle(
+        TOKIO_EVENTS.FOLLOW,
+        { user },
+        settings([gone, alert()]),
+        (audio) => sent.push(audio),
+        onError,
+      );
+
+      expect(onError).toHaveBeenCalledExactlyOnceWith(gone, expect.any(String));
+      expect(sent.map((a) => a.id)).toEqual(["alert-1"]);
+    });
+
     it("fires gift alerts once per combo, when it ends", async () => {
       const alerts = settings([
         alert({ trigger: { type: TOKIO_EVENTS.GIFT, gifts: [] } }),

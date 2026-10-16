@@ -219,6 +219,23 @@ describe("TTSService", () => {
     );
   });
 
+  it("calls onError when the generation fails", async () => {
+    vi.spyOn(Logger, "error");
+    const error = new Error("rate limited");
+    vi.spyOn(service, "generateBuffer").mockResolvedValue({
+      success: false,
+      error,
+    });
+    const onAudio = vi.fn();
+    const onError = vi.fn();
+
+    service.talk(chat("hi"), settings(), onAudio, onError);
+    await new Promise((r) => setTimeout(r));
+
+    expect(onAudio).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalledExactlyOnceWith(error);
+  });
+
   it("clearTalk drops the waiting messages", async () => {
     const s = settings((s) => {
       s.protection.cooldown = 1;

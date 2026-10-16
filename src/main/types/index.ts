@@ -1,9 +1,12 @@
 import {
   APP_EVENTS,
   APP_EVENTS_RESPONSE,
+  AppError,
   AppEventsMap,
   AppEventsResponseMap,
+  FeedbackSource,
 } from "@/common/types";
+import type { Notifier } from "@/helper/feedback";
 import { AlertsService } from "@/services/alerts";
 import { TikTokConnectorService } from "@/services/connector";
 import { JSONManagerService } from "@/services/json";
@@ -56,20 +59,40 @@ export interface AppHandlerVariables extends AppServices {
   readonly ipcMain: IpcMain;
   readonly shell: Shell;
   readonly session: typeof Session;
+  readonly notifier: Notifier;
 }
+
+export type ReplyEvent = Omit<IpcMainEvent, "reply"> & {
+  reply: <T extends APP_EVENTS_RESPONSE>(
+    event: T,
+    args: AppEventsResponseMap[T],
+  ) => void;
+};
 
 export type EventCallback<K extends APP_EVENTS> = (
   handler: AppHandlerVariables,
-  event: Omit<IpcMainEvent, "reply"> & {
-    reply: <T extends APP_EVENTS_RESPONSE>(
-      event: T,
-      args: AppEventsResponseMap[T],
-    ) => void;
-  },
+  event: ReplyEvent,
   data: AppEventsMap[K],
-) => void;
+) => void | Promise<void>;
+
+export interface EventOptions<K extends APP_EVENTS> {
+  // Where failures are logged and reported, the stack's source by default
+  source?: FeedbackSource;
+  // Reported when the handler throws something other than an AppFailure
+  failure?: AppError;
+  // Sends the page's failure reply
+  onError?: (
+    event: ReplyEvent,
+    error: AppError,
+    data: AppEventsMap[K],
+    handler: AppHandlerVariables,
+  ) => void;
+  // false when the page already shows the failure, true by default
+  notify?: boolean;
+}
 
 export interface EventItem<K extends APP_EVENTS> {
   event: K;
   callback: EventCallback<K>;
+  options: EventOptions<K>;
 }

@@ -148,7 +148,19 @@ describe("TikTokLiveConnector", () => {
       await vi.advanceTimersByTimeAsync(0);
 
       expect(connector.isConnected()).toBe(false);
-      expect(onDisconnected).toHaveBeenCalled();
+      expect(onDisconnected).toHaveBeenCalledExactlyOnceWith({
+        reason: "ended",
+      });
+    });
+
+    it("disconnects without a reason when asked to", async () => {
+      await connected();
+      const onDisconnected = capture(TOKIO_EVENTS.DISCONNECTED);
+
+      await connector.disconnect();
+      await connector.disconnect();
+
+      expect(onDisconnected).toHaveBeenCalledExactlyOnceWith(undefined);
     });
   });
 

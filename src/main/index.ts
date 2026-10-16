@@ -1,4 +1,6 @@
+import { APP_EVENTS_RESPONSE } from "@/common/types";
 import { formatError } from "@/common/util";
+import { Notifier } from "@/helper/feedback";
 import Logger from "@/logger";
 import { AlertsService } from "@/services/alerts";
 import { TikTokConnectorService } from "@/services/connector";
@@ -88,12 +90,20 @@ function createWindows(): void {
     },
   });
 
+  // Notices go to the main window only.
+  const notifier = new Notifier((notification) => {
+    if (win && !win.isDestroyed()) {
+      win.webContents.send(APP_EVENTS_RESPONSE.NOTIFY, notification);
+    }
+  });
+
   new Handler({
     app,
     win,
     shell,
     ipcMain,
     session,
+    notifier,
     ...services,
   }).init(events);
 

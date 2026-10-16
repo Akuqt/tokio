@@ -1,279 +1,333 @@
-import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
+import {
+  APP_EVENTS,
+  APP_EVENTS_RESPONSE,
+  FEEDBACK_CODES,
+} from "@/common/types";
+import { SERVER_PORT } from "@/common/util";
 import { cleanText } from "@/helper/chat";
-import { createStack } from "@/helper/events";
+import { createStack, replyFailure } from "@/helper/events";
+import { AppFailure } from "@/helper/feedback";
+import { StoreManagerService } from "@/services/store";
+import { ReplyEvent } from "@/types";
 import { dialog } from "electron";
 
-const events = createStack();
+const events = createStack("system");
 
-events.push(APP_EVENTS.GET_SETTINGS, ({ storeManagerService }, e) => {
-  try {
-    const settings = storeManagerService.getSettings();
-    const profiles = storeManagerService.getProfiles();
+// Changes to the settings also send the updated settings and profiles.
+const replySettings = (e: ReplyEvent, store: StoreManagerService) => {
+  e.reply(APP_EVENTS_RESPONSE.GET_SETTINGS, {
+    data: {
+      settings: store.getSettings(),
+      profiles: store.getProfiles(),
+    },
+    success: true,
+  });
+};
 
-    e.reply(APP_EVENTS_RESPONSE.GET_SETTINGS, {
-      data: {
-        settings,
-        profiles,
-      },
-      success: true,
-    });
-  } catch {
-    e.reply(APP_EVENTS_RESPONSE.GET_SETTINGS, {
-      success: false,
-    });
-  }
-});
+events.push(
+  APP_EVENTS.GET_SETTINGS,
+  ({ storeManagerService }, e) => {
+    replySettings(e, storeManagerService);
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.SETTINGS_LOAD_FAILED,
+      message: "Unable to load the settings.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.GET_SETTINGS),
+  },
+);
 
 events.push(
   APP_EVENTS.CREATE_PROFILE,
-  async ({ storeManagerService }, e, { name }) => {
-    try {
-      const fileName = cleanText(name).replace(/\s/, "_") + ".json";
-      const res = await storeManagerService.createNewProfile(fileName, name);
-      if (!res) throw new Error("Failed to create Profile.");
-      const settings = storeManagerService.getSettings();
-      const profiles = storeManagerService.getProfiles();
+  async ({ storeManagerService, notifier }, e, { name }) => {
+    const fileName = cleanText(name).replace(/\s/, "_") + ".json";
+    const res = await storeManagerService.createNewProfile(fileName, name);
+    if (!res) throw new Error(`The profile ${fileName} was not created.`);
 
-      e.reply(APP_EVENTS_RESPONSE.CREATE_PROFILE, {
-        success: true,
-      });
-      e.reply(APP_EVENTS_RESPONSE.GET_SETTINGS, {
-        data: {
-          settings,
-          profiles,
-        },
-        success: true,
-      });
-    } catch {
-      e.reply(APP_EVENTS_RESPONSE.CREATE_PROFILE, {
-        success: false,
-      });
-    }
+    e.reply(APP_EVENTS_RESPONSE.CREATE_PROFILE, {
+      success: true,
+    });
+    replySettings(e, storeManagerService);
+    notifier.success(
+      "system",
+      FEEDBACK_CODES.PROFILE_CREATED,
+      `Profile "${name}" created.`,
+    );
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.PROFILE_CREATE_FAILED,
+      message: "Unable to create the profile.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.CREATE_PROFILE),
   },
 );
 
 events.push(
   APP_EVENTS.CLONE_PROFILE,
-  async ({ storeManagerService }, e, { name, ref }) => {
-    try {
-      const fileName = cleanText(name).replace(/\s/, "_") + ".json";
-      const res = await storeManagerService.cloneProfile(ref, fileName, name);
-      if (!res) throw new Error("Failed to clone Profile.");
+  async ({ storeManagerService, notifier }, e, { name, ref }) => {
+    const fileName = cleanText(name).replace(/\s/, "_") + ".json";
+    const res = await storeManagerService.cloneProfile(ref, fileName, name);
+    if (!res) throw new Error(`The profile ${ref} was not cloned.`);
 
-      const settings = storeManagerService.getSettings();
-      const profiles = storeManagerService.getProfiles();
-
-      e.reply(APP_EVENTS_RESPONSE.CLONE_PROFILE, {
-        success: true,
-      });
-      e.reply(APP_EVENTS_RESPONSE.GET_SETTINGS, {
-        data: {
-          settings,
-          profiles,
-        },
-        success: true,
-      });
-    } catch {
-      e.reply(APP_EVENTS_RESPONSE.CLONE_PROFILE, {
-        success: false,
-      });
-    }
+    e.reply(APP_EVENTS_RESPONSE.CLONE_PROFILE, {
+      success: true,
+    });
+    replySettings(e, storeManagerService);
+    notifier.success(
+      "system",
+      FEEDBACK_CODES.PROFILE_CLONED,
+      `Profile "${name}" created as a copy.`,
+    );
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.PROFILE_CLONE_FAILED,
+      message: "Unable to clone the profile.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.CLONE_PROFILE),
   },
 );
 
 events.push(
   APP_EVENTS.SET_PROFILE,
-  async ({ storeManagerService, connectorService }, e, { file }) => {
-    try {
-      if (connectorService.isConnected()) return;
-      await storeManagerService.updateActiveProfile(file);
-      const profile = await storeManagerService.getProfileData();
-      const settings = storeManagerService.getSettings();
-      const profiles = storeManagerService.getProfiles();
-      if (!profile || !profiles) throw new Error("Unable to load profile");
-      e.reply(APP_EVENTS_RESPONSE.GET_PROFILE, {
-        success: true,
-        profile,
-        profiles,
-      });
-
-      e.reply(APP_EVENTS_RESPONSE.GET_SETTINGS, {
-        data: {
-          settings,
-          profiles,
-        },
-        success: true,
-      });
-    } catch {
-      // Next
+  async ({ storeManagerService, connectorService, notifier }, e, { file }) => {
+    if (connectorService.isConnected()) {
+      throw new AppFailure(
+        FEEDBACK_CODES.PROFILE_LOCKED,
+        "Disconnect from the LIVE before switching profiles.",
+        { level: "warning" },
+      );
     }
+    await storeManagerService.updateActiveProfile(file);
+    const profile = await storeManagerService.getProfileData();
+    const profiles = storeManagerService.getProfiles();
+    if (!profile || !profiles) throw new Error(`Unable to load ${file}.`);
+
+    e.reply(APP_EVENTS_RESPONSE.GET_PROFILE, {
+      success: true,
+      profile,
+      profiles,
+    });
+    replySettings(e, storeManagerService);
+    notifier.success(
+      "system",
+      FEEDBACK_CODES.PROFILE_SWITCHED,
+      `Switched to the profile "${storeManagerService.getSettings().activeProfile.name}".`,
+    );
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.PROFILE_LOAD_FAILED,
+      message: "Unable to switch the profile.",
+    },
   },
 );
 
 events.push(
   APP_EVENTS.EXPORT_ENTITY,
-  async ({ storeManagerService, win }, e, { type, file }) => {
-    try {
-      const diagRes = await dialog.showSaveDialog(win, {
-        title: `Export ${type}`,
-        defaultPath: file,
-        filters: [
-          {
-            extensions: ["json"],
-            name: type,
-          },
-        ],
-      });
-      if (diagRes.canceled) return;
-      let res = false;
-      if (type === "profile") {
-        res = await storeManagerService.exportProfile(file, diagRes.filePath);
-      } else {
-        res = false;
-      }
+  async ({ storeManagerService, win, notifier }, e, { type, file }) => {
+    const diagRes = await dialog.showSaveDialog(win, {
+      title: `Export ${type}`,
+      defaultPath: file,
+      filters: [
+        {
+          extensions: ["json"],
+          name: type,
+        },
+      ],
+    });
+    if (diagRes.canceled) return;
 
-      if (!res) throw new Error("Failed to export Entity.");
+    const res =
+      type === "profile" &&
+      (await storeManagerService.exportProfile(file, diagRes.filePath));
+    if (!res) throw new Error(`The ${type} ${file} was not exported.`);
 
-      e.reply(APP_EVENTS_RESPONSE.EXPORT_ENTITY, {
-        success: true,
-        type,
-      });
-    } catch {
+    e.reply(APP_EVENTS_RESPONSE.EXPORT_ENTITY, {
+      success: true,
+      type,
+    });
+    notifier.success(
+      "system",
+      FEEDBACK_CODES.PROFILE_EXPORTED,
+      "Profile exported.",
+    );
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.PROFILE_EXPORT_FAILED,
+      message: "Unable to export the profile.",
+    },
+    onError: (e, error, { type }) =>
       e.reply(APP_EVENTS_RESPONSE.EXPORT_ENTITY, {
         success: false,
         type,
-      });
-    }
+        error,
+      }),
   },
 );
 
 events.push(
   APP_EVENTS.IMPORT_ENTITY,
-  async ({ storeManagerService, win }, e, { type }) => {
-    try {
-      const diagRes = await dialog.showOpenDialog(win, {
-        title: `Import ${type}`,
-        properties: ["openFile"],
-        filters: [
-          {
-            extensions: ["json"],
-            name: type,
-          },
-        ],
-      });
-      if (diagRes.canceled) return;
-      let res = false;
-      if (type === "profile") {
-        res = await storeManagerService.importProfile(diagRes.filePaths[0]);
-      } else {
-        res = false;
-      }
-
-      if (!res) throw new Error("Failed to import Entity.");
-
-      const settings = storeManagerService.getSettings();
-      const profiles = storeManagerService.getProfiles();
-
-      e.reply(APP_EVENTS_RESPONSE.GET_SETTINGS, {
-        data: {
-          settings,
-          profiles,
+  async ({ storeManagerService, win, notifier }, e, { type }) => {
+    const diagRes = await dialog.showOpenDialog(win, {
+      title: `Import ${type}`,
+      properties: ["openFile"],
+      filters: [
+        {
+          extensions: ["json"],
+          name: type,
         },
-        success: true,
-      });
+      ],
+    });
+    if (diagRes.canceled) return;
 
-      e.reply(APP_EVENTS_RESPONSE.IMPORT_ENTITY, {
-        success: true,
-        type,
-      });
-    } catch {
+    const res =
+      type === "profile" &&
+      (await storeManagerService.importProfile(diagRes.filePaths[0]));
+    if (!res) {
+      throw new Error(`The ${type} ${diagRes.filePaths[0]} was not imported.`);
+    }
+
+    replySettings(e, storeManagerService);
+    e.reply(APP_EVENTS_RESPONSE.IMPORT_ENTITY, {
+      success: true,
+      type,
+    });
+    notifier.success(
+      "system",
+      FEEDBACK_CODES.PROFILE_IMPORTED,
+      "Profile imported.",
+    );
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.PROFILE_IMPORT_FAILED,
+      message: "Unable to import the profile. Check that it's a Tokio profile.",
+    },
+    onError: (e, error, { type }) =>
       e.reply(APP_EVENTS_RESPONSE.IMPORT_ENTITY, {
         success: false,
         type,
-      });
-    }
+        error,
+      }),
   },
 );
 
 events.push(
   APP_EVENTS.SET_PROVIDER,
-  async ({ storeManagerService, ttsService }, e, { name, key, type }) => {
-    try {
-      const switched =
-        type === "tts" && ttsService.getActiveProvider()?.name !== name;
-      await storeManagerService.updateProvider(type, name, key);
-      if (switched) {
-        // Voices are provider specific, reset the profile to the new provider's default.
-        const voice = await ttsService.getDefaultVoice();
-        const profile = await storeManagerService.getProfileData();
-        if (voice && profile) {
-          await storeManagerService.updateProfileData({
-            tts: { ...profile.tts, voice },
-          });
-        }
+  async (
+    { storeManagerService, ttsService, notifier },
+    e,
+    { name, key, type },
+  ) => {
+    const switched =
+      type === "tts" && ttsService.getActiveProvider()?.name !== name;
+    await storeManagerService.updateProvider(type, name, key);
+    if (switched) {
+      // Voices are provider specific, reset the profile to the new provider's default.
+      const voice = await ttsService.getDefaultVoice();
+      const profile = await storeManagerService.getProfileData();
+      if (voice && profile) {
+        await storeManagerService.updateProfileData({
+          tts: { ...profile.tts, voice },
+        });
       }
-      const settings = storeManagerService.getSettings();
-      const profiles = storeManagerService.getProfiles();
+    }
 
-      e.reply(APP_EVENTS_RESPONSE.GET_SETTINGS, {
-        data: {
-          settings,
-          profiles,
-        },
-        success: true,
-      });
-      e.reply(APP_EVENTS_RESPONSE.SET_PROVIDER, {
-        type,
-        success: true,
-      });
-    } catch {
+    replySettings(e, storeManagerService);
+    e.reply(APP_EVENTS_RESPONSE.SET_PROVIDER, {
+      type,
+      success: true,
+    });
+    notifier.success(
+      "system",
+      FEEDBACK_CODES.PROVIDER_UPDATED,
+      `${type === "tts" ? "TTS" : "Connector"} provider set to ${name}.`,
+    );
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.PROVIDER_UPDATE_FAILED,
+      message: "Unable to change the provider.",
+    },
+    onError: (e, error, { type }) =>
       e.reply(APP_EVENTS_RESPONSE.SET_PROVIDER, {
         type,
         success: false,
-      });
-    }
+        error,
+      }),
   },
 );
 
 events.push(
   APP_EVENTS.SET_SERVER,
-  async ({ storeManagerService, serverService }, e, { enabled }) => {
-    try {
-      // Save the state the server ended up in, so a taken port turns the toggle off.
-      const res = await serverService.toggleServer(enabled);
-      await storeManagerService.updateServerSettings(enabled && res);
-      const settings = storeManagerService.getSettings();
-      const profiles = storeManagerService.getProfiles();
+  async ({ storeManagerService, serverService, notifier }, e, { enabled }) => {
+    // Save the state the server ended up in, so a taken port turns the toggle off.
+    const res = await serverService.toggleServer(enabled);
+    await storeManagerService.updateServerSettings(enabled && res);
+    replySettings(e, storeManagerService);
 
-      e.reply(APP_EVENTS_RESPONSE.GET_SETTINGS, {
-        data: {
-          settings,
-          profiles,
-        },
-        success: true,
-      });
-      e.reply(APP_EVENTS_RESPONSE.SET_SERVER, {
-        success: res,
-      });
-    } catch {
-      e.reply(APP_EVENTS_RESPONSE.SET_SERVER, {
-        success: false,
-      });
+    if (!res) {
+      throw new AppFailure(
+        FEEDBACK_CODES.SERVER_START_FAILED,
+        enabled
+          ? `The overlay server couldn't start. Port ${SERVER_PORT} may be in use.`
+          : "Unable to stop the overlay server.",
+      );
     }
+    e.reply(APP_EVENTS_RESPONSE.SET_SERVER, {
+      success: true,
+    });
+    if (enabled) {
+      notifier.success(
+        "server",
+        FEEDBACK_CODES.SERVER_STARTED,
+        "The overlay server is on.",
+      );
+    } else {
+      notifier.info(
+        "server",
+        FEEDBACK_CODES.SERVER_STOPPED,
+        "The overlay server is off.",
+      );
+    }
+  },
+  {
+    source: "server",
+    failure: {
+      code: FEEDBACK_CODES.SERVER_START_FAILED,
+      message: "Unable to change the overlay server.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.SET_SERVER),
   },
 );
 
-events.push(APP_EVENTS.REQ_FQDN, async ({ urlManagerService }, e) => {
-  try {
+events.push(
+  APP_EVENTS.REQ_FQDN,
+  async ({ urlManagerService }, e) => {
     const res = await urlManagerService.installAppFQDN();
+    // Also false when the administrator prompt is declined.
+    if (!res) {
+      throw new AppFailure(
+        FEEDBACK_CODES.FQDN_INSTALL_FAILED,
+        "Unable to set up the overlay address. Accept the administrator prompt to add it.",
+        { level: "warning" },
+      );
+    }
     e.reply(APP_EVENTS_RESPONSE.REQ_FQDN, {
-      success: res,
+      success: true,
     });
-  } catch {
-    e.reply(APP_EVENTS_RESPONSE.REQ_FQDN, {
-      success: false,
-    });
-  }
-});
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.FQDN_INSTALL_FAILED,
+      message: "Unable to set up the overlay address.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.REQ_FQDN),
+  },
+);
 
 export default events;
