@@ -320,6 +320,11 @@
   overflow: hidden;
 }
 
+.select_display_disabled {
+  color: var(--font-secondary);
+  cursor: not-allowed;
+}
+
 .select_placeholder {
   color: var(--font-secondary);
 }

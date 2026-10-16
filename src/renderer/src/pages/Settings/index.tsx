@@ -14,6 +14,7 @@ type ModalType = "newProfile" | "cloneProfile" | "confirmServer";
 export function Settings() {
   const [store, updateStore, setStore] = useImmerState(defaultStoreData);
   const [modal, setModal] = useState<ModalType | null>(null);
+  const [connected, setConnected] = useState(false);
 
   const setServerEnabled = (enabled: boolean) =>
     updateStore((s) => {
@@ -21,6 +22,11 @@ export function Settings() {
     });
 
   useIpcRequest(APP_EVENTS.GET_SETTINGS);
+  useIpcRequest(APP_EVENTS.IS_CONNECTED);
+
+  useIpcListener(APP_EVENTS_RESPONSE.CONNECTED, (res) => {
+    if (res) setConnected(res.success);
+  });
 
   useIpcListener(APP_EVENTS_RESPONSE.GET_SETTINGS, (res) => {
     if (res?.success) setStore(res.data!);
@@ -77,6 +83,7 @@ export function Settings() {
         <ProfileSection
           profiles={store.profiles}
           active={store.settings.activeProfile}
+          locked={connected}
           onNew={() => setModal("newProfile")}
           onClone={() => setModal("cloneProfile")}
         />

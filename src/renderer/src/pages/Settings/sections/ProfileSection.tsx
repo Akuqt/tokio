@@ -8,11 +8,18 @@ import styles from "../settings.module.css";
 interface Props {
   profiles: EntityMetadata[];
   active: EntityMetadata;
+  locked: boolean;
   onNew: () => void;
   onClone: () => void;
 }
 
-export function ProfileSection({ profiles, active, onNew, onClone }: Props) {
+export function ProfileSection({
+  profiles,
+  active,
+  locked,
+  onNew,
+  onClone,
+}: Props) {
   const { confirmDiscard } = useUnsavedChanges();
 
   return (
@@ -22,8 +29,13 @@ export function ProfileSection({ profiles, active, onNew, onClone }: Props) {
       description="Manage settings for different lives."
     >
       <div className={styles.profiles}>
-        <Field label="Active Profile" className={styles.profile_select}>
+        <Field
+          label="Active Profile"
+          hint={locked ? "(disconnect to switch)" : undefined}
+          className={styles.profile_select}
+        >
           <Select
+            disabled={locked}
             options={profiles.map((p) => ({ label: p.name, value: p.file }))}
             value={active.file}
             onChange={async (file) => {

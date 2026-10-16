@@ -83,8 +83,9 @@ events.push(
 
 events.push(
   APP_EVENTS.SET_PROFILE,
-  async ({ storeManagerService }, e, { file }) => {
+  async ({ storeManagerService, connectorService }, e, { file }) => {
     try {
+      if (connectorService.isConnected()) return;
       await storeManagerService.updateActiveProfile(file);
       const profile = await storeManagerService.getProfileData();
       const settings = storeManagerService.getSettings();

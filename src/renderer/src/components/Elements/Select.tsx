@@ -22,6 +22,7 @@ type CommonProps<V extends Value> = {
   searchable?: boolean;
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
 };
 
 const OPTION_HEIGHT = 44;
@@ -89,16 +90,18 @@ export function MultiSelect<V extends Value>({
                   <img src={chip.img} className={styles.select_img} />
                 )}
                 {chip.label}
-                <button
-                  type="button"
-                  className={styles.select_chip_remove}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onChange(value.filter((item) => item !== chip.value));
-                  }}
-                >
-                  <VscClose size={18} />
-                </button>
+                {!common.disabled && (
+                  <button
+                    type="button"
+                    className={styles.select_chip_remove}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onChange(value.filter((item) => item !== chip.value));
+                    }}
+                  >
+                    <VscClose size={18} />
+                  </button>
+                )}
               </span>
             ))}
           </span>
@@ -121,6 +124,7 @@ function SelectBase<V extends Value>({
   searchable,
   placeholder = "Select an option...",
   className,
+  disabled,
   display,
   isSelected,
   onPick,
@@ -129,7 +133,13 @@ function SelectBase<V extends Value>({
 
   return (
     <div ref={anchorRef} className={className}>
-      <div className={styles.select_display} onClick={toggle}>
+      <div
+        className={cx(
+          styles.select_display,
+          disabled && styles.select_display_disabled,
+        )}
+        onClick={disabled ? undefined : toggle}
+      >
         {display ?? (
           <span className={styles.select_placeholder}>{placeholder}</span>
         )}
