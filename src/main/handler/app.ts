@@ -1,6 +1,7 @@
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
 import config from "@/config";
 import { Notifier } from "@/helper/feedback";
+import { isOverlayURL } from "@/helper/network";
 import { AlertsService } from "@/services/alerts";
 import { TikTokConnectorService } from "@/services/connector";
 import { JSONManagerService } from "@/services/json";
@@ -111,6 +112,12 @@ export class AppHandler implements AppHandlerVariables {
 
     this.session.defaultSession.webRequest.onHeadersReceived(
       (details, callback) => {
+        // Overlays run without a CSP, as in OBS, so they can use inline
+        // scripts and load scripts, styles and fonts from the network.
+        if (isOverlayURL(details.url)) {
+          callback({ responseHeaders: details.responseHeaders });
+          return;
+        }
         callback({
           responseHeaders: {
             ...details.responseHeaders,
