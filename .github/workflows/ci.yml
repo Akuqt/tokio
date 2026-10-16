@@ -46,7 +46,8 @@ jobs:
         run: yarn test
 
   # Packaged builds run on pushes and ready PRs. Draft PRs only get the checks, unless the
-  # latest commit message contains [ci] (see .github/pull_request_template.md).
+  # latest commit message contains [ci] (see .github/pull_request_template.md). Release commits
+  # (chore(release): ...) skip them: their tag runs release.yml, which packages the same commit.
   gate:
     runs-on: ubuntu-latest
     outputs:
@@ -62,8 +63,11 @@ jobs:
         env:
           EVENT: ${{ github.event_name }}
           DRAFT: ${{ github.event.pull_request.draft }}
+          PUSHED_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
-          if [ "$EVENT" != "pull_request" ] || [ "$DRAFT" != "true" ]; then
+          if [ "$EVENT" = "push" ] && [[ "$PUSHED_MESSAGE" == "chore(release)"* ]]; then
+            build=false
+          elif [ "$EVENT" != "pull_request" ] || [ "$DRAFT" != "true" ]; then
             build=true
           elif git log -1 --format=%B | grep -qF "[ci]"; then
             build=true

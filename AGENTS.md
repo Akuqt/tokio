@@ -171,7 +171,7 @@ Tokio's source is MIT. The project is open source, so treat license compliance a
 
 Workflows live in `.github/workflows/`:
 
-- `ci.yml` runs on every PR and on `main`: Prettier check, lint, typecheck and tests on Linux and Windows. Non-draft PRs, pushes to `main`, and draft PRs whose latest commit message contains `[ci]` also package the app for all three systems through `build-app.yml` and upload the packages as artifacts.
+- `ci.yml` runs on every PR and on `main`: Prettier check, lint, typecheck and tests on Linux and Windows. Non-draft PRs, pushes to `main`, and draft PRs whose latest commit message contains `[ci]` also package the app for all three systems through `build-app.yml` and upload the packages as artifacts. Release commits (`chore(release): ...`) skip that, because their tag's `release.yml` run packages the same commit.
 - `installer.yml` builds the installer for each system when `src/installer` or `scripts/installer` change.
 - `release.yml` runs when a `v<version>` tag is pushed. The tag must match `package.json`'s version. It packages the app and the installers and attaches them, with the `latest*.yml` update files and blockmaps, to a draft GitHub release.
 
