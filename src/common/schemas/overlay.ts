@@ -157,3 +157,13 @@ export const OverlayConfigSchema = z
 
 export type OverlayConfig = z.infer<typeof OverlayConfigSchema>;
 export type OverlayConfigField = z.infer<typeof FieldsSchema>;
+
+/** The config with every field's value set back to its default. */
+export function resetOverlayConfig(config: OverlayConfig): OverlayConfig {
+  const reset = structuredClone(config);
+  for (const { attributes } of reset.fields) {
+    // Each field's value has the same type as its default.
+    Object.assign(attributes, { value: structuredClone(attributes.default) });
+  }
+  return reset;
+}

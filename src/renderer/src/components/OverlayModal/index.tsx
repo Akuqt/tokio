@@ -1,4 +1,8 @@
-import { OverlayConfig, OverlayConfigField } from "@/common/schemas";
+import {
+  OverlayConfig,
+  OverlayConfigField,
+  resetOverlayConfig,
+} from "@/common/schemas";
 import { CustomGift } from "@/common/types";
 import { memo, useState } from "react";
 import { MoonLoader } from "react-spinners";
@@ -20,7 +24,6 @@ interface Props {
   gifts: CustomGift[];
   onRequestClose: () => void;
   onSave: (config: OverlayConfig) => void;
-  onReset: () => void;
 }
 
 type Value = string | number;
@@ -35,7 +38,7 @@ function asSingle<V extends Value>(value: V | V[]): V | undefined {
 }
 
 export const OverlayModal = memo(
-  ({ config, gifts, onRequestClose, onReset, onSave }: Props) => {
+  ({ config, gifts, onRequestClose, onSave }: Props) => {
     const [settings, setSettings] = useState<OverlayConfig | null>(config);
     const [prevConfig, setPrevConfig] = useState(config);
 
@@ -163,9 +166,11 @@ export const OverlayModal = memo(
           <div className={styles.footer}>
             <Btn
               disabled={settings == null}
-              onClick={() => {
-                if (settings != null) onReset();
-              }}
+              onClick={() =>
+                setSettings((prev) =>
+                  prev == null ? prev : resetOverlayConfig(prev),
+                )
+              }
             >
               Reset
             </Btn>

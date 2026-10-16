@@ -61,9 +61,6 @@ export function Overlays() {
           gifts={gifts}
           config={config}
           onRequestClose={closeModal}
-          onReset={() => {
-            // TODO: Implement overlay settings reset
-          }}
           onSave={(saved) => {
             window.api.emit(APP_EVENTS.SAVE_OVERLAY_CONFIG, {
               config: saved,
