@@ -19,10 +19,10 @@
     <script>
       window.installer = {
         sendMessage: function (msg) {
-          window.external.sendMessage(msg);
+          window.ipc.postMessage(msg);
         },
         receiveMessage: function (cb) {
-          window.external.receiveMessage(cb);
+          window.__installerReceive = cb;
         },
       };
     </script>

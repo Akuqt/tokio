@@ -116,6 +116,14 @@ yarn lint       # lint
 yarn build:win  # build the Windows installer into dist/
 ```
 
+The small download-and-install program in `src/installer/` is written in Rust and runs on Windows, macOS and Linux. Building it needs a [Rust toolchain](https://rustup.rs) (1.85+); on Linux also `libwebkit2gtk-4.1-dev`, `libssl-dev` and `libdbus-1-dev`.
+
+```sh
+yarn build:installer  # build the installer for this system into installer-out/
+```
+
+The installer doesn't need rebuilding for new versions: when it runs, it downloads the app from the latest GitHub release, picking the `yarn build:win`, `build:mac` or `build:linux` artifact for its system by name. Set `INSTALLER_URL` at build time to download from a fixed URL instead. On Linux the AppImage needs FUSE to run.
+
 Want to help? Read [CONTRIBUTING.md](CONTRIBUTING.md) and the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## License

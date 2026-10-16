@@ -28,6 +28,23 @@ nsis:
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
   runAfterFinish: false
+# NOTE: The installer (src/installer) finds these artifacts on the latest GitHub release by these names
+# (see release_lookup in src/installer/build.rs). Keep them in sync.
+mac:
+  icon: "build/icon.png"
+  artifactName: ${name}-${version}-mac-${arch}.${ext}
+  target:
+    - target: zip
+      arch: [x64, arm64]
+linux:
+  executableName: tokio
+  icon: "build/icon.png"
+  category: AudioVideo
+  target:
+    - target: AppImage
+      arch: [x64]
+appImage:
+  artifactName: ${name}-${version}-${arch}.${ext}
 npmRebuild: false
 publish:
   provider: generic

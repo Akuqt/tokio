@@ -19,9 +19,11 @@ yarn format        # prettier --write .
 yarn build         # typecheck + music UI + electron-vite build
 yarn build:win     # build + electron-builder Windows package
 yarn tts:edge:check # live check of the Edge TTS provider against Microsoft's service (needs network)
+yarn build:installer # installer UI + Rust installer into installer-out/ (needs a Rust toolchain)
+yarn licenses:installer # regenerate the installer's crate notices (needs cargo-about)
 ```
 
-Verify changes with `yarn test`, `yarn typecheck` and `yarn lint`. For changes to the Edge TTS provider, also run `yarn tts:edge:check`.
+Verify changes with `yarn test`, `yarn typecheck` and `yarn lint`. For changes to the Edge TTS provider, also run `yarn tts:edge:check`. For changes to the installer, also run `yarn build:installer` and `cargo clippy --manifest-path src/installer/Cargo.toml -- -D warnings`.
 
 ### Tests
 
@@ -39,19 +41,19 @@ Verify changes with `yarn test`, `yarn typecheck` and `yarn lint`. For changes t
 
 ## Layout
 
-| Path                                  | Role                                                                                                                  |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `src/main/`                           | Electron main process: services, IPC event handlers, window setup                                                     |
-| `src/preload/`                        | Exposes the typed `window.api.emit` / `window.api.on` bridge                                                          |
-| `src/renderer/`                       | Main React UI (pages, components, contexts, router)                                                                   |
-| `src/music/`                          | Separate music window UI, built as a single file into `music-out/`                                                    |
-| `src/common/`                         | Code shared by both processes: Zod schemas, event types, constants, utils                                             |
-| `src/ui/`                             | Web-only code shared by the main and music windows: design tokens, base CSS, `TitleBar`                               |
-| `src/installer/`                      | Custom Windows installer (C# / .NET + Photino) with a React UI. Leave it alone unless the task is about the installer |
-| `scripts/`                            | Repo maintenance scripts (`clean`, `todos`, `edge-tts`)                                                               |
-| `LICENSES/`, `THIRD_PARTY_NOTICES.md` | Third-party license texts and notices, shipped to the app's `resources/licenses`. See Licensing below                 |
+| Path                                  | Role                                                                                                              |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `src/main/`                           | Electron main process: services, IPC event handlers, window setup                                                 |
+| `src/preload/`                        | Exposes the typed `window.api.emit` / `window.api.on` bridge                                                      |
+| `src/renderer/`                       | Main React UI (pages, components, contexts, router)                                                               |
+| `src/music/`                          | Separate music window UI, built as a single file into `music-out/`                                                |
+| `src/common/`                         | Code shared by both processes: Zod schemas, event types, constants, utils                                         |
+| `src/ui/`                             | Web-only code shared by the main and music windows: design tokens, base CSS, `TitleBar`                           |
+| `src/installer/`                      | Cross-platform installer (Rust, wry + tao) with a React UI. Leave it alone unless the task is about the installer |
+| `scripts/`                            | Repo maintenance scripts (`clean`, `todos`, `edge-tts`, `installer`)                                              |
+| `LICENSES/`, `THIRD_PARTY_NOTICES.md` | Third-party license texts and notices, shipped to the app's `resources/licenses`. See Licensing below             |
 
-`out/`, `music-out/`, `build/` output and `src/installer/obj/` are generated. Don't edit them.
+`out/`, `music-out/`, `installer-out/`, `build/` output, `src/installer/dist/`, `src/installer/target/` and `src/installer/licenses/` are generated. Don't edit them.
 
 ## Path aliases
 
@@ -159,7 +161,7 @@ Tokio's source is MIT. The project is open source, so treat license compliance a
 - **Keep the notices in sync** when licensed components change:
   - `THIRD_PARTY_NOTICES.md` and `LICENSES/` (shipped via `extraResources` in `electron-builder.yml`)
   - the license banner in `electron.vite.config.ts`, because the bundler strips file header comments
-  - `src/installer/THIRD_PARTY_NOTICES.txt` when the installer's dependencies change (Photino, React, icon sets); it's embedded by `main.csproj`
+  - `src/installer/THIRD_PARTY_NOTICES.txt` when the installer's dependencies change (Rust crates, React, icon sets); it's embedded by `src/installer/src/notices.rs`. After changing `Cargo.toml` or `Cargo.lock`, run `yarn licenses:installer` and check the crate licenses against `src/installer/about.toml`
   - the Services list in `THIRD_PARTY_NOTICES.md` when the app starts talking to a new online service
   - `COMPONENTS` and `SERVICES` in `src/renderer/src/pages/About/helper.ts`, which mirror the parts of `THIRD_PARTY_NOTICES.md` that aren't npm packages (the LGPL file, icon sets, Electron, online services)
 - The About page (`/about`, last sidebar item) shows the AGPL's "Appropriate Legal Notices": copyright, no warranty, the license and where to get the source. Keep it reachable from the sidebar. Its package list comes from `LicensesService` (`src/main/services/licenses`), which walks the production dependency tree in `node_modules` (inside `app.asar` when packaged), so new dependencies appear without changes.

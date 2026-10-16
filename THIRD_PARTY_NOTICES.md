@@ -68,7 +68,7 @@ Check this table when adding an icon set: react-icons also contains sets under C
 
 ## Installer
 
-The Tokio installer (`src/installer/`) is a separate MIT program that downloads and runs the application setup. Its third-party components are the .NET runtime, Photino.NET, Photino.Native, the Microsoft Edge WebView2 Loader, React and VS Code Codicons. Their notices are in [`src/installer/THIRD_PARTY_NOTICES.txt`](src/installer/THIRD_PARTY_NOTICES.txt), which is embedded in the installer together with the full license texts.
+The Tokio installer (`src/installer/`) is a separate MIT program, written in Rust, that downloads and installs the application on Windows, macOS and Linux. Its third-party components are its Rust crates (including wry and tao), the Microsoft Edge WebView2 Loader (Windows), React and VS Code Codicons. On macOS and Linux it also includes option-ext, under the [MPL-2.0](LICENSES/MPL-2.0.txt), unmodified. Their notices are in [`src/installer/THIRD_PARTY_NOTICES.txt`](src/installer/THIRD_PARTY_NOTICES.txt) and, for the crates, the generated [`src/installer/licenses/rust-crates.txt`](src/installer/licenses/rust-crates.txt). Both are embedded in the installer together with the full license texts.
 
 ## Services
 
