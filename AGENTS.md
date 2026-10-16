@@ -161,7 +161,9 @@ Tokio's source is MIT. The project is open source, so treat license compliance a
   - the license banner in `electron.vite.config.ts`, because the bundler strips file header comments
   - `src/installer/THIRD_PARTY_NOTICES.txt` when the installer's dependencies change (Photino, React, icon sets); it's embedded by `main.csproj`
   - the Services list in `THIRD_PARTY_NOTICES.md` when the app starts talking to a new online service
-- Keep `"license": "MIT AND LGPL-3.0-only"` in `package.json`. It describes the repository's own code.
+  - `COMPONENTS` and `SERVICES` in `src/renderer/src/pages/About/helper.ts`, which mirror the parts of `THIRD_PARTY_NOTICES.md` that aren't npm packages (the LGPL file, icon sets, Electron, online services)
+- The About page (`/about`, last sidebar item) shows the AGPL's "Appropriate Legal Notices": copyright, no warranty, the license and where to get the source. Keep it reachable from the sidebar. Its package list comes from `LicensesService` (`src/main/services/licenses`), which walks the production dependency tree in `node_modules` (inside `app.asar` when packaged), so new dependencies appear without changes.
+- Keep `"license": "MIT"` in `package.json`. It describes the repository's own code.
 
 ## Conventions
 

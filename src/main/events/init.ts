@@ -232,6 +232,7 @@ events.push(
       jsonManagerService,
       yamlManagerService,
       alertsService,
+      licensesService,
       notifier,
       win,
     } = handler;
@@ -249,6 +250,7 @@ events.push(
         jsonManagerService.setLogFile(files.logs.system);
         alertsService.setLogFile(files.logs.alerts);
         musicService.setLogFile(files.logs.music);
+        licensesService.setLogFile(files.logs.system);
         notifier.setLogFiles(files.logs);
         alertsService.setSoundsFolder(folders.soundsFolder);
       },

@@ -20,7 +20,8 @@ export function Page({ width = "default", children }: PageProps) {
 }
 
 type SectionProps = {
-  title: ReactNode;
+  // Without title, description and actions there's no header
+  title?: ReactNode;
   description?: ReactNode;
   // Shown before the title
   icon?: ReactNode;
@@ -38,18 +39,22 @@ export function Section({
 }: SectionProps) {
   return (
     <section className={styles.section}>
-      <header className={styles.section_header}>
-        <div>
-          <h2 className={styles.section_title}>
-            {icon}
-            {title}
-          </h2>
-          {description && (
-            <p className={styles.section_description}>{description}</p>
-          )}
-        </div>
-        {actions && <div className={styles.section_actions}>{actions}</div>}
-      </header>
+      {(title || description || actions) && (
+        <header className={styles.section_header}>
+          <div>
+            {title && (
+              <h2 className={styles.section_title}>
+                {icon}
+                {title}
+              </h2>
+            )}
+            {description && (
+              <p className={styles.section_description}>{description}</p>
+            )}
+          </div>
+          {actions && <div className={styles.section_actions}>{actions}</div>}
+        </header>
+      )}
       {children}
     </section>
   );

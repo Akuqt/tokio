@@ -1,3 +1,4 @@
+export * from "./about";
 export * from "./alerts";
 export * from "./connector";
 export * from "./events";

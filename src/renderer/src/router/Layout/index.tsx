@@ -13,7 +13,14 @@ import { TitleBar } from "@/ui/TitleBar";
 import { Link, Outlet, useBlocker } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BsLightningCharge } from "react-icons/bs";
-import { FiHome, FiMusic, FiSettings, FiTool, FiVolume2 } from "react-icons/fi";
+import {
+  FiHome,
+  FiInfo,
+  FiMusic,
+  FiSettings,
+  FiTool,
+  FiVolume2,
+} from "react-icons/fi";
 import { LuMonitorCog } from "react-icons/lu";
 import styles from "./layout.module.css";
 
@@ -26,6 +33,8 @@ const NAV_ITEMS = [
   // Pinned to the bottom of the sidebar from here on
   { to: "/tools", label: "Tools", icon: <FiTool size={22} />, bottom: true },
   { to: "/settings", label: "Settings", icon: <FiSettings size={22} /> },
+  // Shows the license notices the AGPL requires, keep it in the sidebar
+  { to: "/about", label: "About", icon: <FiInfo size={22} /> },
 ] as const;
 
 export function Layout() {

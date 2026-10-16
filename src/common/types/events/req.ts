@@ -77,6 +77,10 @@ export enum APP_EVENTS {
   GET_SOUNDS = "app:sounds:get",
   UPLOAD_SOUNDS = "app:sounds:upload",
   REMOVE_SOUND = "app:sounds:remove",
+
+  // ABOUT
+  GET_ABOUT = "app:about:get",
+  GET_LICENSE_TEXT = "app:about:get:license",
 }
 
 export interface AppEventsMap {
@@ -223,4 +227,9 @@ export interface AppEventsMap {
   [APP_EVENTS.REMOVE_SOUND]: {
     file: string;
   };
+
+  // ABOUT
+  [APP_EVENTS.GET_ABOUT]: void;
+  // A document or package id from GET_ABOUT
+  [APP_EVENTS.GET_LICENSE_TEXT]: { id: string };
 }

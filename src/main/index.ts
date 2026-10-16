@@ -5,6 +5,7 @@ import Logger from "@/logger";
 import { AlertsService } from "@/services/alerts";
 import { TikTokConnectorService } from "@/services/connector";
 import { JSONManagerService } from "@/services/json";
+import { LicensesService } from "@/services/licenses";
 import { MusicService } from "@/services/music";
 import { OverlayService } from "@/services/overlay";
 import { PathManagerService } from "@/services/path";
@@ -51,7 +52,14 @@ const services: AppServices = {
   connectorService: new TikTokConnectorService(),
   storeManagerService: new StoreManagerService(),
   yamlManagerService: new YAMLManagerService(),
+  licensesService: new LicensesService(),
 };
+
+// Packaged, the notices are copied to resources/licenses (electron-builder.yml).
+services.licensesService.initialize(
+  app.getAppPath(),
+  app.isPackaged ? join(process.resourcesPath, "licenses") : app.getAppPath(),
+);
 
 const logFatal = (kind: string) => (error: unknown) => {
   Logger.error(

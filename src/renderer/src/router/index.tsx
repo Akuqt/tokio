@@ -4,7 +4,16 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import { Alerts, Home, Music, Overlays, Settings, Tools, TTS } from "../pages";
+import {
+  About,
+  Alerts,
+  Home,
+  Music,
+  Overlays,
+  Settings,
+  Tools,
+  TTS,
+} from "../pages";
 import { Layout } from "./Layout";
 
 const rootRoute = createRootRoute({
@@ -53,6 +62,12 @@ const settingsRoute = createRoute({
   component: Settings,
 });
 
+const aboutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/about",
+  component: About,
+});
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   overlaysRoute,
@@ -61,6 +76,7 @@ const routeTree = rootRoute.addChildren([
   musicRoute,
   toolsRoute,
   settingsRoute,
+  aboutRoute,
 ]);
 
 const hashHistory = createHashHistory();

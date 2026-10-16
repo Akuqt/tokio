@@ -4,6 +4,7 @@ import { Notifier } from "@/helper/feedback";
 import { AlertsService } from "@/services/alerts";
 import { TikTokConnectorService } from "@/services/connector";
 import { JSONManagerService } from "@/services/json";
+import { LicensesService } from "@/services/licenses";
 import { MusicService } from "@/services/music";
 import { OverlayService } from "@/services/overlay";
 import { PathManagerService } from "@/services/path";
@@ -38,6 +39,7 @@ export class AppHandler implements AppHandlerVariables {
   public readonly storeManagerService: StoreManagerService;
   public readonly pathManagerService: PathManagerService;
   public readonly alertsService: AlertsService;
+  public readonly licensesService: LicensesService;
   public readonly notifier: Notifier;
 
   constructor(deps: AppHandlerVariables) {

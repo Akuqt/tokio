@@ -1,3 +1,4 @@
+import { AboutInfo, LicenseText } from "../about";
 import { MyInstantsSound } from "../alerts";
 import { TokioPayload } from "../connector";
 import { CustomGift, OverlayConfigRedux } from "../overlay";
@@ -80,6 +81,10 @@ export enum APP_EVENTS_RESPONSE {
 
   // SOUND LIBRARY
   GET_SOUNDS = "app:sounds:res",
+
+  // ABOUT
+  GET_ABOUT = "app:about:res:get",
+  GET_LICENSE_TEXT = "app:about:res:get:license",
 }
 
 export interface AppEventsResponseMap {
@@ -236,5 +241,13 @@ export interface AppEventsResponseMap {
   // success is false when the last upload or removal failed
   [APP_EVENTS_RESPONSE.GET_SOUNDS]: Reply<{
     data: AlertSound[];
+  }>;
+
+  // ABOUT
+  [APP_EVENTS_RESPONSE.GET_ABOUT]: Reply<{
+    data?: AboutInfo;
+  }>;
+  [APP_EVENTS_RESPONSE.GET_LICENSE_TEXT]: Reply<{
+    data?: LicenseText;
   }>;
 }

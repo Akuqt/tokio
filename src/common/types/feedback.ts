@@ -23,6 +23,8 @@ export enum FEEDBACK_CODES {
   PROFILE_EXPORT_FAILED = "profile_export_failed",
   PROVIDER_UPDATE_FAILED = "provider_update_failed",
   FQDN_INSTALL_FAILED = "fqdn_install_failed",
+  ABOUT_LOAD_FAILED = "about_load_failed",
+  LICENSE_LOAD_FAILED = "license_load_failed",
 
   // SERVER
   SERVER_STARTED = "server_started",

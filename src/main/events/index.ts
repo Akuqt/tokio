@@ -1,5 +1,6 @@
 import { mergeStacks } from "@/helper/events";
 import init from "./init";
+import about from "./pages/about";
 import alerts from "./pages/alerts";
 import home from "./pages/home";
 import music from "./pages/music";
@@ -17,4 +18,5 @@ export default mergeStacks(
   overlays,
   alerts,
   tools,
+  about,
 );

@@ -12,7 +12,7 @@ Tokio's own files stay MIT and can be reused under MIT on their own. The applica
 
 **Corresponding source.** The complete source of Tokio is published at <https://github.com/Akuqt/tokio>, and every released version is built from it. The exact dependency versions are pinned in `yarn.lock`. See the README for build instructions (`yarn build:win`).
 
-**Licenses in the app.** `LICENSE`, this notice and the `LICENSES/` folder are installed with the application, in its `resources/licenses` folder. Every npm dependency ships with its own license file inside `resources/app.asar`, under `node_modules/<package>/`.
+**Licenses in the app.** `LICENSE`, this notice and the `LICENSES/` folder are installed with the application, in its `resources/licenses` folder. Every npm dependency ships with its own license file inside `resources/app.asar`, under `node_modules/<package>/`. The About page of the app shows these notices, the license texts and the license of every npm package it ships.
 
 ## AGPL-3.0-only dependencies
 

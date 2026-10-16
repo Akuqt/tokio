@@ -10,6 +10,7 @@ import type { Notifier } from "@/helper/feedback";
 import { AlertsService } from "@/services/alerts";
 import { TikTokConnectorService } from "@/services/connector";
 import { JSONManagerService } from "@/services/json";
+import { LicensesService } from "@/services/licenses";
 import { MusicService } from "@/services/music";
 import { OverlayService } from "@/services/overlay";
 import { PathManagerService } from "@/services/path";
@@ -51,6 +52,7 @@ export interface AppServices {
   readonly pathManagerService: PathManagerService;
   readonly yamlManagerService: YAMLManagerService;
   readonly alertsService: AlertsService;
+  readonly licensesService: LicensesService;
 }
 
 export interface AppHandlerVariables extends AppServices {
