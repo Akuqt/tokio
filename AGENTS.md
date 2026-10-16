@@ -31,6 +31,12 @@ Verify changes with `yarn test`, `yarn typecheck` and `yarn lint`. For changes t
 - Fixtures live in `test/fixtures` and Prettier skips them, so saved HTML keeps its original markup.
 - `it.fails` marks a known bug. Turn it into `it` when the bug is fixed.
 
+## Agent models
+
+- **Planning:** use **Opus 5.5 at high effort**. Before handing off or starting the implementation, be 90–95% confident in the plan. If you aren't, keep reading code or ask the user until you are.
+- **Implementation:** when delegating to a subagent, use **Sonnet 5.5 at high effort** when it can do the work: well-scoped changes that follow existing patterns.
+- Otherwise use **Opus 5.5**: medium effort for moderate tasks, high effort for complex or cross-cutting ones (architecture, IPC/schema changes across processes, tricky concurrency, licensing-sensitive code).
+
 ## Layout
 
 | Path                                  | Role                                                                                                                  |
