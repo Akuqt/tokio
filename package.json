@@ -1,6 +1,6 @@
 {
   "name": "tokio",
-  "version": "0.0.1",
+  "version": "0.1.0-alpha.1",
   "description": "Tiktok live integrator app.",
   "main": "./out/main/index.js",
   "type": "module",
