@@ -90,7 +90,7 @@ export class ServerService extends Service {
           );
 
           client.on("close", () => {
-            this._wss?.removeClient(clientId);
+            this._wss?.removeClient(clientId, client);
             Logger.info(
               `<WebSocket> Client disconnected: ${clientId}`,
               this._logFile,

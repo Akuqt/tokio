@@ -1,4 +1,5 @@
 import { TOKIO_EVENTS, TokioEventMap } from "@/common/types";
+import Logger from "@/logger";
 import { EventEmitter } from "node:events";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { networkInterfaces, tmpdir } from "node:os";
@@ -213,6 +214,33 @@ describe("ServerService", () => {
 
       expect(await message).toEqual({ hello: "a" });
       expect(onB).not.toHaveBeenCalled();
+    });
+
+    it("sends to every overlay connected with the same id", async () => {
+      const first = await connect("a");
+      const second = await connect("a");
+      const messages = Promise.all([nextMessage(first), nextMessage(second)]);
+
+      expect(server.sendToClient("a", "ping")).toBe(true);
+
+      expect(await messages).toEqual(["ping", "ping"]);
+    });
+
+    it("keeps sending to an overlay when another with its id disconnects", async () => {
+      const info = vi.spyOn(Logger, "info");
+      const first = await connect("a");
+      const second = await connect("a");
+
+      first.close();
+      await vi.waitFor(() =>
+        expect(info.mock.calls.map(([message]) => message)).toContain(
+          "<WebSocket> Client disconnected: a",
+        ),
+      );
+      const message = nextMessage(second);
+
+      expect(server.sendToClient("a", "ping")).toBe(true);
+      expect(await message).toBe("ping");
     });
 
     it("keeps internal events in the app", async () => {
