@@ -27,6 +27,8 @@ type SectionProps = {
   icon?: ReactNode;
   // Buttons on the right of the title
   actions?: ReactNode;
+  // Draws a line under the header, for a section whose content is a grid
+  divider?: boolean;
   children?: ReactNode;
 };
 
@@ -35,12 +37,18 @@ export function Section({
   description,
   icon,
   actions,
+  divider,
   children,
 }: SectionProps) {
   return (
     <section className={styles.section}>
       {(title || description || actions) && (
-        <header className={styles.section_header}>
+        <header
+          className={cx(
+            styles.section_header,
+            divider && styles.section_header_divider,
+          )}
+        >
           <div>
             {title && (
               <h2 className={styles.section_title}>

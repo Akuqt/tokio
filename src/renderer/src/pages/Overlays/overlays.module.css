@@ -10,3 +10,10 @@
   opacity: 1;
   pointer-events: all;
 }
+
+/* Two overlays per row, one when there's no room */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: var(--space-8) var(--space-6);
+}

@@ -67,7 +67,7 @@ export function Overlays() {
         />
       )}
 
-      <Page>
+      <Page width="wide">
         <GallerySection
           overlays={overlays}
           onTest={(id) => window.api.emit(APP_EVENTS.TEST_OVERLAY, { id })}

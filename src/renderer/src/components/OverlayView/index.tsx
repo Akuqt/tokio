@@ -1,78 +1,140 @@
 import { OverlayApp } from "@/common/types";
 import { getOverlayURL } from "@/common/util";
+import { cx } from "@/helper/cx";
 import copy from "copy-to-clipboard";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FaRegCopy } from "react-icons/fa";
+import { FiCheck, FiMaximize2 } from "react-icons/fi";
 import { GoUnverified, GoVerified } from "react-icons/go";
 import { PiShootingStarThin } from "react-icons/pi";
 import { VscPackage, VscSettings } from "react-icons/vsc";
-import { Btn, Input } from "../Elements";
+import { Btn } from "../Elements";
 import { Iframe } from "../Iframe";
+import { Modal } from "../Modal";
 import styles from "./overlayview.module.css";
+
+// Size overlays lay out at in the previews. The card zooms it down to fit
+const PREVIEW = { width: 768, height: 432 };
 
 interface Props {
   onTest: (id: string) => void;
   onCustomize: (id: string) => void;
   overlay: OverlayApp;
-  width: string;
-  height: string;
 }
 
-export function OverlayView({
-  onTest,
-  onCustomize,
-  overlay,
-  width,
-  height,
-}: Props) {
+export function OverlayView({ onTest, onCustomize, overlay }: Props) {
   const url = getOverlayURL(overlay.id);
+  const frame = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(1);
+  const [expanded, setExpanded] = useState(false);
+  // Shows a check on the URL for a moment after copying it
+  const [copied, setCopied] = useState(false);
+
+  useLayoutEffect(() => {
+    const el = frame.current;
+    if (!el) return undefined;
+    const observer = new ResizeObserver(() =>
+      setZoom(el.clientWidth / PREVIEW.width),
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!copied) return undefined;
+    const timer = setTimeout(() => setCopied(false), 1500);
+    return () => clearTimeout(timer);
+  }, [copied]);
 
   return (
     <div className={styles.container}>
-      <div className={styles.info}>
-        <h3 className={styles.title}>{overlay.name}</h3>
-        <div className={styles.tags}>
-          <span className={styles.tag}>
-            <VscPackage size={16} />
-            {overlay.version}
-          </span>
-          {overlay.external ? (
-            <span className={styles.tag}>
-              <GoUnverified size={16} />
-              External
-            </span>
-          ) : (
-            <span className={styles.tag}>
-              <GoVerified size={16} color="var(--success)" />
-              Verified
-            </span>
-          )}
-        </div>
-      </div>
+      {expanded && (
+        <Modal
+          title={overlay.name}
+          closeButton
+          maxWidth="fit-content"
+          onClose={() => setExpanded(false)}
+          footer={
+            <Btn onClick={() => onTest(overlay.id)}>
+              <PiShootingStarThin size={18} />
+              Test
+            </Btn>
+          }
+        >
+          <div className={styles.frame} style={PREVIEW}>
+            <Iframe name={overlay.id} source={overlay.path} />
+          </div>
+        </Modal>
+      )}
 
-      <div className={styles.controls}>
-        <div className={styles.url_group}>
-          <Input type="url" readOnly value={url} className={styles.url} />
-          <Btn title="Copy URL" onClick={() => copy(url)}>
-            <FaRegCopy size={18} />
-          </Btn>
+      <div className={styles.header}>
+        <div className={styles.info}>
+          <h3 className={styles.title} title={overlay.name}>
+            {overlay.name}
+          </h3>
+          <div className={styles.tags}>
+            <span className={styles.tag}>
+              <VscPackage size={14} />
+              {overlay.version}
+            </span>
+            {overlay.external ? (
+              <span className={styles.tag}>
+                <GoUnverified size={14} />
+                External
+              </span>
+            ) : (
+              <span className={styles.tag}>
+                <GoVerified size={14} color="var(--success)" />
+                Verified
+              </span>
+            )}
+          </div>
         </div>
+
         <div className={styles.buttons}>
           <Btn onClick={() => onTest(overlay.id)}>
-            <PiShootingStarThin size={20} />
+            <PiShootingStarThin size={18} />
             Test
           </Btn>
           {overlay.config && (
             <Btn onClick={() => onCustomize(overlay.id)}>
-              <VscSettings size={20} />
+              <VscSettings size={18} />
               Customize
             </Btn>
           )}
         </div>
       </div>
 
-      <div className={styles.frame} style={{ width, height }}>
-        <Iframe name={overlay.id} source={overlay.path} />
+      {/* Zoomed out so the whole layout fits, the modal shows it full size */}
+      <div ref={frame} className={cx(styles.frame, styles.frame_card)}>
+        <div style={{ ...PREVIEW, zoom }}>
+          <Iframe name={overlay.id} source={overlay.path} />
+        </div>
+        <Btn
+          variant="icon"
+          title="Full size"
+          className={styles.expand}
+          onClick={() => setExpanded(true)}
+        >
+          <FiMaximize2 size={16} />
+        </Btn>
       </div>
+
+      <Btn
+        title="Copy URL"
+        className={styles.url}
+        onClick={() => {
+          copy(url);
+          setCopied(true);
+        }}
+      >
+        <span className={styles.url_text}>{url}</span>
+        {copied ? (
+          <FiCheck size={16} className={styles.copied} />
+        ) : (
+          <FaRegCopy size={16} />
+        )}
+      </Btn>
     </div>
   );
 }

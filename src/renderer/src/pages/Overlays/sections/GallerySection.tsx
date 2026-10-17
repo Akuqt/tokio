@@ -24,6 +24,7 @@ export function GallerySection({ overlays, onTest, onCustomize }: Props) {
     <Section
       title="Overlay Gallery"
       description="Enhance your stream layout with overlays."
+      divider
       actions={
         <>
           <Input
@@ -49,16 +50,16 @@ export function GallerySection({ overlays, onTest, onCustomize }: Props) {
       }
     >
       {shown.length > 0 ? (
-        shown.map((overlay) => (
-          <OverlayView
-            key={overlay.id}
-            width="768px"
-            height="432px"
-            overlay={overlay}
-            onTest={onTest}
-            onCustomize={onCustomize}
-          />
-        ))
+        <div className={styles.gallery}>
+          {shown.map((overlay) => (
+            <OverlayView
+              key={overlay.id}
+              overlay={overlay}
+              onTest={onTest}
+              onCustomize={onCustomize}
+            />
+          ))}
+        </div>
       ) : (
         <EmptyState>
           {overlays.length > 0

@@ -47,6 +47,27 @@
   margin-bottom: var(--space-2);
 }
 
+.section_header_divider {
+  position: relative;
+  margin-bottom: 0;
+  padding-bottom: var(--space-4);
+}
+
+/* Same line as the one between sections */
+.section_header_divider::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(
+    to right,
+    var(--background-secondary),
+    transparent
+  );
+}
+
 .section_title {
   display: flex;
   align-items: center;
