@@ -45,6 +45,7 @@
     "licenses:installer": "cargo about generate --manifest-path src/installer/Cargo.toml -c src/installer/about.toml -o src/installer/licenses/rust-crates.txt src/installer/about.hbs",
     "clean": "node ./scripts/clean/index.js",
     "todos": "node ./scripts/todos/index.js",
+    "release:notes": "node ./scripts/release-notes/index.js",
     "tts:edge:check": "tsx ./scripts/edge-tts/index.ts",
     "prepare": "husky"
   },
