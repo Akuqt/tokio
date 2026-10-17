@@ -12,6 +12,7 @@ import { PathManagerService } from "@/services/path";
 import { ServerService } from "@/services/server";
 import { StoreManagerService } from "@/services/store";
 import { TTSService } from "@/services/tts";
+import { UpdaterService } from "@/services/updater";
 import { URLManagerService } from "@/services/url";
 import { YAMLManagerService } from "@/services/yaml";
 import { AppHandlerVariables, CustomBrowserWindow } from "@/types";
@@ -41,6 +42,7 @@ export class AppHandler implements AppHandlerVariables {
   public readonly pathManagerService: PathManagerService;
   public readonly alertsService: AlertsService;
   public readonly licensesService: LicensesService;
+  public readonly updaterService: UpdaterService;
   public readonly notifier: Notifier;
 
   constructor(deps: AppHandlerVariables) {

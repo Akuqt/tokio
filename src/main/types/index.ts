@@ -17,6 +17,7 @@ import { PathManagerService } from "@/services/path";
 import { ServerService } from "@/services/server";
 import { StoreManagerService } from "@/services/store";
 import { TTSService } from "@/services/tts";
+import { UpdaterService } from "@/services/updater";
 import { URLManagerService } from "@/services/url";
 import { YAMLManagerService } from "@/services/yaml";
 import {
@@ -53,6 +54,7 @@ export interface AppServices {
   readonly yamlManagerService: YAMLManagerService;
   readonly alertsService: AlertsService;
   readonly licensesService: LicensesService;
+  readonly updaterService: UpdaterService;
 }
 
 export interface AppHandlerVariables extends AppServices {

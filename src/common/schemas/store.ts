@@ -31,6 +31,12 @@ const AppSettingsSchema = z.object({
   server: z.object({
     enabled: z.boolean(),
   }),
+  updates: z
+    .object({
+      // Checks for new releases on startup and every few hours
+      auto: z.boolean(),
+    })
+    .default({ auto: true }),
   overlays: z.array(z.object({ ...OverlayMeta, id: z.string() })),
   testOverlays: z.array(TestOverlaySchema).default([]),
   // Uploaded sounds, available to alerts in every profile

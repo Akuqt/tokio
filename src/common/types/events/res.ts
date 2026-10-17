@@ -13,6 +13,7 @@ import {
 import { AppNotification, Reply } from "../feedback";
 import { OverlayApp } from "../server";
 import { VoiceData } from "../store";
+import { UpdateStatus } from "../updates";
 
 type WindowState = { state: "normal" | "maximized" };
 
@@ -52,6 +53,7 @@ export enum APP_EVENTS_RESPONSE {
   EXPORT_ENTITY = "app:settings:res:export:entity",
   SET_PROVIDER = "app:settings:res:set:provider",
   SET_SERVER = "app:settings:res:set:server",
+  SET_AUTO_UPDATES = "app:settings:res:set:updates",
   REQ_FQDN = "app:settings:res:fqdn",
 
   //HOME
@@ -85,6 +87,10 @@ export enum APP_EVENTS_RESPONSE {
   // ABOUT
   GET_ABOUT = "app:about:res:get",
   GET_LICENSE_TEXT = "app:about:res:get:license",
+
+  // UPDATES
+  UPDATE_STATUS = "app:updates:res:status",
+  CHECK_UPDATES = "app:updates:res:check",
 }
 
 export interface AppEventsResponseMap {
@@ -155,6 +161,8 @@ export interface AppEventsResponseMap {
   }>;
 
   [APP_EVENTS_RESPONSE.SET_SERVER]: Reply;
+
+  [APP_EVENTS_RESPONSE.SET_AUTO_UPDATES]: Reply;
 
   [APP_EVENTS_RESPONSE.REQ_FQDN]: Reply;
 
@@ -250,4 +258,9 @@ export interface AppEventsResponseMap {
   [APP_EVENTS_RESPONSE.GET_LICENSE_TEXT]: Reply<{
     data?: LicenseText;
   }>;
+
+  // UPDATES
+  // Also pushed whenever the status changes
+  [APP_EVENTS_RESPONSE.UPDATE_STATUS]: UpdateStatus;
+  [APP_EVENTS_RESPONSE.CHECK_UPDATES]: Reply;
 }

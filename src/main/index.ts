@@ -12,6 +12,7 @@ import { PathManagerService } from "@/services/path";
 import { ServerService } from "@/services/server";
 import { StoreManagerService } from "@/services/store";
 import { TTSService } from "@/services/tts";
+import { UpdaterService } from "@/services/updater";
 import { URLManagerService } from "@/services/url";
 import { electronApp, is, optimizer } from "@electron-toolkit/utils";
 import {
@@ -53,6 +54,7 @@ const services: AppServices = {
   storeManagerService: new StoreManagerService(),
   yamlManagerService: new YAMLManagerService(),
   licensesService: new LicensesService(),
+  updaterService: new UpdaterService(),
 };
 
 // Packaged, the notices are copied to resources/licenses (electron-builder.yml).
@@ -150,4 +152,5 @@ app.on("window-all-closed", () => {
 
 app.on("will-quit", () => {
   services.ttsService.dispose();
+  services.updaterService.dispose();
 });

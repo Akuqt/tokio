@@ -214,6 +214,31 @@ describe("StoreManagerService", () => {
     });
   });
 
+  describe("updates", () => {
+    it("turns automatic checks on for stores saved before the setting", async () => {
+      const { updates: _updates, ...settings } = defaultStoreData.settings;
+      await writeFile(
+        storeFile,
+        JSON.stringify({ ...defaultStoreData, settings }),
+      );
+
+      const store = await init();
+
+      expect(store.getSettings().updates).toEqual({ auto: true });
+    });
+
+    it("saves the setting", async () => {
+      const store = await init();
+
+      await store.updateUpdatesSettings(false);
+
+      expect((await readJSON(storeFile)).settings.updates).toEqual({
+        auto: false,
+      });
+      expect((await init()).getSettings().updates).toEqual({ auto: false });
+    });
+  });
+
   describe("live state", () => {
     afterEach(() => {
       vi.useRealTimers();

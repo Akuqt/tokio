@@ -14,6 +14,7 @@ export enum FEEDBACK_CODES {
   PROVIDER_UPDATED = "provider_updated",
   APP_LOAD_FAILED = "app_load_failed",
   SETTINGS_LOAD_FAILED = "settings_load_failed",
+  SETTINGS_SAVE_FAILED = "settings_save_failed",
   PROFILE_LOAD_FAILED = "profile_load_failed",
   PROFILE_SAVE_FAILED = "profile_save_failed",
   PROFILE_CREATE_FAILED = "profile_create_failed",
@@ -25,6 +26,15 @@ export enum FEEDBACK_CODES {
   FQDN_INSTALL_FAILED = "fqdn_install_failed",
   ABOUT_LOAD_FAILED = "about_load_failed",
   LICENSE_LOAD_FAILED = "license_load_failed",
+
+  // UPDATES
+  UPDATE_AVAILABLE = "update_available",
+  UPDATE_READY = "update_ready",
+  UPDATES_ENABLED = "updates_enabled",
+  UPDATES_DISABLED = "updates_disabled",
+  UPDATE_CHECK_FAILED = "update_check_failed",
+  UPDATE_DOWNLOAD_FAILED = "update_download_failed",
+  UPDATE_INSTALL_FAILED = "update_install_failed",
 
   // SERVER
   SERVER_STARTED = "server_started",

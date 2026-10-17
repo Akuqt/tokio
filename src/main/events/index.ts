@@ -8,6 +8,7 @@ import overlays from "./pages/overlays";
 import settings from "./pages/settings";
 import tools from "./pages/tools";
 import tts from "./pages/tts";
+import updates from "./pages/updates";
 
 export default mergeStacks(
   init,
@@ -19,4 +20,5 @@ export default mergeStacks(
   alerts,
   tools,
   about,
+  updates,
 );

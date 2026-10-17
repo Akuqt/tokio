@@ -306,6 +306,38 @@ events.push(
 );
 
 events.push(
+  APP_EVENTS.SET_AUTO_UPDATES,
+  async ({ storeManagerService, updaterService, notifier }, e, { enabled }) => {
+    await storeManagerService.updateUpdatesSettings(enabled);
+    updaterService.setAuto(enabled);
+    replySettings(e, storeManagerService);
+    e.reply(APP_EVENTS_RESPONSE.SET_AUTO_UPDATES, {
+      success: true,
+    });
+    if (enabled) {
+      notifier.success(
+        "system",
+        FEEDBACK_CODES.UPDATES_ENABLED,
+        "Tokio checks for updates automatically.",
+      );
+    } else {
+      notifier.info(
+        "system",
+        FEEDBACK_CODES.UPDATES_DISABLED,
+        "Automatic update checks are off. Check from About.",
+      );
+    }
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.SETTINGS_SAVE_FAILED,
+      message: "Unable to save the update setting.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.SET_AUTO_UPDATES),
+  },
+);
+
+events.push(
   APP_EVENTS.REQ_FQDN,
   async ({ urlManagerService }, e) => {
     const res = await urlManagerService.installAppFQDN();

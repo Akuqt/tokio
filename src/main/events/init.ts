@@ -23,6 +23,9 @@ const STATS_THROTTLE_MS = 250;
 // Failures that repeat on every chat or event are sent at most this often.
 const REPEAT_NOTICE_MS = 30_000;
 
+// Update notices repeat on every check, once a day is enough.
+const UPDATE_NOTICE_MS = 24 * 60 * 60 * 1000;
+
 const events = createStack("system");
 
 // Gifts in the shape overlays use, none when TikTok can't be reached.
@@ -37,6 +40,50 @@ const fetchOverlayGifts = async (
     img: g.image,
     coins: g.coins,
   }));
+};
+
+// Updates are found in the background, so main tells the user about them.
+const initUpdater = async ({
+  updaterService: updater,
+  win,
+  notifier,
+}: AppHandlerVariables) => {
+  await updater.initialize({
+    onStatus: (status) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send(APP_EVENTS_RESPONSE.UPDATE_STATUS, status);
+      }
+    },
+    onUpdate: (status) => {
+      const options = {
+        key: `update:${status.version}`,
+        windowMs: UPDATE_NOTICE_MS,
+      };
+      if (status.state === "ready") {
+        notifier.info(
+          "system",
+          FEEDBACK_CODES.UPDATE_READY,
+          `Tokio ${status.version} is ready. Restart from the title bar to update.`,
+          options,
+        );
+      } else {
+        notifier.info(
+          "system",
+          FEEDBACK_CODES.UPDATE_AVAILABLE,
+          `Tokio ${status.version} is available. Download it from the title bar.`,
+          options,
+        );
+      }
+    },
+    onDownloadFailed: () => {
+      notifier.warn(
+        "system",
+        FEEDBACK_CODES.UPDATE_DOWNLOAD_FAILED,
+        "Unable to download the Tokio update. It will be tried again later.",
+        { windowMs: UPDATE_NOTICE_MS },
+      );
+    },
+  });
 };
 
 // Live events reach TTS, music, alerts and the UI from here. No request waits
@@ -233,6 +280,7 @@ events.push(
       yamlManagerService,
       alertsService,
       licensesService,
+      updaterService,
       notifier,
       win,
     } = handler;
@@ -251,6 +299,7 @@ events.push(
         alertsService.setLogFile(files.logs.alerts);
         musicService.setLogFile(files.logs.music);
         licensesService.setLogFile(files.logs.system);
+        updaterService.setLogFile(files.logs.system);
         notifier.setLogFiles(files.logs);
         alertsService.setSoundsFolder(folders.soundsFolder);
       },
@@ -339,6 +388,9 @@ events.push(
       success: true,
     });
     notifier.info("system", FEEDBACK_CODES.APP_LOADED, "Tokio is ready.");
+
+    await initUpdater(handler);
+    updaterService.start(settings.updates.auto);
   },
   {
     failure: {

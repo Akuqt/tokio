@@ -43,6 +43,7 @@ export enum APP_EVENTS {
   EXPORT_ENTITY = "app:settings:export:entity",
   SET_PROVIDER = "app:settings:set:provider",
   SET_SERVER = "app:settings:set:server",
+  SET_AUTO_UPDATES = "app:settings:set:updates",
   REQ_FQDN = "app:settings:req:fqdn",
 
   // HOME
@@ -81,6 +82,11 @@ export enum APP_EVENTS {
   // ABOUT
   GET_ABOUT = "app:about:get",
   GET_LICENSE_TEXT = "app:about:get:license",
+
+  // UPDATES
+  GET_UPDATE_STATUS = "app:updates:get",
+  CHECK_UPDATES = "app:updates:check",
+  INSTALL_UPDATE = "app:updates:install",
 }
 
 export interface AppEventsMap {
@@ -158,6 +164,10 @@ export interface AppEventsMap {
     enabled: boolean;
   };
 
+  [APP_EVENTS.SET_AUTO_UPDATES]: {
+    enabled: boolean;
+  };
+
   [APP_EVENTS.REQ_FQDN]: void;
 
   // HOME
@@ -232,4 +242,10 @@ export interface AppEventsMap {
   [APP_EVENTS.GET_ABOUT]: void;
   // A document or package id from GET_ABOUT
   [APP_EVENTS.GET_LICENSE_TEXT]: { id: string };
+
+  // UPDATES
+  [APP_EVENTS.GET_UPDATE_STATUS]: void;
+  [APP_EVENTS.CHECK_UPDATES]: void;
+  // Restarts into the downloaded update, or opens the release page on macOS
+  [APP_EVENTS.INSTALL_UPDATE]: void;
 }

@@ -279,6 +279,12 @@ export class StoreManagerService extends Service {
     await this._queueSave();
   }
 
+  public async updateUpdatesSettings(auto: boolean): Promise<void> {
+    this._ensureInitialized();
+    this._storeData!.settings.updates = { auto };
+    await this._queueSave();
+  }
+
   public async addOverlayInfo(
     info: OverlayMetadata & { id: string },
   ): Promise<void> {
