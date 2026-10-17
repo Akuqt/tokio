@@ -42,6 +42,8 @@ export enum APP_EVENTS {
   IMPORT_ENTITY = "app:settings:import:entity",
   EXPORT_ENTITY = "app:settings:export:entity",
   SET_PROVIDER = "app:settings:set:provider",
+  GET_VOICE_KEYS = "app:settings:get:voice-keys",
+  SET_VOICE_KEY = "app:settings:set:voice-key",
   SET_SERVER = "app:settings:set:server",
   SET_AUTO_UPDATES = "app:settings:set:updates",
   REQ_FQDN = "app:settings:req:fqdn",
@@ -159,6 +161,13 @@ export interface AppEventsMap {
     name: string;
     key: string;
     type: "connector";
+  };
+
+  [APP_EVENTS.GET_VOICE_KEYS]: void;
+
+  [APP_EVENTS.SET_VOICE_KEY]: {
+    engine: string;
+    key: string;
   };
 
   [APP_EVENTS.SET_SERVER]: {

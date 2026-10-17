@@ -183,6 +183,17 @@ describe("StoreManagerService", () => {
       );
     });
 
+    it("restores the saved voice keys decrypted", async () => {
+      const first = await init();
+      await first.updateVoiceKey("Default", "secret");
+      expect(await readFile(storeFile, "utf-8")).not.toContain("secret");
+
+      const setEngineKey = vi.spyOn(tts, "setEngineKey");
+      await init();
+
+      expect(setEngineKey).toHaveBeenCalledExactlyOnceWith("Default", "secret");
+    });
+
     it("speaks old voices with the TTS provider selected before", async () => {
       const data = structuredClone(defaultStoreData);
       data.settings.activeTTSProvider = {
@@ -212,6 +223,27 @@ describe("StoreManagerService", () => {
       expect((await store.getProfileData())?.tts.voice).toEqual({
         ...voice,
         engine: "",
+      });
+    });
+  });
+
+  describe("voice keys", () => {
+    it("saves a key for its engine and hands it over", async () => {
+      const store = await init();
+      const setEngineKey = vi.spyOn(tts, "setEngineKey");
+
+      await store.updateVoiceKey("Default", "session");
+
+      expect(setEngineKey).toHaveBeenCalledExactlyOnceWith(
+        "Default",
+        "session",
+      );
+      expect(store.getVoiceKey("Default")).toBe("session");
+      expect(store.getVoiceKey("Edge")).toBe("");
+      expect(store.getSettings().providers.tts).toContainEqual({
+        name: "Default",
+        key: "session",
+        active: true,
       });
     });
   });

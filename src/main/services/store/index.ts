@@ -110,6 +110,10 @@ export class StoreManagerService extends Service {
         this._providers.connector.setProvider(conn_p.name, conn_p.key);
         // Speaks the voices saved before the engines were combined.
         this._providers.tts.setProvider(data.settings.activeTTSProvider.name);
+        for (const saved of data.settings.providers.tts) {
+          const { name, key } = this._decryptProviderKey(saved);
+          if (key) this._providers.tts.setEngineKey(name, key);
+        }
       }
       this._storeData = data;
       Logger.success(`<System> JSON Store initialized cleanly`, this._logFile);
@@ -416,6 +420,34 @@ export class StoreManagerService extends Service {
 
     await this._queueSave();
     return provider;
+  }
+
+  public getVoiceKey(engine: string): string {
+    this._ensureInitialized();
+    const saved = this._storeData!.settings.providers.tts.find(
+      (p) => p.name === engine,
+    );
+    return saved ? this._decryptProviderKey(saved).key : "";
+  }
+
+  // Keys are saved with the provider list, encrypted.
+  public async updateVoiceKey(engine: string, key: string): Promise<void> {
+    this._ensureInitialized();
+    const list = this._storeData!.settings.providers.tts;
+    const index = list.findIndex((p) => p.name === engine);
+    const saved = this._encryptProviderKey({
+      name: engine,
+      key,
+      active: list[index]?.active ?? false,
+    });
+    if (index !== -1) {
+      list[index] = saved;
+    } else {
+      list.push(saved);
+    }
+
+    this._providers.tts.setEngineKey(engine, key);
+    await this._queueSave();
   }
 
   public async createNewProfile(

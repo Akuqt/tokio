@@ -52,6 +52,8 @@ export enum APP_EVENTS_RESPONSE {
   IMPORT_ENTITY = "app:settings:res:import:entity",
   EXPORT_ENTITY = "app:settings:res:export:entity",
   SET_PROVIDER = "app:settings:res:set:provider",
+  GET_VOICE_KEYS = "app:settings:res:voice-keys",
+  SET_VOICE_KEY = "app:settings:res:set:voice-key",
   SET_SERVER = "app:settings:res:set:server",
   SET_AUTO_UPDATES = "app:settings:res:set:updates",
   REQ_FQDN = "app:settings:res:fqdn",
@@ -159,6 +161,13 @@ export interface AppEventsResponseMap {
   [APP_EVENTS_RESPONSE.SET_PROVIDER]: Reply<{
     type: "connector";
   }>;
+
+  // Only the engines that take a key
+  [APP_EVENTS_RESPONSE.GET_VOICE_KEYS]: Reply<{
+    engines?: (VoiceEngine & { key: string })[];
+  }>;
+
+  [APP_EVENTS_RESPONSE.SET_VOICE_KEY]: Reply;
 
   [APP_EVENTS_RESPONSE.SET_SERVER]: Reply;
 

@@ -8,6 +8,7 @@ import { cleanText } from "@/helper/chat";
 import { createStack, replyFailure } from "@/helper/events";
 import { AppFailure } from "@/helper/feedback";
 import { StoreManagerService } from "@/services/store";
+import { TTSService } from "@/services/tts";
 import { ReplyEvent } from "@/types";
 import { dialog } from "electron";
 
@@ -243,6 +244,64 @@ events.push(
         success: false,
         error,
       }),
+  },
+);
+
+const replyVoiceKeys = (
+  e: ReplyEvent,
+  tts: TTSService,
+  store: StoreManagerService,
+) => {
+  e.reply(APP_EVENTS_RESPONSE.GET_VOICE_KEYS, {
+    engines: tts
+      .getEngines()
+      .filter((engine) => engine.keyLabel)
+      .map((engine) => ({ ...engine, key: store.getVoiceKey(engine.id) })),
+    success: true,
+  });
+};
+
+events.push(
+  APP_EVENTS.GET_VOICE_KEYS,
+  ({ storeManagerService, ttsService }, e) => {
+    replyVoiceKeys(e, ttsService, storeManagerService);
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.SETTINGS_LOAD_FAILED,
+      message: "Unable to load the voice keys.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.GET_VOICE_KEYS),
+  },
+);
+
+events.push(
+  APP_EVENTS.SET_VOICE_KEY,
+  async ({ storeManagerService, ttsService, notifier }, e, { engine, key }) => {
+    const target = ttsService.getEngines().find((v) => v.id === engine);
+    if (!target?.keyLabel) {
+      throw new Error(`The voice engine ${engine} takes no key.`);
+    }
+    await storeManagerService.updateVoiceKey(engine, key);
+
+    e.reply(APP_EVENTS_RESPONSE.SET_VOICE_KEY, {
+      success: true,
+    });
+    replyVoiceKeys(e, ttsService, storeManagerService);
+    notifier.success(
+      "system",
+      FEEDBACK_CODES.PROVIDER_UPDATED,
+      key
+        ? `${target.keyLabel} saved for the ${target.label} voices.`
+        : `${target.keyLabel} removed from the ${target.label} voices.`,
+    );
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.PROVIDER_UPDATE_FAILED,
+      message: "Unable to save the key.",
+    },
+    onError: replyFailure(APP_EVENTS_RESPONSE.SET_VOICE_KEY),
   },
 );
 

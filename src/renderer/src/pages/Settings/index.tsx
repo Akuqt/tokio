@@ -10,6 +10,7 @@ import { ProvidersSection } from "./sections/ProvidersSection";
 import { ServerSection } from "./sections/ServerSection";
 import { SoundsSection } from "./sections/SoundsSection";
 import { UpdatesSection } from "./sections/UpdatesSection";
+import { VoiceKeysSection } from "./sections/VoiceKeysSection";
 
 type ModalType = "newProfile" | "cloneProfile" | "confirmServer";
 
@@ -89,6 +90,8 @@ export function Settings() {
             window.api.emit(APP_EVENTS.SET_AUTO_UPDATES, { enabled });
           }}
         />
+
+        <VoiceKeysSection />
 
         {store.settings.providers.connector.length > 1 && (
           <ProvidersSection settings={store.settings} />
