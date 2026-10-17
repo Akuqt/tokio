@@ -1,6 +1,7 @@
 import { APP_EVENTS_RESPONSE } from "@/common/types";
 import { formatError } from "@/common/util";
 import { Notifier } from "@/helper/feedback";
+import { withPreviewBackground } from "@/helper/preview";
 import Logger from "@/logger";
 import { AlertsService } from "@/services/alerts";
 import { TikTokConnectorService } from "@/services/connector";
@@ -131,7 +132,8 @@ app.whenReady().then(async () => {
     optimizer.watchWindowShortcuts(window);
   });
 
-  protocol.handle("local-resource", (request) => {
+  // Overlay previews, see withPreviewBackground
+  protocol.handle("local-resource", async (request) => {
     const requestUrl = new URL(request.url);
 
     let decodedPath = decodeURIComponent(requestUrl.pathname);
@@ -140,7 +142,8 @@ app.whenReady().then(async () => {
       decodedPath = decodedPath.slice(1);
     }
 
-    return net.fetch(pathToFileURL(decodedPath).href);
+    const res = await net.fetch(pathToFileURL(decodedPath).href);
+    return withPreviewBackground(res, decodedPath);
   });
 
   createWindows();
