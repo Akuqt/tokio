@@ -68,7 +68,10 @@ Building your own overlay? Create a test ID on the **Tools** page and send your 
 
 ### Install
 
-Download the installer for your system from the [latest release](https://github.com/tokio-app/tokio/releases/latest) (`Tokio-Installer-windows-x64.exe`, `-mac-arm64.zip`, `-mac-x64.zip` or `-linux-x64.tar.gz`) and run it. It downloads and installs the latest version of Tokio. The release also has the app's own packages: the Windows setup, the macOS zips and the Linux AppImage.
+Download Tokio from the [latest release](https://github.com/tokio-app/tokio/releases/latest).
+
+- **Windows**: run `Tokio-Installer-windows-x64.exe`. It downloads and installs the latest version of Tokio. To skip the installer, use the app's own setup, `tokio-<version>-setup.exe`.
+- **macOS and Linux**: download the app itself: `tokio-<version>-mac-arm64.zip` (Apple Silicon), `tokio-<version>-mac-x64.zip` (Intel) or `tokio-<version>-x86_64.AppImage`.
 
 ### Platforms
 
@@ -80,8 +83,8 @@ Download the installer for your system from the [latest release](https://github.
 
 Every release has builds for Windows (x64), macOS (Apple Silicon and Intel) and Linux (x64). The voices installed on the system are only available on Windows; TikTok and Edge voices work everywhere.
 
-- **macOS**: Tokio and its installer aren't notarized yet, so macOS may block them the first time. Open it from Finder with right-click → **Open**, or allow it in **System Settings → Privacy & Security**.
-- **Linux**: the AppImage needs FUSE to run.
+- **macOS**: unzip the download and move **Tokio** to your Applications folder. Tokio isn't notarized yet, so macOS may block it the first time. Open it from Finder with right-click → **Open**, or allow it in **System Settings → Privacy & Security**.
+- **Linux**: make the AppImage executable with `chmod +x` (or in the file's properties) and run it. It needs FUSE.
 
 ### Connect to your LIVE
 
