@@ -88,9 +88,11 @@ Every release has builds for Windows (x64), macOS (Apple Silicon and Intel) and 
 
 ### Connect to your LIVE
 
-1. Start your LIVE on TikTok.
-2. Open Tokio, enter your `@username` on the **Home** page and connect.
-3. Turn on the features you want for this stream: text-to-speech, music, alerts.
+Set everything up before you go live: Tokio can only connect once your LIVE has started.
+
+1. On Tokio's **Home** page, turn on the features you want for this stream: text-to-speech, music, alerts. Add your overlays to OBS or TikTok LIVE Studio (see [Adding an overlay](#adding-an-overlay)).
+2. Start your LIVE on TikTok.
+3. Enter your `@username` on the **Home** page and connect.
 
 ### Adding an overlay
 
