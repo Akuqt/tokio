@@ -74,9 +74,9 @@ The Tokio installer (`src/installer/`) is a separate MIT program, written in Rus
 
 Tokio talks to these online services. None of them is covered by Tokio's license or by the licenses above. Each one is subject to its operator's terms and can stop working at any time.
 
-- **TikTok:** TikTok LIVE, through tiktok-live-connector, and TikTok's text-to-speech (the "Default" TTS provider). Neither is an official public API.
+- **TikTok:** TikTok LIVE, through tiktok-live-connector, and TikTok's text-to-speech (the TikTok voices). Neither is an official public API.
 - **Euler Stream** (`api.eulerstream.com`): request signing used by tiktok-live-connector.
-- **Microsoft:** Edge's Read Aloud service (the "Edge" TTS provider), which isn't an official public API.
+- **Microsoft:** Edge's Read Aloud service (the Edge voices), which isn't an official public API.
 - **Spotify and YouTube:** music requests.
 - **GitHub** (`github.com`, `api.github.com`): update checks and downloads, from Tokio's releases.
 - **MyInstants** (`www.myinstants.com`): sound search and downloads for alerts, read from the public website rather than an official API. Its sounds are uploaded by its users and aren't covered by Tokio's license.

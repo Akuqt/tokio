@@ -21,7 +21,7 @@ Enter your TikTok username to connect to your LIVE. Turn each feature on or off 
 
 Chat messages are read aloud as they come in.
 
-- **Voices** from three engines: TikTok's own voices, Microsoft Edge voices, and, on Windows, the voices installed on the system (SAPI and OneCore, including older 32-bit voices). Adjust speed, pitch and volume.
+- **Voices** from three engines, all in one list: TikTok's own voices, Microsoft Edge voices, and, on Windows, the voices installed on the system (SAPI and OneCore, including older 32-bit voices). Adjust speed, pitch and volume.
 - **Format**: choose which messages get read and how, for example `{username} {comment}` or only messages that start with a command.
 - **Replacements**: teach the voice how to say acronyms, slang and names.
 - **Permissions**: let everyone talk, or only followers, superfans or moderators. You can also set a minimum fan level, a whitelist and a blacklist.
@@ -55,7 +55,7 @@ Import overlays in **Settings → Imported Overlays**, where you can also remove
 ### Profiles and settings
 
 - **Profiles**: keep separate settings for different streams. Create a blank profile or clone an existing one, and switch between them from the title bar.
-- **Providers**: choose the engine used for text-to-speech and for TikTok events.
+- **Voice engines**: optionally add your TikTok session ID, which the TikTok voices use when it's set.
 - **Overlay server**: turn the local server for overlays on or off.
 - **Updates**: Tokio checks GitHub for new releases on startup and every few hours, downloads them in the background and installs them when you restart from the title bar. On macOS, where the app isn't signed, the button opens the release page instead. Turn automatic checks off in Settings, or check any time from About.
 - **Notifications**: when something fails, such as a voice that can't be generated or a sound that's missing, Tokio tells you what went wrong. The bell in the title bar keeps the session's history.

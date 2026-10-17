@@ -71,7 +71,7 @@ export const COMPONENTS: Component[] = [
 export const SERVICES: { name: string; note: string }[] = [
   {
     name: "TikTok",
-    note: "TikTok LIVE, through tiktok-live-connector, and TikTok's text-to-speech (the Default TTS provider). Neither is an official public API.",
+    note: "TikTok LIVE, through tiktok-live-connector, and TikTok's text-to-speech (the TikTok voices). Neither is an official public API.",
   },
   {
     name: "Euler Stream",
@@ -79,7 +79,7 @@ export const SERVICES: { name: string; note: string }[] = [
   },
   {
     name: "Microsoft",
-    note: "Edge's Read Aloud service (the Edge TTS provider), which isn't an official public API.",
+    note: "Edge's Read Aloud service (the Edge voices), which isn't an official public API.",
   },
   { name: "Spotify and YouTube", note: "Music requests." },
   {
