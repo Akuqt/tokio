@@ -24,6 +24,24 @@
   color: var(--font-primary);
 }
 
+.update {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: var(--control-height);
+}
+
+.update_actions {
+  display: flex;
+  align-items: center;
+}
+
+.update_error {
+  font-size: var(--font-sm);
+  color: var(--warning);
+}
+
 .notice {
   display: flex;
   flex-direction: column;

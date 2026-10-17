@@ -1,3 +1,4 @@
+import { UpdateStatus } from "@/common/types";
 import { REPOSITORY_URL } from "@/common/util";
 
 // Keep in sync with THIRD_PARTY_NOTICES.md. npm packages are listed by main,
@@ -82,6 +83,10 @@ export const SERVICES: { name: string; note: string }[] = [
   },
   { name: "Spotify and YouTube", note: "Music requests." },
   {
+    name: "GitHub",
+    note: "Update checks and downloads, from Tokio's releases.",
+  },
+  {
     name: "MyInstants",
     note: "Sound search and downloads for alerts, read from the public website. Its sounds are uploaded by its users and aren't covered by Tokio's license.",
   },
@@ -104,4 +109,26 @@ export function resolveNoticeLink(href: string): LinkTarget | null {
     return { url: `${REPOSITORY_URL}/blob/main/${href}` };
   }
   return null;
+}
+
+/** What the About page says about updates. */
+export function updateText(status: UpdateStatus): string {
+  switch (status.state) {
+    case "idle":
+      return "Tokio hasn't checked for updates yet.";
+    case "unsupported":
+      return "Updates aren't available in this build.";
+    case "checking":
+      return "Checking for updates…";
+    case "none":
+      return "Tokio is up to date.";
+    case "available":
+      return status.manual
+        ? `Tokio ${status.version} is available. Download it from the release page.`
+        : `Tokio ${status.version} is available.`;
+    case "downloading":
+      return `Downloading Tokio ${status.version}… ${status.percent}%`;
+    default:
+      return `Tokio ${status.version} is ready to install.`;
+  }
 }

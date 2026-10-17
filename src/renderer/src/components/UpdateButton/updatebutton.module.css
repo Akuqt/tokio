@@ -1,0 +1,10 @@
+.container {
+  margin-right: var(--space-2);
+  -webkit-app-region: no-drag;
+}
+
+.button {
+  height: 32px;
+  padding: 0 var(--space-3);
+  font-size: var(--font-sm);
+}

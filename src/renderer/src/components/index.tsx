@@ -13,3 +13,4 @@ export * from "./ProfileDropdown";
 export * from "./ProtectionSection";
 export * from "./SoundPicker";
 export * from "./Toasts";
+export * from "./UpdateButton";

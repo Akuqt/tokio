@@ -8,6 +8,7 @@ import { ProfileSection } from "./sections/ProfileSection";
 import { ProvidersSection } from "./sections/ProvidersSection";
 import { ServerSection } from "./sections/ServerSection";
 import { SoundsSection } from "./sections/SoundsSection";
+import { UpdatesSection } from "./sections/UpdatesSection";
 
 type ModalType = "newProfile" | "cloneProfile" | "confirmServer";
 
@@ -75,6 +76,16 @@ export function Settings() {
               setServerEnabled(false);
               window.api.emit(APP_EVENTS.SET_SERVER, { enabled: false });
             }
+          }}
+        />
+
+        <UpdatesSection
+          enabled={store.settings.updates.auto}
+          onChange={(enabled) => {
+            updateStore((s) => {
+              s.settings.updates.auto = enabled;
+            });
+            window.api.emit(APP_EVENTS.SET_AUTO_UPDATES, { enabled });
           }}
         />
 

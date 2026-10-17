@@ -1,6 +1,6 @@
 import { AboutInfo, APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
 import { Page } from "@/components";
-import { useIpcListener, useIpcRequest } from "@/hooks";
+import { useIpcListener, useIpcRequest, useUpdateStatus } from "@/hooks";
 import { useState } from "react";
 import { AppSection } from "./sections/AppSection";
 import { ComponentsSection } from "./sections/ComponentsSection";
@@ -13,8 +13,22 @@ export function About() {
   const [failed, setFailed] = useState(false);
   // Document or package whose license is shown
   const [viewing, setViewing] = useState<string | null>(null);
+  const update = useUpdateStatus();
+  const [checking, setChecking] = useState(false);
+  const [checkError, setCheckError] = useState<string>();
+  const [connected, setConnected] = useState(false);
 
   useIpcRequest(APP_EVENTS.GET_ABOUT);
+  useIpcRequest(APP_EVENTS.IS_CONNECTED);
+
+  useIpcListener(APP_EVENTS_RESPONSE.CONNECTED, (res) => {
+    if (res) setConnected(res.success);
+  });
+
+  useIpcListener(APP_EVENTS_RESPONSE.CHECK_UPDATES, (res) => {
+    setChecking(false);
+    setCheckError(res?.success ? undefined : res?.error?.message);
+  });
 
   useIpcListener(APP_EVENTS_RESPONSE.GET_ABOUT, (res) => {
     if (!res) return;
@@ -33,7 +47,19 @@ export function About() {
       )}
 
       <Page>
-        <AppSection versions={about?.versions} onView={setViewing} />
+        <AppSection
+          versions={about?.versions}
+          update={update}
+          checking={checking}
+          checkError={checkError}
+          connected={connected}
+          onCheck={() => {
+            setChecking(true);
+            setCheckError(undefined);
+            window.api.emit(APP_EVENTS.CHECK_UPDATES);
+          }}
+          onView={setViewing}
+        />
         <ComponentsSection onView={setViewing} />
         <PackagesSection
           packages={about?.packages}

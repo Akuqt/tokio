@@ -1,13 +1,14 @@
 import Logo from "@/assets/logo.png";
 import { EntityMetadata } from "@/common/schemas";
 import { APP_EVENTS, APP_EVENTS_RESPONSE } from "@/common/types";
-import { NotificationBell, ProfileDropdown } from "@/components";
+import { NotificationBell, ProfileDropdown, UpdateButton } from "@/components";
 import {
   useAudio,
   useIpcListener,
   useIpcRequest,
   useNotifications,
   useUnsavedChanges,
+  useUpdateStatus,
 } from "@/hooks";
 import { TitleBar } from "@/ui/TitleBar";
 import { Link, Outlet, useBlocker } from "@tanstack/react-router";
@@ -35,6 +36,7 @@ export function Layout() {
   const { resumeContext } = useAudio();
   const { confirmDiscard } = useUnsavedChanges();
   const notifications = useNotifications();
+  const updateStatus = useUpdateStatus();
 
   const [isConnected, setIsConnected] = useState(false);
   const [profiles, setProfiles] = useState<EntityMetadata[]>([]);
@@ -79,6 +81,7 @@ export function Layout() {
             }
           }}
         />
+        <UpdateButton status={updateStatus} connected={isConnected} />
         <NotificationBell
           history={notifications.history}
           unread={notifications.unread}
