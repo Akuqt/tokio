@@ -36,6 +36,20 @@ jobs:
     needs: [app, installer]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history and tags for the notes
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # Lists the commits since the previous v* tag, grouped by Conventional Commits type.
+      - name: Write release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/release-notes/index.js "$GITHUB_REF_NAME" > release-notes.md
+
       - uses: actions/download-artifact@v4
         with:
           path: assets
@@ -47,9 +61,10 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           ls -l assets
+          # A rerun only replaces the files, so notes already edited in the draft are kept.
           if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
             gh release upload "$GITHUB_REF_NAME" assets/* --clobber
           else
             gh release create "$GITHUB_REF_NAME" assets/* --draft --verify-tag \
-              --title "Tokio ${GITHUB_REF_NAME#v}" --generate-notes
+              --title "Tokio ${GITHUB_REF_NAME#v}" --notes-file release-notes.md
           fi
