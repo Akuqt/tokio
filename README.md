@@ -57,6 +57,7 @@ Import overlays and set them up from the gallery: colors, text, the gifts they r
 - **Profiles**: keep separate settings for different streams. Create a blank profile or clone an existing one, and switch between them from the title bar.
 - **Providers**: choose the engine used for text-to-speech and for TikTok events.
 - **Overlay server**: turn the local server for overlays on or off.
+- **Updates**: Tokio checks GitHub for new releases on startup and every few hours, downloads them in the background and installs them when you restart from the title bar. On macOS, where the app isn't signed, the button opens the release page instead. Turn automatic checks off in Settings, or check any time from About.
 - **Notifications**: when something fails, such as a voice that can't be generated or a sound that's missing, Tokio tells you what went wrong. The bell in the title bar keeps the session's history.
 
 ### Tools for overlay developers
