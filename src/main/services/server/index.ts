@@ -1,4 +1,4 @@
-import { TOKIO_EVENTS, TokioEventMap } from "@/common/types";
+import { isLiveEvent, TOKIO_EVENTS, TokioEventMap } from "@/common/types";
 import { formatError, SERVER_PORT } from "@/common/util";
 import Logger from "@/logger";
 import express, { Express, Router } from "express";
@@ -160,12 +160,14 @@ export class ServerService extends Service {
     if (!connectorService) {
       throw new Error("Connector service not defined.");
     }
-    Object.values(TOKIO_EVENTS).forEach((event) => {
-      const handler: BoundHandler = (data) => this.broadcast(event, data);
-      connectorService.on(event, handler);
-      musicService.on(event, handler);
-      this._boundEvents.push({ event, handler });
-    });
+    Object.values(TOKIO_EVENTS)
+      .filter(isLiveEvent)
+      .forEach((event: TOKIO_EVENTS) => {
+        const handler: BoundHandler = (data) => this.broadcast(event, data);
+        connectorService.on(event, handler);
+        musicService.on(event, handler);
+        this._boundEvents.push({ event, handler });
+      });
   }
 
   public cleanupEvents(connectorService: TikTokConnectorService) {

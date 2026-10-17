@@ -5,8 +5,8 @@ import {
   TestOverlay,
 } from "@/common/schemas";
 import {
-  AppEvents,
   CustomGift,
+  isLiveEvent,
   OverlayApp,
   OverlayConfigRedux,
   TOKIO_EVENTS,
@@ -39,16 +39,6 @@ export interface OverlayResult<T = undefined> {
   success: boolean;
   data?: T;
 }
-
-// Internal events have no samples, overlays only get tested with live ones.
-const INTERNAL_EVENTS: TOKIO_EVENTS[] = [
-  TOKIO_EVENTS.CONNECTED,
-  TOKIO_EVENTS.DISCONNECTED,
-  TOKIO_EVENTS.MUSIC_PROCCESS_ENDED,
-];
-
-const isLiveEvent = (event: TOKIO_EVENTS): event is AppEvents =>
-  !INTERNAL_EVENTS.includes(event);
 
 export class OverlayService extends Service {
   private _folder = "";
@@ -278,7 +268,7 @@ export class OverlayService extends Service {
     this._server.sendToClient(id, payload);
   }
 
-  // A sample of every live event, for an overlay's test button.
+  // A sample of every live event, for an overlay's test button. Internal events have no samples.
   public getTestPayloads(): TokioPayload[] {
     return Object.values(TOKIO_EVENTS)
       .filter(isLiveEvent)

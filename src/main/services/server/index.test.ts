@@ -215,6 +215,20 @@ describe("ServerService", () => {
       expect(onB).not.toHaveBeenCalled();
     });
 
+    it("keeps internal events in the app", async () => {
+      const client = await connect("a");
+      const message = nextMessage(client);
+
+      provider.emit(TOKIO_EVENTS.CONNECTED, { success: true });
+      provider.emit(TOKIO_EVENTS.FOLLOW, follow);
+
+      expect(await message).toEqual({
+        type: TOKIO_EVENTS.FOLLOW,
+        data: follow,
+      });
+      expect(musicEvents.has(TOKIO_EVENTS.MUSIC_PROCCESS_ENDED)).toBe(false);
+    });
+
     it("reports a send to an id with no overlay connected", () => {
       expect(server.sendToClient("missing", "ping")).toBe(false);
     });
