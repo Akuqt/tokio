@@ -4,25 +4,30 @@ import {
   FEEDBACK_CODES,
 } from "@/common/types";
 import { createStack, replyFailure } from "@/helper/events";
+import { LoggedError } from "@/helper/feedback";
 import { dialog } from "electron";
 
 const events = createStack("overlays");
 
 events.push(
   APP_EVENTS.IMPORT_OVERLAY,
-  async ({ win, overlayService, notifier }, e, { gifts }) => {
+  async ({ win, overlayService, notifier }, e) => {
     const diagRes = await dialog.showOpenDialog(win, {
       title: `Import Overlay`,
       properties: ["openDirectory"],
     });
     if (diagRes.canceled) return;
 
+    const gifts = await overlayService.getGifts();
     const res = await overlayService.import(diagRes.filePaths[0], gifts);
     if (!res.success) {
       throw new Error(`${diagRes.filePaths[0]} is not a valid overlay.`);
     }
 
-    e.reply(APP_EVENTS_RESPONSE.IMPORT_OVERLAY, { success: true });
+    e.reply(APP_EVENTS_RESPONSE.GET_OVERLAYS, {
+      success: true,
+      data: overlayService.getOverlays(),
+    });
     notifier.success(
       "overlays",
       FEEDBACK_CODES.OVERLAY_IMPORTED,
@@ -35,7 +40,42 @@ events.push(
       message:
         "Unable to import the overlay. Check that the folder has an index.html and an info.yaml.",
     },
-    onError: replyFailure(APP_EVENTS_RESPONSE.IMPORT_OVERLAY),
+    onError: (e, error, _, { overlayService }) =>
+      e.reply(APP_EVENTS_RESPONSE.GET_OVERLAYS, {
+        success: false,
+        data: overlayService.getOverlays(),
+        error,
+      }),
+  },
+);
+
+events.push(
+  APP_EVENTS.REMOVE_OVERLAY,
+  async ({ overlayService, notifier }, e, { id }) => {
+    const res = await overlayService.remove(id);
+    if (!res.success) throw new LoggedError(`Unable to remove overlay ${id}.`);
+
+    e.reply(APP_EVENTS_RESPONSE.GET_OVERLAYS, {
+      success: true,
+      data: overlayService.getOverlays(),
+    });
+    notifier.success(
+      "overlays",
+      FEEDBACK_CODES.OVERLAY_REMOVED,
+      "Overlay removed.",
+    );
+  },
+  {
+    failure: {
+      code: FEEDBACK_CODES.OVERLAY_REMOVE_FAILED,
+      message: "Unable to remove the overlay.",
+    },
+    onError: (e, error, _, { overlayService }) =>
+      e.reply(APP_EVENTS_RESPONSE.GET_OVERLAYS, {
+        success: false,
+        data: overlayService.getOverlays(),
+        error,
+      }),
   },
 );
 

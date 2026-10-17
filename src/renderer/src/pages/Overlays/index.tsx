@@ -44,10 +44,6 @@ export function Overlays() {
     closeModal();
   });
 
-  useIpcListener(APP_EVENTS_RESPONSE.IMPORT_OVERLAY, (res) => {
-    if (res?.success) window.api.emit(APP_EVENTS.GET_OVERLAYS);
-  });
-
   useIpcListener(APP_EVENTS_RESPONSE.TEST_OVERLAY, (res) => {
     if (!res) return;
     for (const payload of res.payloads) postToOverlay(res.id, payload);
@@ -74,7 +70,6 @@ export function Overlays() {
       <Page>
         <GallerySection
           overlays={overlays}
-          onImport={() => window.api.emit(APP_EVENTS.IMPORT_OVERLAY, { gifts })}
           onTest={(id) => window.api.emit(APP_EVENTS.TEST_OVERLAY, { id })}
           onCustomize={(id) => {
             window.api.emit(APP_EVENTS.GET_OVERLAY_CONFIG, { id });

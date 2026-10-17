@@ -2,23 +2,16 @@ import { OverlayApp } from "@/common/types";
 import { Btn, EmptyState, Input, OverlayView, Section } from "@/components";
 import { cx } from "@/helper";
 import { useMemo, useState } from "react";
-import { LuPackagePlus } from "react-icons/lu";
 import { MdOutlineSearch, MdOutlineSearchOff } from "react-icons/md";
 import styles from "../overlays.module.css";
 
 interface Props {
   overlays: OverlayApp[];
-  onImport: () => void;
   onTest: (id: string) => void;
   onCustomize: (id: string) => void;
 }
 
-export function GallerySection({
-  overlays,
-  onImport,
-  onTest,
-  onCustomize,
-}: Props) {
+export function GallerySection({ overlays, onTest, onCustomize }: Props) {
   const [showSearch, setShowSearch] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -52,9 +45,6 @@ export function GallerySection({
               <MdOutlineSearch size={24} />
             )}
           </Btn>
-          <Btn title="Import overlay" onClick={onImport}>
-            <LuPackagePlus size={20} />
-          </Btn>
         </>
       }
     >
@@ -70,7 +60,11 @@ export function GallerySection({
           />
         ))
       ) : (
-        <EmptyState>No overlays found.</EmptyState>
+        <EmptyState>
+          {overlays.length > 0
+            ? "No overlays found."
+            : "No overlays yet. Import one in Settings."}
+        </EmptyState>
       )}
     </Section>
   );

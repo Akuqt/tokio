@@ -58,6 +58,7 @@ describe("OverlayService", () => {
   let testOverlays: TestOverlay[];
   let rebuilt: boolean;
   let mount: MockInstance<ServerService["mount"]>;
+  let unmount: MockInstance<ServerService["unmount"]>;
   let sendToClient: MockInstance<ServerService["sendToClient"]>;
 
   const store = {
@@ -105,6 +106,7 @@ describe("OverlayService", () => {
     // Not started, it only keeps the routes.
     const server = new ServerService(0);
     mount = vi.spyOn(server, "mount");
+    unmount = vi.spyOn(server, "unmount");
     sendToClient = vi.spyOn(server, "sendToClient");
     service = new OverlayService();
     service.initialize(
@@ -235,6 +237,43 @@ describe("OverlayService", () => {
       expect(await service.import(source, gifts)).toEqual({ success: false });
       expect(await readdir(folder)).toEqual([]);
       expect(mount).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("remove", () => {
+    it("deletes an imported overlay and stops serving it", async () => {
+      const source = join(root, "source");
+      await configurable(source);
+      await service.import(source, gifts);
+      const [id] = await readdir(folder);
+
+      expect(await service.remove(id)).toEqual({ success: true });
+
+      expect(await readdir(folder)).toEqual([]);
+      expect(stored).toEqual([]);
+      expect(unmount).toHaveBeenCalledWith(id);
+      expect(service.getOverlays()).toEqual([]);
+    });
+
+    it("refuses an id that isn't stored", async () => {
+      await configurable(join(folder, "title"));
+
+      expect(await service.remove("..")).toMatchObject({ success: false });
+      expect(await service.remove("title")).toMatchObject({ success: false });
+
+      expect(await readdir(root)).toContain("overlays");
+      expect(await readdir(folder)).toEqual(["title"]);
+      expect(unmount).not.toHaveBeenCalled();
+    });
+
+    it("keeps official overlays", async () => {
+      await configurable(join(folder, "title"));
+      stored = [{ id: "title", name: "Title", version: "1.0.0", config: true }];
+
+      expect(await service.remove("title")).toMatchObject({ success: false });
+
+      expect(await readdir(folder)).toEqual(["title"]);
+      expect(stored).toHaveLength(1);
     });
   });
 

@@ -60,6 +60,7 @@ export enum APP_EVENTS {
   GET_GIFTS = "app:overlays:get:gifts",
   SEND_OVERLAY_DATA = "app:overlays:send:data",
   TEST_OVERLAY = "app:overlays:test",
+  REMOVE_OVERLAY = "app:overlays:remove",
 
   // TOOLS
   GET_TEST_OVERLAYS = "app:tools:overlays:get",
@@ -183,9 +184,7 @@ export interface AppEventsMap {
   };
 
   // OVERLAYS
-  [APP_EVENTS.IMPORT_OVERLAY]: {
-    gifts: CustomGift[];
-  };
+  [APP_EVENTS.IMPORT_OVERLAY]: void;
   [APP_EVENTS.GET_OVERLAYS]: void;
   [APP_EVENTS.GET_OVERLAY_CONFIG]: { id: string };
   [APP_EVENTS.GET_GIFTS]: void;
@@ -201,6 +200,7 @@ export interface AppEventsMap {
   [APP_EVENTS.TEST_OVERLAY]: {
     id: string;
   };
+  [APP_EVENTS.REMOVE_OVERLAY]: { id: string };
 
   // TOOLS
   [APP_EVENTS.GET_TEST_OVERLAYS]: void;

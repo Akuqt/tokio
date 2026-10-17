@@ -179,6 +179,38 @@ export class OverlayService extends Service {
     }
   }
 
+  /**
+   * Deletes an imported overlay with its settings and stops serving it.
+   * Official overlays aren't removed here.
+   */
+  public async remove(id: string): Promise<OverlayResult> {
+    // Only stored ids, so the renderer's id can't point outside the folder
+    const overlay = this._store.getSettings().overlays.find((o) => o.id === id);
+    if (!overlay?.external) {
+      Logger.warn(
+        `<Overlays> Unable to remove overlay ${id}, it isn't an imported overlay.`,
+        this._logFile,
+      );
+      return { success: false };
+    }
+
+    try {
+      await rm(this._dir(id), { recursive: true, force: true });
+    } catch (error) {
+      Logger.error(
+        `<Overlays> Unable to remove overlay ${id} -- ${formatError(error)}`,
+        this._logFile,
+        error,
+      );
+      return { success: false };
+    }
+
+    this._server.unmount(id);
+    this._overlays = this._overlays.filter((o) => o.id !== id);
+    await this._store.removeOverlayInfo(id);
+    return { success: true };
+  }
+
   // Paths point at the overlay's HTML file.
   public getOverlays(): OverlayApp[] {
     return this._overlays.map((ov) => ({

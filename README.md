@@ -50,7 +50,7 @@ Play a sound for any LIVE event: chat messages, follows, shares, likes, gifts, e
 
 ### Overlays
 
-Import overlays and set them up from the gallery: colors, text, the gifts they react to, and anything else an overlay offers. Each overlay gets its own URL on your computer (`http://tokio-app.local:37891/...`). Copy it from the gallery and add it to your streaming app (see [Adding an overlay](#adding-an-overlay)).
+Import overlays in **Settings → Imported Overlays**, where you can also remove them, and set them up from the gallery on the **Overlays** page: colors, text, the gifts they react to, and anything else an overlay offers. Each overlay gets its own URL on your computer (`http://tokio-app.local:37891/...`). Copy it from the gallery and add it to your streaming app (see [Adding an overlay](#adding-an-overlay)).
 
 ### Profiles and settings
 

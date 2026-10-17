@@ -40,11 +40,11 @@ export function SoundsSection() {
       {sounds.length === 0 ? (
         <EmptyState>No sounds uploaded yet.</EmptyState>
       ) : (
-        <div className={styles.sounds}>
+        <div className={styles.library}>
           {sounds.map((sound) => {
             const playing = test.testing === sound.file;
             return (
-              <div key={sound.file} className={styles.sound}>
+              <div key={sound.file} className={styles.library_item}>
                 <PlayButton
                   playing={playing}
                   onClick={() =>
@@ -55,7 +55,7 @@ export function SoundsSection() {
                     })
                   }
                 />
-                <span className={styles.sound_name} title={sound.name}>
+                <span className={styles.library_name} title={sound.name}>
                   {sound.name}
                 </span>
                 <Btn

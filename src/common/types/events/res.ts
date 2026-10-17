@@ -62,7 +62,6 @@ export enum APP_EVENTS_RESPONSE {
   LIKES = "app:home:res:likes",
 
   // OVERLAYS
-  IMPORT_OVERLAY = "app:overlays:res:add",
   GET_OVERLAYS = "app:overlays:res:get",
   GET_OVERLAY_CONFIG = "app:overlays:res:get:config",
   SAVE_OVERLAY_CONFIG = "app:overlays:res:save:config",
@@ -186,7 +185,6 @@ export interface AppEventsResponseMap {
   };
 
   // OVERLAYS
-  [APP_EVENTS_RESPONSE.IMPORT_OVERLAY]: Reply;
   [APP_EVENTS_RESPONSE.GET_OVERLAYS]: Reply<{
     data?: OverlayApp[];
   }>;
