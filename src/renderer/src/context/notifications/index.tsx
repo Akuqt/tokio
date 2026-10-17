@@ -8,13 +8,15 @@ const HISTORY_LIMIT = 50;
 // Older toasts leave the screen, they stay in the history
 const MAX_TOASTS = 4;
 
+// Read once its toast was closed, the bell was opened, or it was a success
+type Entry = AppNotification & { read: boolean };
+
 export interface NotificationsContextType {
   // Newest first
   history: AppNotification[];
-  // Notices that arrived since the bell was last opened
+  // Notices that left the screen without being read
   unread: number;
   unreadError: boolean;
-  dismiss: (id: string) => void;
   markSeen: () => void;
   clear: () => void;
 }
@@ -31,25 +33,35 @@ export function NotificationsProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [history, setHistory] = useState<AppNotification[]>([]);
+  const [history, setHistory] = useState<Entry[]>([]);
   // Ids on screen, newest last
   const [toasts, setToasts] = useState<string[]>([]);
-  // Timestamp of the newest notice when the bell was last opened
-  const [lastSeen, setLastSeen] = useState(0);
 
   useIpcListener(APP_EVENTS_RESPONSE.NOTIFY, (notification) => {
     if (!notification) return;
-    setHistory((h) => [notification, ...h].slice(0, HISTORY_LIMIT));
+    // A success answers the user's own action, so it's never missed
+    const entry = { ...notification, read: notification.level === "success" };
+    setHistory((h) => [entry, ...h].slice(0, HISTORY_LIMIT));
     setToasts((t) => [...t, notification.id].slice(-MAX_TOASTS));
   });
 
-  const dismiss = useCallback((id: string) => {
+  // The toast timed out, it counts as unread
+  const expire = useCallback((id: string) => {
     setToasts((t) => t.filter((toast) => toast !== id));
   }, []);
 
+  // The user closed the toast, so they've read it
+  const close = useCallback((id: string) => {
+    setToasts((t) => t.filter((toast) => toast !== id));
+    setHistory((h) => h.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  }, []);
+
+  // Keeps the same array when nothing changes, the bell calls it on every update
   const markSeen = useCallback(() => {
-    setLastSeen(history[0]?.timestamp ?? 0);
-  }, [history]);
+    setHistory((h) =>
+      h.some((n) => !n.read) ? h.map((n) => ({ ...n, read: true })) : h,
+    );
+  }, []);
 
   const clear = useCallback(() => {
     setHistory([]);
@@ -57,16 +69,15 @@ export function NotificationsProvider({
   }, []);
 
   const value = useMemo(() => {
-    const unread = history.filter((n) => n.timestamp > lastSeen);
+    const unread = history.filter((n) => !n.read && !toasts.includes(n.id));
     return {
       history,
       unread: unread.length,
       unreadError: unread.some((n) => n.level === "error"),
-      dismiss,
       markSeen,
       clear,
     };
-  }, [history, lastSeen, dismiss, markSeen, clear]);
+  }, [history, toasts, markSeen, clear]);
 
   const visible = useMemo(
     () => history.filter((n) => toasts.includes(n.id)).reverse(),
@@ -76,7 +87,7 @@ export function NotificationsProvider({
   return (
     <NotificationsContext.Provider value={value}>
       {children}
-      <Toasts toasts={visible} onDismiss={dismiss} />
+      <Toasts toasts={visible} onExpire={expire} onClose={close} />
     </NotificationsContext.Provider>
   );
 }

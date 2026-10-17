@@ -12,12 +12,12 @@ import { VscClose } from "react-icons/vsc";
 import { Btn } from "../Elements";
 import styles from "./toasts.module.css";
 
-// How long a toast stays, errors stay until closed
-const TOAST_MS: Record<FeedbackLevel, number | null> = {
+// How long a toast stays. Missed ones stay in the bell
+const TOAST_MS: Record<FeedbackLevel, number> = {
   success: 4000,
   info: 4000,
   warning: 7000,
-  error: null,
+  error: 10000,
 };
 
 const ICONS: Record<FeedbackLevel, IconType> = {
@@ -53,25 +53,28 @@ export function LevelIcon({
 
 type ToastProps = {
   notification: AppNotification;
-  onDismiss: (id: string) => void;
+  // The timer ran out
+  onExpire: (id: string) => void;
+  // The user closed it
+  onClose: (id: string) => void;
 };
 
-function Toast({ notification, onDismiss }: ToastProps) {
+function Toast({ notification, onExpire, onClose }: ToastProps) {
   const { id, level, message } = notification;
   const duration = TOAST_MS[level];
   const [paused, setPaused] = useState(false);
   // Time left, kept while hovering pauses the timer
-  const remaining = useRef(duration ?? 0);
+  const remaining = useRef(duration);
 
   useEffect(() => {
-    if (duration === null || paused) return undefined;
+    if (paused) return undefined;
     const started = Date.now();
-    const timer = setTimeout(() => onDismiss(id), remaining.current);
+    const timer = setTimeout(() => onExpire(id), remaining.current);
     return () => {
       clearTimeout(timer);
       remaining.current -= Date.now() - started;
     };
-  }, [duration, paused, id, onDismiss]);
+  }, [duration, paused, id, onExpire]);
 
   return (
     <div
@@ -86,7 +89,7 @@ function Toast({ notification, onDismiss }: ToastProps) {
         variant="icon"
         title="Close"
         className={styles.close}
-        onClick={() => onDismiss(id)}
+        onClick={() => onClose(id)}
       >
         <VscClose size={16} />
       </Btn>
@@ -97,15 +100,21 @@ function Toast({ notification, onDismiss }: ToastProps) {
 type Props = {
   // Oldest first, the newest is shown at the bottom
   toasts: AppNotification[];
-  onDismiss: (id: string) => void;
+  onExpire: (id: string) => void;
+  onClose: (id: string) => void;
 };
 
 /** Notices stacked in the bottom right corner, above modals. */
-export function Toasts({ toasts, onDismiss }: Props) {
+export function Toasts({ toasts, onExpire, onClose }: Props) {
   return (
     <div role="region" aria-label="Notifications" className={styles.viewport}>
       {toasts.map((n) => (
-        <Toast key={n.id} notification={n} onDismiss={onDismiss} />
+        <Toast
+          key={n.id}
+          notification={n}
+          onExpire={onExpire}
+          onClose={onClose}
+        />
       ))}
     </div>
   );
