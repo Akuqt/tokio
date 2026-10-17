@@ -1,7 +1,7 @@
 <div align="center">
   <img src="resources/icon.png" alt="Tokio logo" width="96" />
   <h1>Tokio</h1>
-  <p>Make your TikTok LIVE react to chat, gifts and follows: text-to-speech, music requests, sound alerts and overlays.</p>
+  <p>Make your TikTok LIVE react to chat, gifts, likes and more: text-to-speech, music requests, sound alerts and overlays.</p>
   <p>
     <a href="https://tokio.ialfaro.com">Website</a> ·
     <a href="https://github.com/tokio-app/tokio/releases">Download</a> ·
