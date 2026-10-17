@@ -19,6 +19,7 @@ yarn build:win            # build + package (also build:mac, build:linux)
 yarn tts:edge:check       # live check of the Edge TTS provider (needs network)
 yarn build:installer      # installer UI + Rust installer into installer-out/ (needs Rust)
 yarn licenses:installer   # regenerate the installer's crate notices (needs cargo-about)
+yarn release:notes [tag]  # print a release's notes (the next release's without a tag)
 ```
 
 Verify changes with `yarn test`, `yarn typecheck` and `yarn lint`. For the Edge TTS provider, also run `yarn tts:edge:check`. For the installer, also run `yarn build:installer` and `cargo clippy --manifest-path src/installer/Cargo.toml -- -D warnings`.
@@ -157,7 +158,7 @@ Tokio's source is MIT; treat license compliance as part of every change.
 
 - `ci.yml` (PRs and `main`): Prettier check, lint, typecheck and tests on Linux and Windows. Non-draft PRs, `main`, and draft PRs whose latest commit contains `[ci]` also package the app via `build-app.yml`; `chore(release): ...` commits skip packaging.
 - `installer.yml` builds the installer when `src/installer` or `scripts/installer` change.
-- `release.yml` runs on a `v<version>` tag matching `package.json` and attaches the packages, installers and update files to a draft GitHub release.
+- `release.yml` runs on a `v<version>` tag matching `package.json` and attaches the packages, installers and update files to a draft GitHub release. `scripts/release-notes` writes its notes from the Conventional Commits since the previous `v*` tag (`chore(release)` commits are skipped); a rerun keeps the draft's notes.
 
 To release: bump `version` in `package.json`, commit, push a `v<version>` tag, then review and publish the draft (only published releases feed the installer and auto-updates). Keep `artifactName` in `electron-builder.yml`, the upload paths in `build-app.yml` and `release_lookup` in `src/installer/build.rs` in sync.
 
