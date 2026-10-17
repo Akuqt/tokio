@@ -220,6 +220,34 @@ describe("OverlayService", () => {
       );
     });
 
+    it("gives an overlay without settings its ID", async () => {
+      const source = join(root, "source");
+      await overlay(source, {
+        "info.yaml": info("Clock"),
+        "index.html": `<body>${SETUP}</body>`,
+      });
+
+      expect(await service.import(source, gifts)).toEqual({ success: true });
+
+      const [id] = await readdir(folder);
+      const html = await readFile(join(folder, id, "index.html"), "utf-8");
+      expect(html).toContain(
+        `<script id="tokio-setup"> window.__OVERLAY_ID__ = "${id}"; </script>`,
+      );
+    });
+
+    it("rejects an overlay without the setup block", async () => {
+      const source = join(root, "source");
+      await overlay(source, {
+        "info.yaml": info("Clock"),
+        "index.html": "<h1>clock</h1>",
+      });
+
+      expect(await service.import(source, gifts)).toEqual({ success: false });
+      expect(await readdir(folder)).toEqual([]);
+      expect(stored).toEqual([]);
+    });
+
     it("rejects a folder that isn't an overlay", async () => {
       const source = join(root, "source");
       await overlay(source, { "index.html": "<p></p>" });

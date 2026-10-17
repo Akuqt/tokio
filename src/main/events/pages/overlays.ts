@@ -38,7 +38,7 @@ events.push(
     failure: {
       code: FEEDBACK_CODES.OVERLAY_IMPORT_FAILED,
       message:
-        "Unable to import the overlay. Check that the folder has an index.html and an info.yaml.",
+        'Unable to import the overlay. Check that the folder has an info.yaml and an index.html with a <script id="tokio-setup"> block.',
     },
     onError: (e, error, _, { overlayService }) =>
       e.reply(APP_EVENTS_RESPONSE.GET_OVERLAYS, {

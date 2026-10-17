@@ -11,6 +11,9 @@ import { join } from "node:path";
 
 const SCRIPT_REGEX = /<script id="tokio-setup">[\s\S]*?<\/script>/i;
 
+// Where Tokio writes the overlay's ID, and its settings when it has them.
+export const hasSetupBlock = (html: string) => SCRIPT_REGEX.test(html);
+
 export function getOverlayConfig(
   data: OverlayConfig,
   mode: "value" | "default",
@@ -132,7 +135,7 @@ export async function processOverlay(
         return { success: false };
       }
 
-      if (!htmlContent || !SCRIPT_REGEX.test(htmlContent)) {
+      if (!htmlContent || !hasSetupBlock(htmlContent)) {
         return { success: false };
       }
     }
@@ -172,15 +175,23 @@ export async function processHTML(
 }> {
   try {
     const htmlPath = join(dir, "index.html");
-    if (!config) {
+    const overlay_config = config
+      ? getOverlayConfig(config, mode, gifts)
+      : undefined;
+    // Overlays imported before the block was required may not have it.
+    if (!hasSetupBlock(html)) {
       return {
         success: true,
+        parsed: overlay_config,
       };
     }
-    const overlay_config = getOverlayConfig(config, mode, gifts);
 
-    const safeJson = JSON.stringify(overlay_config).replace(/</g, "\\u003c");
-    const newScriptBlock = `<script id="tokio-setup"> window.__OVERLAY_CONFIG__ = ${safeJson}; window.__OVERLAY_ID__ = "${id}"; </script>`;
+    let setup = `window.__OVERLAY_ID__ = "${id}";`;
+    if (overlay_config) {
+      const safeJson = JSON.stringify(overlay_config).replace(/</g, "\\u003c");
+      setup = `window.__OVERLAY_CONFIG__ = ${safeJson}; ${setup}`;
+    }
+    const newScriptBlock = `<script id="tokio-setup"> ${setup} </script>`;
 
     const finalHtml = html.replace(SCRIPT_REGEX, newScriptBlock);
 

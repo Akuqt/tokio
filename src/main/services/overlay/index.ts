@@ -22,7 +22,12 @@ import { ServerService } from "../server";
 import { Service } from "../shared";
 import { StoreManagerService } from "../store";
 import { YAMLManagerService } from "../yaml";
-import { findOverlays, processHTML, processOverlay } from "./common";
+import {
+  findOverlays,
+  hasSetupBlock,
+  processHTML,
+  processOverlay,
+} from "./common";
 
 // The parts of the store that keep the overlay lists.
 type OverlayStore = Pick<
@@ -138,6 +143,8 @@ export class OverlayService extends Service {
       if (!res.success) return { success: false };
 
       const { config, htmlContent, info } = res.data!;
+      // It gets its ID through the block, settings or not.
+      if (!hasSetupBlock(htmlContent)) return { success: false };
 
       await cp(basedir, dir, { recursive: true });
 
