@@ -177,6 +177,15 @@ Workflows live in `.github/workflows/`:
 
 To release: bump `version` in `package.json`, commit, push a `v<version>` tag, then review and publish the draft. Only published releases count as the latest, which the installer and auto-updates read. Keep the `artifactName` patterns in `electron-builder.yml`, the upload paths in `build-app.yml` and `release_lookup` in `src/installer/build.rs` in sync.
 
+## Website
+
+The website (`https://tokio.ialfaro.com`) lives in `tokio-app/website` (locally `../tokio-web`) and has its own `AGENTS.md`. Its docs and landing page are written from this repo's `README.md`, and its download page and overlay developer docs depend on facts from this code. Update the website when any of these change:
+
+- features, settings, chat commands or install steps described in the README
+- the overlay format (`info.yaml`, `OverlayConfigSchema`, the `tokio-setup` script block), the server port or hostname, or `TOKIO_EVENTS` names and payloads
+- installer or package file names (`artifactName` in `electron-builder.yml`, the upload paths in `build-app.yml`): the site's `src/lib/release.ts` matches them
+- the Services list in `THIRD_PARTY_NOTICES.md` or the licensing, which the site's About page mirrors
+
 ## Conventions
 
 - Prettier: 2-space indent, double quotes, semicolons, trailing commas. Run `yarn format` on files you touch.
