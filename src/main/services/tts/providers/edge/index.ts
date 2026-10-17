@@ -1,4 +1,4 @@
-import { GenerationResponse, TTSProvider, VoiceData } from "../../common";
+import { GenerationResponse, ProviderVoice, TTSProvider } from "../../common";
 import { listVoices, synthesize } from "./common/protocol";
 import { EdgeTTSError } from "./common/errors";
 import { createConfig } from "./config";
@@ -18,14 +18,15 @@ export function edgeDisplayName(voice: EdgeVoice): string {
 }
 
 // Also accepts the raw suffix (e.g. "JorgeNeural") saved by earlier versions.
-export function edgeShortName({ lang, name }: VoiceData): string {
+export function edgeShortName({ lang, name }: ProviderVoice): string {
   const suffix = name.replaceAll(" ", "");
   return `${lang}-${suffix.endsWith("Neural") ? suffix : `${suffix}Neural`}`;
 }
 
 export class EdgeTTS extends TTSProvider {
+  public readonly label = "Edge";
   private _config: EdgeConfig;
-  private _voices: { list: VoiceData[]; fetchedAt: number } | null = null;
+  private _voices: { list: ProviderVoice[]; fetchedAt: number } | null = null;
 
   constructor(overrides?: EdgeConfigOverrides) {
     super();
@@ -38,7 +39,7 @@ export class EdgeTTS extends TTSProvider {
 
   public setKey(_key: string) {}
 
-  public async getVoices(): Promise<VoiceData[]> {
+  public async getVoices(): Promise<ProviderVoice[]> {
     const cached = this._voices;
     if (cached && Date.now() - cached.fetchedAt < this._config.VOICES_TTL_MS) {
       return cached.list;
@@ -54,10 +55,6 @@ export class EdgeTTS extends TTSProvider {
       if (cached) return cached.list; // Stale is better than nothing.
       throw error;
     }
-  }
-
-  public getDefaultVoice(): VoiceData {
-    return this._config.DEFAULT_VOICE;
   }
 
   private _resolveShortName(lang?: string, voice?: string): string {

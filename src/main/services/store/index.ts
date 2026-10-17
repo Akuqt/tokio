@@ -107,9 +107,9 @@ export class StoreManagerService extends Service {
         const conn_p = this._decryptProviderKey(
           data.settings.activeConnProvider,
         );
-        const tts_p = this._decryptProviderKey(data.settings.activeTTSProvider);
         this._providers.connector.setProvider(conn_p.name, conn_p.key);
-        this._providers.tts.setProvider(tts_p.name, tts_p.key);
+        // Speaks the voices saved before the engines were combined.
+        this._providers.tts.setProvider(data.settings.activeTTSProvider.name);
       }
       this._storeData = data;
       Logger.success(`<System> JSON Store initialized cleanly`, this._logFile);
@@ -387,8 +387,8 @@ export class StoreManagerService extends Service {
     this._memoryProfile = await this._getProfileData();
   }
 
+  // The connector provider. TTS engines aren't picked, every voice names one.
   public async updateProvider(
-    type: "connector" | "tts",
     name: string,
     key?: string,
   ): Promise<AppProvider | null> {
@@ -402,10 +402,7 @@ export class StoreManagerService extends Service {
     });
 
     const settings = this._storeData!.settings;
-    const targetList =
-      type === "tts" ? settings.providers.tts : settings.providers.connector;
-    const providerService =
-      type === "tts" ? this._providers.tts : this._providers.connector;
+    const targetList = settings.providers.connector;
 
     const existingIndex = targetList.findIndex((p) => p.name === name);
     if (existingIndex !== -1) {
@@ -414,13 +411,8 @@ export class StoreManagerService extends Service {
       targetList.push(provider);
     }
 
-    if (type === "tts") {
-      settings.activeTTSProvider = provider;
-    } else {
-      settings.activeConnProvider = provider;
-    }
-
-    providerService.setProvider(name, key);
+    settings.activeConnProvider = provider;
+    this._providers.connector.setProvider(name, key);
 
     await this._queueSave();
     return provider;

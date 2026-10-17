@@ -1,4 +1,4 @@
-import { VoiceData } from "../../../common";
+import { ProviderVoice } from "../../../common";
 import { EnglishVoiceName, SpanishVoiceName } from "../types";
 
 export const EnglishVoicesData: Record<EnglishVoiceName, string> = {
@@ -64,7 +64,7 @@ export const VoicesData: Record<EnglishVoiceName | SpanishVoiceName, string> = {
   ...SpanishVoicesData,
 };
 
-const Voices: VoiceData[] = [];
+const Voices: ProviderVoice[] = [];
 
 for (const voice of Object.keys(EnglishVoicesData)) {
   Voices.push({ name: voice, lang: "en" });

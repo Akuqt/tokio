@@ -12,7 +12,7 @@ import {
 } from "../../schemas";
 import { AppNotification, Reply } from "../feedback";
 import { OverlayApp } from "../server";
-import { VoiceData } from "../store";
+import { VoiceData, VoiceEngine } from "../store";
 import { UpdateStatus } from "../updates";
 
 type WindowState = { state: "normal" | "maximized" };
@@ -123,6 +123,7 @@ export interface AppEventsResponseMap {
   //VOICES
   [APP_EVENTS_RESPONSE.GET_VOICES]: Reply<{
     voices?: VoiceData[];
+    engines?: VoiceEngine[];
   }>;
 
   //TTS PAGE
@@ -156,7 +157,7 @@ export interface AppEventsResponseMap {
   }>;
 
   [APP_EVENTS_RESPONSE.SET_PROVIDER]: Reply<{
-    type: "tts" | "connector";
+    type: "connector";
   }>;
 
   [APP_EVENTS_RESPONSE.SET_SERVER]: Reply;

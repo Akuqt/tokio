@@ -4,16 +4,20 @@ export type GenerationResponse = {
   error?: Error;
 };
 
-export type VoiceData = {
+// A voice as an engine knows it, TTSService adds the engine id.
+export type ProviderVoice = {
   name: string;
   lang: string;
 };
 
 export abstract class TTSProvider {
+  // Shown to the user, e.g. as the group of its voices.
+  public abstract readonly label: string;
+  // Set when the engine takes a key, which is then editable in Settings.
+  public readonly keyLabel?: string;
   public abstract setKey(key: string): void;
-  public abstract getVoices(): VoiceData[] | Promise<VoiceData[]>;
-  public abstract getDefaultVoice():
-    VoiceData | null | Promise<VoiceData | null>;
+  public abstract getVoices(): ProviderVoice[] | Promise<ProviderVoice[]>;
+  // Unknown voices (e.g. another engine's) must fall back to a default.
   public abstract generateBuffer(
     text: string,
     lang?: string,

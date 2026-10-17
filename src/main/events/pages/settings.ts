@@ -218,24 +218,8 @@ events.push(
 
 events.push(
   APP_EVENTS.SET_PROVIDER,
-  async (
-    { storeManagerService, ttsService, notifier },
-    e,
-    { name, key, type },
-  ) => {
-    const switched =
-      type === "tts" && ttsService.getActiveProvider()?.name !== name;
-    await storeManagerService.updateProvider(type, name, key);
-    if (switched) {
-      // Voices are provider specific, reset the profile to the new provider's default.
-      const voice = await ttsService.getDefaultVoice();
-      const profile = await storeManagerService.getProfileData();
-      if (voice && profile) {
-        await storeManagerService.updateProfileData({
-          tts: { ...profile.tts, voice },
-        });
-      }
-    }
+  async ({ storeManagerService, notifier }, e, { name, key, type }) => {
+    await storeManagerService.updateProvider(name, key);
 
     replySettings(e, storeManagerService);
     e.reply(APP_EVENTS_RESPONSE.SET_PROVIDER, {
@@ -245,7 +229,7 @@ events.push(
     notifier.success(
       "system",
       FEEDBACK_CODES.PROVIDER_UPDATED,
-      `${type === "tts" ? "TTS" : "Connector"} provider set to ${name}.`,
+      `Connector provider set to ${name}.`,
     );
   },
   {

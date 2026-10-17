@@ -90,7 +90,9 @@ export function Settings() {
           }}
         />
 
-        <ProvidersSection settings={store.settings} />
+        {store.settings.providers.connector.length > 1 && (
+          <ProvidersSection settings={store.settings} />
+        )}
 
         <ProfileSection
           profiles={store.profiles}

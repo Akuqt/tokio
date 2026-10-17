@@ -9,20 +9,15 @@ interface Props {
   settings: AppSettings;
 }
 
+// Only shown when there's more than one connector to choose from.
 export function ProvidersSection({ settings }: Props) {
   return (
     <Section
       icon={<FiBox />}
       title="Providers"
-      description="Configure the backend services used for TTS and TikTok events."
+      description="Configure the backend service used for TikTok events."
     >
       <FormGrid>
-        <ProviderForm
-          type="tts"
-          label="TTS"
-          providers={settings.providers.tts}
-          active={settings.activeTTSProvider}
-        />
         <ProviderForm
           type="connector"
           label="TikTok Events"
@@ -35,7 +30,7 @@ export function ProvidersSection({ settings }: Props) {
 }
 
 interface FormProps {
-  type: "tts" | "connector";
+  type: "connector";
   label: string;
   providers: AppProvider[];
   active: AppProvider;

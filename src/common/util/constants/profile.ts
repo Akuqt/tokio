@@ -50,6 +50,7 @@ export const defaultProfile: Profile = {
   },
   tts: {
     voice: {
+      engine: "Default",
       lang: "en",
       name: "Default",
     },

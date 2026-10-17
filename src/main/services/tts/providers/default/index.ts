@@ -1,12 +1,13 @@
-import { defaultProfile } from "@/common/util";
 import axios, { isAxiosError } from "axios";
 import { Buffer } from "node:buffer";
-import { GenerationResponse, TTSProvider, VoiceData } from "../../common";
+import { GenerationResponse, ProviderVoice, TTSProvider } from "../../common";
 import { handleStatusError, prepareText, Voices, VoicesData } from "./common";
 import config from "./config";
 import { TTSResponse, TTSResponseALT } from "./types";
 
 export class TikTokTTS extends TTSProvider {
+  public readonly label = "TikTok";
+  public override readonly keyLabel = "Session ID";
   private sessionId: string | undefined;
 
   private getURL(text: string, speaker: string, lang: string) {
@@ -106,11 +107,7 @@ export class TikTokTTS extends TTSProvider {
     }
   }
 
-  public getVoices(): VoiceData[] {
+  public getVoices(): ProviderVoice[] {
     return Voices;
-  }
-
-  public getDefaultVoice(): VoiceData {
-    return defaultProfile.tts.voice;
   }
 }

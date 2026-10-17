@@ -210,7 +210,7 @@ const registerConnectorEvents = ({
           notifier.error(
             "tts",
             FEEDBACK_CODES.TTS_GENERATION_FAILED,
-            "Unable to generate TTS audio. Check the TTS provider in Settings.",
+            "Unable to generate TTS audio. Try another voice on the TTS page.",
             { windowMs: REPEAT_NOTICE_MS },
           );
         },

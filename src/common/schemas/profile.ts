@@ -72,6 +72,9 @@ export const ProfileSchema = z.object({
   }),
   tts: z.object({
     voice: z.object({
+      // Empty for voices saved before the engines were combined, they keep
+      // the provider that was selected in Settings then.
+      engine: z.string().default(""),
       name: z.string(),
       lang: z.string(),
     }),

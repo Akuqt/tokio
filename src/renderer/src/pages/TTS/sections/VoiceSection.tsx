@@ -1,5 +1,5 @@
 import { Profile } from "@/common/schemas";
-import { VoiceData } from "@/common/types";
+import { VoiceData, VoiceEngine } from "@/common/types";
 import {
   Btn,
   Field,
@@ -20,37 +20,46 @@ type Settings = Profile["tts"];
 interface Props {
   settings: Settings;
   voices: VoiceData[];
+  engines: VoiceEngine[];
   testLoading: boolean;
   testQueue: AudioQueue;
   update: Updater<Settings>;
   onTest: (text: string) => void;
 }
 
-const voiceKey = (voice: VoiceData) => `${voice.lang}|${voice.name}`;
+const voiceKey = (voice: VoiceData) =>
+  `${voice.engine}|${voice.lang}|${voice.name}`;
 
-// Voices grouped by language, in the order the languages first appear.
-function voiceOptions(voices: VoiceData[]): SelectOption<string>[] {
-  const groups = new Map<string, VoiceData[]>();
+// Voices grouped by engine and language, in the order the groups first appear.
+function voiceOptions(
+  voices: VoiceData[],
+  engines: VoiceEngine[],
+): SelectOption<string>[] {
+  const labels = new Map(engines.map((e) => [e.id, e.label]));
+  const groups = new Map<string, SelectOption<string>[]>();
   for (const voice of voices) {
-    groups.set(voice.lang, [...(groups.get(voice.lang) ?? []), voice]);
+    const group = `${labels.get(voice.engine) ?? voice.engine} · ${voice.lang}`;
+    const options = groups.get(group) ?? [];
+    options.push({ value: voiceKey(voice), label: voice.name, group });
+    groups.set(group, options);
   }
-  return [...groups.values()].flat().map((voice) => ({
-    value: voiceKey(voice),
-    label: voice.name,
-    group: voice.lang,
-  }));
+  return [...groups.values()].flat();
 }
 
 export function VoiceSection({
   settings,
   voices,
+  engines,
   testLoading,
   testQueue,
   update,
   onTest,
 }: Props) {
   const [testMessage, setTestMessage] = useState("");
-  const options = useMemo(() => voiceOptions(voices), [voices]);
+  const options = useMemo(
+    () => voiceOptions(voices, engines),
+    [voices, engines],
+  );
   const { filters } = settings;
 
   return (

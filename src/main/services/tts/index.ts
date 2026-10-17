@@ -1,12 +1,14 @@
 import { Profile } from "@/common/schemas";
-import { ChatEvent } from "@/common/types";
+import { ChatEvent, VoiceData, VoiceEngine } from "@/common/types";
 import { formatError, TaskQueue } from "@/common/util";
 import { hasPermission } from "@/helper/permissions";
 import Logger from "@/logger";
 import { ProviderService } from "../shared";
-import { GenerationResponse, TTSProvider, VoiceData } from "./common";
+import { GenerationResponse, TTSProvider } from "./common";
 import { EdgeTTS, TikTokTTS, WindowsTTS } from "./providers";
 
+// Every provider is an engine, and voices name the engine that speaks them.
+// The active provider only speaks voices with no engine, or an unknown one.
 export class TTSService extends ProviderService<TTSProvider> {
   private _queue: TaskQueue;
 
@@ -24,32 +26,36 @@ export class TTSService extends ProviderService<TTSProvider> {
     return provider instanceof TTSProvider;
   }
 
-  public async getVoices(): Promise<VoiceData[]> {
-    if (!this._current?.provider) return [];
-    try {
-      return await this._current.provider.getVoices();
-    } catch (e) {
-      Logger.error(
-        `<TTS> Unable to get voices - ${formatError(e)}`,
-        this._logFile,
-        e,
-      );
-      return [];
-    }
+  public getEngines(): VoiceEngine[] {
+    return [...(this._providerPool?.entries() ?? [])].map(([id, provider]) => ({
+      id,
+      label: provider.label,
+      keyLabel: provider.keyLabel,
+    }));
   }
 
-  public async getDefaultVoice(): Promise<VoiceData | null> {
-    if (!this._current?.provider) return null;
-    try {
-      return await this._current.provider.getDefaultVoice();
-    } catch (e) {
+  public setEngineKey(engine: string, key: string) {
+    this._providerPool?.get(engine)?.setKey(key);
+  }
+
+  // The voices of every engine. An engine that fails is left out.
+  public async getVoices(): Promise<VoiceData[]> {
+    const engines = [...(this._providerPool?.entries() ?? [])];
+    const results = await Promise.allSettled(
+      engines.map(async ([, provider]) => provider.getVoices()),
+    );
+    return results.flatMap((res, i) => {
+      const [engine] = engines[i];
+      if (res.status === "fulfilled") {
+        return res.value.map((voice) => ({ engine, ...voice }));
+      }
       Logger.error(
-        `<TTS> Unable to get default voice - ${formatError(e)}`,
+        `<TTS> Unable to get the ${engine} voices - ${formatError(res.reason)}`,
         this._logFile,
-        e,
+        res.reason,
       );
-      return null;
-    }
+      return [];
+    });
   }
 
   public dispose() {
@@ -58,14 +64,20 @@ export class TTSService extends ProviderService<TTSProvider> {
     }
   }
 
+  // Voices saved before the engines were combined have no engine, and
+  // imported profiles may name one that isn't available here.
+  private _engineOf(voice?: VoiceData): TTSProvider | null {
+    const engine = voice?.engine && this._providerPool?.get(voice.engine);
+    return engine || this._current?.provider || null;
+  }
+
   public async generateBuffer(
     text: string,
-    lang?: string,
-    voice?: string,
+    voice?: VoiceData,
   ): Promise<GenerationResponse> {
-    if (!this._current?.provider) return { success: false };
-    const res = await this._current.provider.generateBuffer(text, lang, voice);
-    return res;
+    const engine = this._engineOf(voice);
+    if (!engine) return { success: false };
+    return await engine.generateBuffer(text, voice?.lang, voice?.name);
   }
 
   private _valid(settings: Profile["tts"], chat: ChatEvent) {
@@ -166,11 +178,7 @@ export class TTSService extends ProviderService<TTSProvider> {
       maxQueueLength: settings.protection.queue_length,
     });
     this._queue.enqueue(async () => {
-      const res = await this.generateBuffer(
-        text,
-        settings.voice.lang,
-        settings.voice.name,
-      );
+      const res = await this.generateBuffer(text, settings.voice);
       if (res.success) {
         callback?.({
           data: res.buffer,

@@ -1,10 +1,11 @@
 import { Buffer } from "node:buffer";
-import { GenerationResponse, TTSProvider, VoiceData } from "../../common";
+import { GenerationResponse, ProviderVoice, TTSProvider } from "../../common";
 import { SapiHost } from "./common/host";
 import config from "./config";
 import { SapiVoice } from "./types";
 
 export class WindowsTTS extends TTSProvider {
+  public readonly label = "Windows";
   private _host = new SapiHost();
   private _voices: SapiVoice[] | null = null;
 
@@ -15,15 +16,9 @@ export class WindowsTTS extends TTSProvider {
 
   public setKey(_key: string) {}
 
-  public async getVoices(): Promise<VoiceData[]> {
+  public async getVoices(): Promise<ProviderVoice[]> {
     const voices = await this._fetchVoices();
     return voices.map(({ name, lang }) => ({ name, lang }));
-  }
-
-  public async getDefaultVoice(): Promise<VoiceData | null> {
-    const voices = await this._fetchVoices();
-    const voice = voices.find((v) => v.default) ?? voices[0];
-    return voice ? { name: voice.name, lang: voice.lang } : null;
   }
 
   public async generateBuffer(

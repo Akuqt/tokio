@@ -183,22 +183,43 @@ describe("StoreManagerService", () => {
       );
     });
 
-    it("restores the saved providers with their keys decrypted", async () => {
-      const first = await init();
-      await first.updateProvider("tts", "Edge", "secret");
-      expect(await readFile(storeFile, "utf-8")).not.toContain("secret");
+    it("speaks old voices with the TTS provider selected before", async () => {
+      const data = structuredClone(defaultStoreData);
+      data.settings.activeTTSProvider = {
+        name: "Edge",
+        key: "",
+        active: true,
+      };
+      await writeFile(storeFile, JSON.stringify(data));
 
       const setProvider = vi.spyOn(tts, "setProvider");
       await init();
 
-      expect(setProvider).toHaveBeenCalledWith("Edge", "secret");
+      expect(setProvider).toHaveBeenCalledWith("Edge");
+    });
+
+    it("loads voices saved without an engine", async () => {
+      await init();
+      const oldProfile = structuredClone(defaultProfile);
+      const { engine: _engine, ...voice } = oldProfile.tts.voice;
+      await writeFile(
+        defaultProfileFile,
+        JSON.stringify({ ...oldProfile, tts: { ...oldProfile.tts, voice } }),
+      );
+
+      const store = await init();
+
+      expect((await store.getProfileData())?.tts.voice).toEqual({
+        ...voice,
+        engine: "",
+      });
     });
   });
 
   describe("getSettings", () => {
     it("decrypts keys and lists registered providers that were never saved", async () => {
       const store = await init();
-      await store.updateProvider("connector", "Default", "session");
+      await store.updateProvider("Default", "session");
 
       const settings = store.getSettings();
 

@@ -158,7 +158,7 @@ export interface AppEventsMap {
   [APP_EVENTS.SET_PROVIDER]: {
     name: string;
     key: string;
-    type: "connector" | "tts";
+    type: "connector";
   };
 
   [APP_EVENTS.SET_SERVER]: {

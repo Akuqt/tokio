@@ -9,12 +9,10 @@ import { TTSService } from "./index";
 vi.mock("./providers", async () => {
   const { TTSProvider } = await import("./common");
   class FakeTTS extends TTSProvider {
-    setKey() {}
+    label = "Fake";
+    setKey(_key: string) {}
     getVoices() {
       return [{ name: "Fake", lang: "en" }];
-    }
-    getDefaultVoice() {
-      return { name: "Fake", lang: "en" };
     }
     async generateBuffer(text: string) {
       return { success: true, buffer: Buffer.from(text) };
@@ -63,14 +61,98 @@ describe("TTSService", () => {
     return spoken;
   };
 
-  it("starts on the Default provider and registers Edge", async () => {
-    const names = service.getProviders().map((p) => p.name);
+  const engine = (name: string) => service["_providerPool"]!.get(name)!;
 
-    expect(service.getActiveProvider()?.name).toBe("Default");
-    expect(names).toContain("Edge");
-    expect(await service.getDefaultVoice()).toEqual({
-      name: "Fake",
-      lang: "en",
+  describe("engines", () => {
+    it("lists every engine, Default first", () => {
+      const engines = service.getEngines();
+
+      expect(engines[0]).toEqual({ id: "Default", label: "Fake" });
+      expect(engines.map((e) => e.id)).toContain("Edge");
+    });
+
+    it("lists the voices of every engine, tagged with it", async () => {
+      const voices = await service.getVoices();
+
+      expect(voices).toContainEqual({
+        engine: "Default",
+        name: "Fake",
+        lang: "en",
+      });
+      expect(voices).toContainEqual({
+        engine: "Edge",
+        name: "Fake",
+        lang: "en",
+      });
+    });
+
+    it("leaves out the voices of an engine that fails", async () => {
+      const error = vi.spyOn(Logger, "error");
+      vi.spyOn(engine("Edge"), "getVoices").mockRejectedValue(
+        new Error("offline"),
+      );
+
+      const voices = await service.getVoices();
+
+      expect(voices.some((v) => v.engine === "Edge")).toBe(false);
+      expect(voices.some((v) => v.engine === "Default")).toBe(true);
+      expect(error).toHaveBeenCalledWith(
+        expect.stringContaining("Edge voices - offline"),
+        undefined,
+        expect.any(Error),
+      );
+    });
+
+    it("returns no voices when every engine fails", async () => {
+      vi.spyOn(Logger, "error");
+      for (const { id } of service.getEngines()) {
+        vi.spyOn(engine(id), "getVoices").mockImplementation(() => {
+          throw new Error("offline");
+        });
+      }
+
+      expect(await service.getVoices()).toEqual([]);
+    });
+
+    it("speaks with the voice's engine", async () => {
+      const edge = vi.spyOn(engine("Edge"), "generateBuffer");
+      const tiktok = vi.spyOn(engine("Default"), "generateBuffer");
+
+      await service.generateBuffer("hi", {
+        engine: "Edge",
+        name: "Jorge",
+        lang: "es-MX",
+      });
+
+      expect(edge).toHaveBeenCalledExactlyOnceWith("hi", "es-MX", "Jorge");
+      expect(tiktok).not.toHaveBeenCalled();
+    });
+
+    it.each(["", "Missing"])(
+      'speaks voices with the engine "%s" with the active provider',
+      async (name) => {
+        service.setProvider("Edge");
+        const edge = vi.spyOn(engine("Edge"), "generateBuffer");
+
+        await service.generateBuffer("hi", {
+          engine: name,
+          name: "Jorge",
+          lang: "es-MX",
+        });
+
+        expect(edge).toHaveBeenCalledExactlyOnceWith("hi", "es-MX", "Jorge");
+      },
+    );
+
+    it("gives a key only to its engine", () => {
+      const tiktok = vi.spyOn(engine("Default"), "setKey");
+      const edge = vi.spyOn(engine("Edge"), "setKey");
+
+      service.setEngineKey("Default", "session");
+      service.setEngineKey("Missing", "session");
+
+      expect(tiktok).toHaveBeenCalledExactlyOnceWith("session");
+      expect(edge).not.toHaveBeenCalled();
     });
   });
 
@@ -251,13 +333,5 @@ describe("TTSService", () => {
     await new Promise((r) => setTimeout(r, 1100));
 
     expect(spoken).toEqual(["first"]);
-  });
-
-  it("returns no voices when the provider fails", async () => {
-    vi.spyOn(Logger, "error");
-    const provider = service["_current"]?.provider;
-    vi.spyOn(provider!, "getVoices").mockRejectedValue(new Error("offline"));
-
-    expect(await service.getVoices()).toEqual([]);
   });
 });
